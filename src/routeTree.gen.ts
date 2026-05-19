@@ -9,38 +9,134 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeamRouteImport } from './routes/team'
+import { Route as HorsesRouteImport } from './routes/horses'
+import { Route as HealthRouteImport } from './routes/health'
+import { Route as CompetitionsRouteImport } from './routes/competitions'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HorsesHorseIdRouteImport } from './routes/horses.$horseId'
 
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HorsesRoute = HorsesRouteImport.update({
+  id: '/horses',
+  path: '/horses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsRoute = CompetitionsRouteImport.update({
+  id: '/competitions',
+  path: '/competitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HorsesHorseIdRoute = HorsesHorseIdRouteImport.update({
+  id: '/$horseId',
+  path: '/$horseId',
+  getParentRoute: () => HorsesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/competitions': typeof CompetitionsRoute
+  '/health': typeof HealthRoute
+  '/horses': typeof HorsesRouteWithChildren
+  '/team': typeof TeamRoute
+  '/horses/$horseId': typeof HorsesHorseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/competitions': typeof CompetitionsRoute
+  '/health': typeof HealthRoute
+  '/horses': typeof HorsesRouteWithChildren
+  '/team': typeof TeamRoute
+  '/horses/$horseId': typeof HorsesHorseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/competitions': typeof CompetitionsRoute
+  '/health': typeof HealthRoute
+  '/horses': typeof HorsesRouteWithChildren
+  '/team': typeof TeamRoute
+  '/horses/$horseId': typeof HorsesHorseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/competitions'
+    | '/health'
+    | '/horses'
+    | '/team'
+    | '/horses/$horseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/competitions'
+    | '/health'
+    | '/horses'
+    | '/team'
+    | '/horses/$horseId'
+  id:
+    | '__root__'
+    | '/'
+    | '/competitions'
+    | '/health'
+    | '/horses'
+    | '/team'
+    | '/horses/$horseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompetitionsRoute: typeof CompetitionsRoute
+  HealthRoute: typeof HealthRoute
+  HorsesRoute: typeof HorsesRouteWithChildren
+  TeamRoute: typeof TeamRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/horses': {
+      id: '/horses'
+      path: '/horses'
+      fullPath: '/horses'
+      preLoaderRoute: typeof HorsesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competitions': {
+      id: '/competitions'
+      path: '/competitions'
+      fullPath: '/competitions'
+      preLoaderRoute: typeof CompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/horses/$horseId': {
+      id: '/horses/$horseId'
+      path: '/$horseId'
+      fullPath: '/horses/$horseId'
+      preLoaderRoute: typeof HorsesHorseIdRouteImport
+      parentRoute: typeof HorsesRoute
+    }
   }
 }
 
+interface HorsesRouteChildren {
+  HorsesHorseIdRoute: typeof HorsesHorseIdRoute
+}
+
+const HorsesRouteChildren: HorsesRouteChildren = {
+  HorsesHorseIdRoute: HorsesHorseIdRoute,
+}
+
+const HorsesRouteWithChildren =
+  HorsesRoute._addFileChildren(HorsesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompetitionsRoute: CompetitionsRoute,
+  HealthRoute: HealthRoute,
+  HorsesRoute: HorsesRouteWithChildren,
+  TeamRoute: TeamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
