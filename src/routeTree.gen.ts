@@ -10,20 +10,39 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamRouteImport } from './routes/team'
-import { Route as HorsesRouteImport } from './routes/horses'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HorsesHorseIdRouteImport } from './routes/horses.$horseId'
+import { Route as HorsesIndexRouteImport } from './routes/horses.index'
+import { Route as HorsesHorseIdRouteImport } from './routes/horses_.$horseId'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HorsesRoute = HorsesRouteImport.update({
-  id: '/horses',
-  path: '/horses',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -41,36 +60,53 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HorsesIndexRoute = HorsesIndexRouteImport.update({
+  id: '/horses/',
+  path: '/horses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HorsesHorseIdRoute = HorsesHorseIdRouteImport.update({
-  id: '/$horseId',
-  path: '/$horseId',
-  getParentRoute: () => HorsesRoute,
+  id: '/horses_/$horseId',
+  path: '/horses/$horseId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
   '/health': typeof HealthRoute
-  '/horses': typeof HorsesRouteWithChildren
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/horses/': typeof HorsesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
   '/health': typeof HealthRoute
-  '/horses': typeof HorsesRouteWithChildren
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/horses': typeof HorsesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
   '/health': typeof HealthRoute
-  '/horses': typeof HorsesRouteWithChildren
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
-  '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/horses_/$horseId': typeof HorsesHorseIdRoute
+  '/horses/': typeof HorsesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,33 +114,50 @@ export interface FileRouteTypes {
     | '/'
     | '/competitions'
     | '/health'
-    | '/horses'
+    | '/login'
+    | '/notifications'
+    | '/register'
+    | '/settings'
     | '/team'
     | '/horses/$horseId'
+    | '/horses/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/competitions'
     | '/health'
-    | '/horses'
+    | '/login'
+    | '/notifications'
+    | '/register'
+    | '/settings'
     | '/team'
     | '/horses/$horseId'
+    | '/horses'
   id:
     | '__root__'
     | '/'
     | '/competitions'
     | '/health'
-    | '/horses'
+    | '/login'
+    | '/notifications'
+    | '/register'
+    | '/settings'
     | '/team'
-    | '/horses/$horseId'
+    | '/horses_/$horseId'
+    | '/horses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompetitionsRoute: typeof CompetitionsRoute
   HealthRoute: typeof HealthRoute
-  HorsesRoute: typeof HorsesRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
+  RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   TeamRoute: typeof TeamRoute
+  HorsesHorseIdRoute: typeof HorsesHorseIdRoute
+  HorsesIndexRoute: typeof HorsesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,11 +169,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/horses': {
-      id: '/horses'
-      path: '/horses'
-      fullPath: '/horses'
-      preLoaderRoute: typeof HorsesRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/health': {
@@ -144,34 +218,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/horses/$horseId': {
-      id: '/horses/$horseId'
-      path: '/$horseId'
+    '/horses/': {
+      id: '/horses/'
+      path: '/horses'
+      fullPath: '/horses/'
+      preLoaderRoute: typeof HorsesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/horses_/$horseId': {
+      id: '/horses_/$horseId'
+      path: '/horses/$horseId'
       fullPath: '/horses/$horseId'
       preLoaderRoute: typeof HorsesHorseIdRouteImport
-      parentRoute: typeof HorsesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface HorsesRouteChildren {
-  HorsesHorseIdRoute: typeof HorsesHorseIdRoute
-}
-
-const HorsesRouteChildren: HorsesRouteChildren = {
-  HorsesHorseIdRoute: HorsesHorseIdRoute,
-}
-
-const HorsesRouteWithChildren =
-  HorsesRoute._addFileChildren(HorsesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompetitionsRoute: CompetitionsRoute,
   HealthRoute: HealthRoute,
-  HorsesRoute: HorsesRouteWithChildren,
+  LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
+  RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   TeamRoute: TeamRoute,
+  HorsesHorseIdRoute: HorsesHorseIdRoute,
+  HorsesIndexRoute: HorsesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

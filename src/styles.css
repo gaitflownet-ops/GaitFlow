@@ -47,10 +47,10 @@
 :root {
   --radius: 0.875rem;
 
-  /* Paddock luxury equestrian palette */
-  --ivory: oklch(0.972 0.012 85);          /* warm cream */
+  /* EquiSales luxury equestrian palette */
+  --ivory: oklch(0.972 0.012 85);
   --background: oklch(0.972 0.012 85);
-  --foreground: oklch(0.18 0.018 60);       /* near-black charcoal */
+  --foreground: oklch(0.18 0.018 60);
 
   --card: oklch(0.985 0.008 85);
   --card-foreground: oklch(0.18 0.018 60);
@@ -58,11 +58,11 @@
   --popover: oklch(0.985 0.008 85);
   --popover-foreground: oklch(0.18 0.018 60);
 
-  --forest: oklch(0.32 0.045 155);          /* deep forest green */
+  --forest: oklch(0.32 0.045 155);
   --forest-deep: oklch(0.22 0.04 155);
-  --leather: oklch(0.36 0.07 50);           /* rich brown leather */
+  --leather: oklch(0.36 0.07 50);
   --bronze: oklch(0.55 0.09 55);
-  --gold: oklch(0.78 0.13 80);              /* soft warm gold */
+  --gold: oklch(0.78 0.13 80);
   --charcoal: oklch(0.22 0.012 60);
 
   --primary: var(--forest);
@@ -96,7 +96,7 @@
   --sidebar-primary-foreground: oklch(0.18 0.018 60);
   --sidebar-accent: oklch(0.28 0.04 155);
   --sidebar-accent-foreground: oklch(0.96 0.012 85);
-  --sidebar-border: oklch(0.30 0.04 155);
+  --sidebar-border: oklch(0.3 0.04 155);
   --sidebar-ring: var(--gold);
 
   --color-sidebar: var(--sidebar);
@@ -109,9 +109,14 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --shadow-soft: 0 1px 2px oklch(0.18 0.018 60 / 0.04), 0 8px 24px oklch(0.18 0.018 60 / 0.06);
-  --shadow-lift: 0 2px 4px oklch(0.18 0.018 60 / 0.05), 0 24px 60px oklch(0.18 0.018 60 / 0.10);
-  --gradient-hero: linear-gradient(180deg, oklch(0.22 0.04 155 / 0) 40%, oklch(0.18 0.018 60 / 0.85) 100%);
-  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.12 80), oklch(0.62 0.10 60));
+  --shadow-lift: 0 2px 4px oklch(0.18 0.018 60 / 0.05), 0 24px 60px oklch(0.18 0.018 60 / 0.1);
+  --shadow-modal: 0 8px 16px oklch(0.18 0.018 60 / 0.08), 0 40px 80px oklch(0.18 0.018 60 / 0.16);
+  --gradient-hero: linear-gradient(
+    180deg,
+    oklch(0.22 0.04 155 / 0) 40%,
+    oklch(0.18 0.018 60 / 0.85) 100%
+  );
+  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.12 80), oklch(0.62 0.1 60));
 }
 
 @layer base {
@@ -120,24 +125,38 @@
     font-style: normal;
     font-weight: 300 900;
     font-display: swap;
-    src: url("https://fonts.gstatic.com/s/fraunces/v37/6NUh8FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk.woff2") format("woff2");
+    src: url("https://fonts.gstatic.com/s/fraunces/v37/6NUh8FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk.woff2")
+      format("woff2");
   }
   @font-face {
     font-family: "Inter";
     font-style: normal;
     font-weight: 100 900;
     font-display: swap;
-    src: url("https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.woff2") format("woff2");
+    src: url("https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.woff2")
+      format("woff2");
   }
 
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
   body {
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
 }
 
 @layer components {
@@ -152,16 +171,22 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-soft);
-    transition: box-shadow 250ms ease, transform 250ms ease;
+    transition:
+      box-shadow 250ms ease,
+      transform 250ms ease;
   }
-  .lux-card:hover { box-shadow: var(--shadow-lift); }
+  .lux-card:hover {
+    box-shadow: var(--shadow-lift);
+  }
   .gold-text {
     background: var(--gradient-gold);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
-  .hairline { border-top: 1px solid var(--border); }
+  .hairline {
+    border-top: 1px solid var(--border);
+  }
   .eyebrow {
     font-size: 11px;
     letter-spacing: 0.18em;
@@ -169,4 +194,181 @@
     color: var(--muted-foreground);
     font-weight: 500;
   }
+
+  /* ── Modal / overlay ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: oklch(0.18 0.018 60 / 0.55);
+    backdrop-filter: blur(4px);
+    animation: overlay-in 200ms ease;
+  }
+  .modal-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 51;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    pointer-events: none;
+  }
+  .modal-content {
+    pointer-events: all;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--shadow-modal);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    animation: modal-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-content-lg {
+    max-width: 760px;
+  }
+  .modal-content-xl {
+    max-width: 960px;
+  }
+
+  /* ── Input ── */
+  .lux-input {
+    width: 100%;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.625rem 0.875rem;
+    font-size: 14px;
+    color: var(--foreground);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    outline: none;
+  }
+  .lux-input::placeholder {
+    color: var(--muted-foreground);
+  }
+  .lux-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px oklch(0.32 0.045 155 / 0.12);
+  }
+
+  .lux-select {
+    width: 100%;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.625rem 0.875rem;
+    font-size: 14px;
+    color: var(--foreground);
+    transition: border-color 150ms ease;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  .lux-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px oklch(0.32 0.045 155 / 0.12);
+  }
+
+  /* ── Auth dark theme ── */
+  .auth-dark {
+    --background: oklch(0.14 0.025 155);
+    --foreground: oklch(0.96 0.01 85);
+    --card: oklch(0.18 0.03 155);
+    --card-foreground: oklch(0.96 0.01 85);
+    --border: oklch(0.28 0.04 155);
+    --input: oklch(0.22 0.035 155);
+    --muted-foreground: oklch(0.65 0.02 155);
+    --primary: var(--gold);
+    --primary-foreground: oklch(0.18 0.018 60);
+    --secondary: oklch(0.2 0.03 155);
+  }
+
+  /* ── Notification dot pulse ── */
+  .pulse-dot {
+    position: relative;
+  }
+  .pulse-dot::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.4;
+    animation: pulse-ring 2s ease infinite;
+  }
+
+  /* ── Tab active indicator ── */
+  .tab-active-bar {
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 9999px;
+  }
 }
+
+/* ── Keyframes ── */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+
+.animate-slide-in-right { animation: slide-in-right 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-slide-in-down { animation: slide-in-down 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-fade-up { animation: fade-up 400ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-delay-1 { animation: fade-up 400ms 80ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-delay-2 { animation: fade-up 400ms 160ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-delay-3 { animation: fade-up 400ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both; }
