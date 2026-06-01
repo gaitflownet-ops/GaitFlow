@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { Bell, Trophy, Video, HeartPulse, Wrench, BellOff, ArrowRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 type Props = {
   open: boolean;
@@ -42,15 +43,22 @@ export function NotificationDropdown({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  const handleNotifClick = (id: string, horseId?: string) => {
+  const handleNotifClick = async (id: string, horseId?: string | null) => {
     dispatch({ type: "MARK_NOTIFICATION_READ", id });
     onClose();
+    // Update Supabase in the background
+    await (supabase.from("notifications") as any).update({ read: true }).eq("id", id);
     if (horseId) {
       navigate({ to: "/horses/$horseId", params: { horseId } });
     }
   };
 
-  const markAll = () => dispatch({ type: "MARK_ALL_READ" });
+  const markAll = async () => {
+    dispatch({ type: "MARK_ALL_READ" });
+    if (state.user) {
+      await (supabase.from("notifications") as any).update({ read: true }).eq("user_id", state.user.id);
+    }
+  };
 
   return (
     <div
@@ -88,20 +96,24 @@ export function NotificationDropdown({ open, onClose }: Props) {
           </div>
         ) : (
           state.notifications.slice(0, 6).map((n) => {
-            const Icon = kindIcon[n.kind] ?? Bell;
-            const dotClass = kindColor[n.kind] ?? "bg-primary";
+            const Icon = kindIcon[n.kind as keyof typeof kindIcon] ?? Bell;
+            const dotClass = kindColor[n.kind as keyof typeof kindColor] ?? "bg-primary";
             return (
               <button
                 key={n.id}
                 id={`notif-${n.id}`}
-                onClick={() => handleNotifClick(n.id, n.horseId)}
+                onClick={() => handleNotifClick(n.id, n.horse_id)}
                 className={`w-full text-left px-5 py-4 flex gap-3 hover:bg-secondary/60 transition-colors ${!n.read ? "bg-primary/[0.04]" : ""}`}
               >
-                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${n.read ? "bg-secondary" : "bg-primary/10"} text-primary`}>
+                <span
+                  className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${n.read ? "bg-secondary" : "bg-primary/10"} text-primary`}
+                >
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] leading-snug ${!n.read ? "font-semibold" : "font-medium"}`}>
+                  <p
+                    className={`text-[13px] leading-snug ${!n.read ? "font-semibold" : "font-medium"}`}
+                  >
                     {n.title}
                   </p>
                   <p className="text-[12px] text-muted-foreground mt-0.5">{n.body}</p>

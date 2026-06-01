@@ -1,14 +1,25 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { horses } from "@/lib/data";
 import { useApp } from "@/lib/store";
-import { Trophy, HeartPulse, PenLine, Wrench, Video, Camera, TrendingUp, Check } from "lucide-react";
+import { useHorses } from "@/lib/hooks/useHorses";
+import { useCreateUpdate } from "@/lib/hooks/useUpdates";
+import {
+  Trophy,
+  HeartPulse,
+  PenLine,
+  Wrench,
+  Video,
+  Camera,
+  TrendingUp,
+  Check,
+  Loader2,
+} from "lucide-react";
 
 type UpdateType = "competition" | "training" | "health" | "note" | "farrier" | "media";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   defaultHorseId?: string;
   defaultType?: UpdateType;
 };
@@ -22,17 +33,20 @@ const typeOptions: { value: UpdateType; label: string; icon: React.ElementType }
   { value: "media", label: "Media", icon: Video },
 ];
 
-export function AddUpdateModal({ open, onClose, defaultHorseId, defaultType }: Props) {
-  const { dispatch } = useApp();
+export function AddUpdateModal({ open, onOpenChange, defaultHorseId, defaultType }: Props) {
+  const { state } = useApp();
+  const { data: horses = [] } = useHorses();
+  const createUpdate = useCreateUpdate();
+
   const [type, setType] = useState<UpdateType>(defaultType ?? "training");
-  const [horseId, setHorseId] = useState(defaultHorseId ?? horses[0].id);
+  const [horseId, setHorseId] = useState(defaultHorseId ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [done, setDone] = useState(false);
 
   const reset = () => {
     setType(defaultType ?? "training");
-    setHorseId(defaultHorseId ?? horses[0].id);
+    setHorseId(defaultHorseId ?? "");
     setTitle("");
     setBody("");
     setDone(false);
@@ -40,26 +54,32 @@ export function AddUpdateModal({ open, onClose, defaultHorseId, defaultType }: P
 
   const handleClose = () => {
     reset();
-    onClose();
+    onOpenChange(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    dispatch({
-      type: "ADD_UPDATE",
-      update: {
-        id: `u${Date.now()}`,
-        horseId,
-        type,
-        title,
-        body,
-        at: "Just now",
-        by: "Marisol Vega",
-        likes: 0,
-        comments: 0,
-      },
+
+    const targetHorseId = horseId || (horses[0]?.id ?? "");
+    if (!targetHorseId) return;
+
+    await createUpdate.mutateAsync({
+      horse_id: targetHorseId,
+      owner_id: state.user?.id ?? null,
+      type,
+      title,
+      body,
+      at: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      by: state.user?.name ?? "Team",
+      likes: 0,
+      comments: 0,
     });
+
     setDone(true);
     setTimeout(() => handleClose(), 1400);
   };
@@ -107,8 +127,11 @@ export function AddUpdateModal({ open, onClose, defaultHorseId, defaultType }: P
               value={horseId}
               onChange={(e) => setHorseId(e.target.value)}
             >
+              <option value="">Select a horse…</option>
               {horses.map((h) => (
-                <option key={h.id} value={h.id}>{h.name}</option>
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
               ))}
             </select>
           </div>
@@ -159,9 +182,14 @@ export function AddUpdateModal({ open, onClose, defaultHorseId, defaultType }: P
             <button
               type="submit"
               id="update-submit"
-              className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95"
+              disabled={createUpdate.isPending}
+              className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-70 inline-flex items-center justify-center gap-2"
             >
-              Post update
+              {createUpdate.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Post update"
+              )}
             </button>
           </div>
         </form>

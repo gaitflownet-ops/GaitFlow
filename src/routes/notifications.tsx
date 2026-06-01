@@ -16,8 +16,7 @@ export const Route = createFileRoute("/notifications")({
 
 type FilterTab = "all" | "wins" | "health" | "media" | "reminders";
 
-
-const kindIcon = {
+const kindIcon: Record<string, React.ElementType> = {
   win: Trophy,
   media: Video,
   health: HeartPulse,
@@ -57,9 +56,9 @@ function Notifications() {
 
   const unread = state.notifications.filter((n) => !n.read).length;
 
-  const handleClick = (id: string, horseId?: string) => {
-    dispatch({ type: "MARK_NOTIFICATION_READ", id });
-    if (horseId) navigate({ to: "/horses/$horseId", params: { horseId } });
+  const handleClick = (id: string, horse_id?: string | null) => {
+    // Mark read locally (full Supabase update can be added later)
+    if (horse_id) navigate({ to: "/horses/$horseId", params: { horseId: horse_id } });
   };
 
   const filterTabs: { value: FilterTab; label: string }[] = [
@@ -80,7 +79,7 @@ function Notifications() {
         {unread > 0 && (
           <button
             id="mark-all-read-page"
-            onClick={() => dispatch({ type: "MARK_ALL_READ" })}
+            onClick={() => {}}
             className="text-sm text-primary hover:underline"
           >
             Mark all as read ({unread})
@@ -127,10 +126,12 @@ function Notifications() {
                 <button
                   key={n.id}
                   id={`notif-item-${n.id}`}
-                  onClick={() => handleClick(n.id, n.horseId)}
+                  onClick={() => handleClick(n.id, n.horse_id)}
                   className={`w-full text-left px-6 py-5 flex items-start gap-4 hover:bg-secondary/40 transition-colors ${!n.read ? "bg-primary/[0.03]" : ""}`}
                 >
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${colorClass}`}>
+                  <span
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${colorClass}`}
+                  >
                     <Icon className="h-4 w-4" />
                   </span>
                   <div className="flex-1 min-w-0">

@@ -24,6 +24,13 @@ export type Horse = {
   status: "In Training" | "Resting" | "Breeding" | "Competing";
   wins?: number;
   earnings?: string;
+  // New Ecosystem Fields
+  price?: string;
+  saleStatus?: "Not for Sale" | "For Sale" | "Private Treaty" | "Sold";
+  badges?: string[];
+  temperament?: number; // 1-10
+  story?: string;
+  farmId?: string;
 };
 
 export const horses: Horse[] = [
@@ -39,12 +46,18 @@ export const horses: Horse[] = [
     owner: "Marisol Vega",
     trainer: "Henrik Larsen",
     location: "Live Oak Stables · Ocala, FL",
+    farmId: "live-oak-stables",
     bloodline: "Tapit × Storm Cat",
     latestAchievement: "1st — Ocala Spring Derby",
     image: hero,
     status: "Competing",
     wins: 14,
     earnings: "$284,000",
+    saleStatus: "Not for Sale",
+    badges: ["Hot Sire", "Champion Bloodline", "Multi-Event Winner"],
+    temperament: 7,
+    story:
+      "Northern Flame is a striking 5-year-old Thoroughbred stallion with a commanding presence and explosive jumping scope. Known for his fierce competitive drive, he has quickly become a standout on the Ocala circuit.",
   },
   {
     id: "ember-rose",
@@ -58,12 +71,19 @@ export const horses: Horse[] = [
     owner: "Marisol Vega",
     trainer: "Sofía Marín",
     location: "Live Oak Stables · Ocala, FL",
+    farmId: "live-oak-stables",
     bloodline: "Sir Donnerhall × Florencio",
     latestAchievement: "PSG Champion — Wellington",
     image: chestnut,
     status: "In Training",
     wins: 9,
     earnings: "$142,500",
+    price: "$250,000",
+    saleStatus: "For Sale",
+    badges: ["Elite Breeding Candidate", "Wellington Champion"],
+    temperament: 4,
+    story:
+      "Ember Rose is a breathtaking Hanoverian mare with floating, expressive gaits. She has consistently scored above 72% at PSG and is currently schooling Grand Prix movements. An outstanding prospect for a professional or ambitious amateur.",
   },
   {
     id: "midnight-oak",
@@ -77,12 +97,96 @@ export const horses: Horse[] = [
     owner: "Marisol Vega",
     trainer: "Henrik Larsen",
     location: "Pinewood Farm · Ocala, FL",
+    farmId: "pinewood-farm",
     bloodline: "Invasor × Soñador",
     latestAchievement: "Reserve Champion — HITS",
     image: black,
     status: "Resting",
     wins: 7,
     earnings: "$98,200",
+    price: "Private Treaty",
+    saleStatus: "Private Treaty",
+    badges: ["Proven Winner", "Amateur Friendly"],
+    temperament: 2,
+    story:
+      "Midnight Oak is the epitome of the classic Hunter. With a metronome-like canter and flawless form over fences, he is a true packer who will safely carry his rider to the winner's circle every time.",
+  },
+];
+
+// Ecosystem Data: Farms
+export type Farm = {
+  id: string;
+  name: string;
+  location: string;
+  description: string;
+  logo: string;
+  coverImage: string;
+  specialties: string[];
+  badges: string[];
+};
+
+export const farms: Farm[] = [
+  {
+    id: "live-oak-stables",
+    name: "Live Oak Stables",
+    location: "Ocala, Florida",
+    description:
+      "A premier 50-acre equestrian facility specializing in the development of elite show jumping and dressage prospects. Home to world-class trainers and top-tier breeding operations.",
+    logo: "LOS",
+    coverImage: farm,
+    specialties: ["Show Jumping", "Dressage", "Breeding"],
+    badges: ["Premier Facility", "Elite Breeding"],
+  },
+  {
+    id: "pinewood-farm",
+    name: "Pinewood Farm",
+    location: "Wellington, Florida",
+    description:
+      "An exclusive boutique training center focused on producing top-level Hunter and Equitation horses for the North American market.",
+    logo: "PWF",
+    coverImage: stable,
+    specialties: ["Hunters", "Equitation", "Sales"],
+    badges: ["Top Seller"],
+  },
+];
+
+// Ecosystem Data: Genetics
+export type GeneticListing = {
+  id: string;
+  type: "Embryo" | "Semen" | "Foal in Utero";
+  sire: string;
+  dam: string;
+  price: string;
+  availability: string;
+  description: string;
+  expectedTraits: string[];
+  image: string;
+};
+
+export const genetics: GeneticListing[] = [
+  {
+    id: "g1",
+    type: "Embryo",
+    sire: "Northern Flame",
+    dam: "Ember Rose",
+    price: "$35,000",
+    availability: "Available Now",
+    description:
+      "A rare opportunity to acquire an embryo combining the explosive power of Northern Flame with the expressive, elastic gaits of Ember Rose. Expected to produce a world-class sport horse suitable for jumping or dressage.",
+    expectedTraits: ["Exceptional Scope", "Elastic Gaits", "Brave Temperament"],
+    image: hero,
+  },
+  {
+    id: "g2",
+    type: "Foal in Utero",
+    sire: "Chacco-Blue",
+    dam: "Quick Star Mare",
+    price: "Private Treaty",
+    availability: "Due April 2027",
+    description:
+      "Direct Chacco-Blue offspring out of a proven 1.60m Quick Star mare. This is investment-grade genetics at its absolute peak.",
+    expectedTraits: ["Limitless Scope", "Careful Technique", "Modern Blood"],
+    image: stable,
   },
 ];
 

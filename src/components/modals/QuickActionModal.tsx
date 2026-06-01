@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { horses, updates } from "@/lib/data";
+import { useHorses } from "@/lib/hooks/useHorses";
+import { useCreateUpdate } from "@/lib/hooks/useUpdates";
 import { useApp } from "@/lib/store";
 import {
   Camera,
@@ -11,6 +12,7 @@ import {
   Wrench,
   BellPlus,
   Check,
+  Loader2,
 } from "lucide-react";
 
 type Props = {
@@ -18,7 +20,14 @@ type Props = {
   onClose: () => void;
 };
 
-type ActionType = "photo" | "video" | "competition" | "health" | "training" | "service" | "reminder";
+type ActionType =
+  | "photo"
+  | "video"
+  | "competition"
+  | "health"
+  | "training"
+  | "service"
+  | "reminder";
 
 const actionConfig: {
   key: ActionType;
@@ -27,20 +36,65 @@ const actionConfig: {
   description: string;
   color: string;
 }[] = [
-  { key: "photo", label: "Upload Photo", icon: Camera, description: "Add a photo to horse profile", color: "text-bronze" },
-  { key: "video", label: "Upload Video", icon: Video, description: "Share a training or competition video", color: "text-leather" },
-  { key: "competition", label: "Add Competition", icon: Trophy, description: "Log a result or placing", color: "text-[var(--gold)]" },
-  { key: "health", label: "Add Health Record", icon: HeartPulse, description: "Vaccination, vet visit, farrier", color: "text-destructive" },
-  { key: "training", label: "Add Training Note", icon: PenLine, description: "Log a session or observation", color: "text-primary" },
-  { key: "service", label: "Add Service", icon: Wrench, description: "Farrier, dentist, grooming", color: "text-[var(--leather)]" },
-  { key: "reminder", label: "Add Reminder", icon: BellPlus, description: "Schedule a future task", color: "text-[var(--bronze)]" },
+  {
+    key: "photo",
+    label: "Upload Photo",
+    icon: Camera,
+    description: "Add a photo to horse profile",
+    color: "text-bronze",
+  },
+  {
+    key: "video",
+    label: "Upload Video",
+    icon: Video,
+    description: "Share a training or competition video",
+    color: "text-leather",
+  },
+  {
+    key: "competition",
+    label: "Add Competition",
+    icon: Trophy,
+    description: "Log a result or placing",
+    color: "text-[var(--gold)]",
+  },
+  {
+    key: "health",
+    label: "Add Health Record",
+    icon: HeartPulse,
+    description: "Vaccination, vet visit, farrier",
+    color: "text-destructive",
+  },
+  {
+    key: "training",
+    label: "Add Training Note",
+    icon: PenLine,
+    description: "Log a session or observation",
+    color: "text-primary",
+  },
+  {
+    key: "service",
+    label: "Add Service",
+    icon: Wrench,
+    description: "Farrier, dentist, grooming",
+    color: "text-[var(--leather)]",
+  },
+  {
+    key: "reminder",
+    label: "Add Reminder",
+    icon: BellPlus,
+    description: "Schedule a future task",
+    color: "text-[var(--bronze)]",
+  },
 ];
 
 export function QuickActionModal({ open, onClose }: Props) {
-  const { dispatch } = useApp();
+  const { state } = useApp();
+  const { data: horses = [] } = useHorses();
+  const createUpdate = useCreateUpdate();
+
   const [step, setStep] = useState<"select" | "form">("select");
   const [selected, setSelected] = useState<ActionType | null>(null);
-  const [horseId, setHorseId] = useState(horses[0].id);
+  const [horseId, setHorseId] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [done, setDone] = useState(false);
@@ -48,6 +102,7 @@ export function QuickActionModal({ open, onClose }: Props) {
   const reset = () => {
     setStep("select");
     setSelected(null);
+    setHorseId("");
     setTitle("");
     setBody("");
     setDone(false);
@@ -63,11 +118,12 @@ export function QuickActionModal({ open, onClose }: Props) {
     setStep("form");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title) return;
+    const targetHorseId = horseId || horses[0]?.id;
+    if (!targetHorseId || !title) return;
 
-    const typeMap: Record<ActionType, (typeof updates)[0]["type"]> = {
+    const typeMap: Record<ActionType, string> = {
       photo: "media",
       video: "media",
       competition: "competition",
@@ -77,19 +133,13 @@ export function QuickActionModal({ open, onClose }: Props) {
       reminder: "note",
     };
 
-    dispatch({
-      type: "ADD_UPDATE",
-      update: {
-        id: `u${Date.now()}`,
-        horseId,
-        type: typeMap[selected!],
-        title,
-        body,
-        at: "Just now",
-        by: "Marisol Vega",
-        likes: 0,
-        comments: 0,
-      },
+    await createUpdate.mutateAsync({
+      horse_id: targetHorseId,
+      type: typeMap[selected!],
+      title,
+      body,
+      by: state.user?.name ?? "Marisol Vega",
+      at: new Date().toISOString(),
     });
 
     setDone(true);
@@ -101,14 +151,20 @@ export function QuickActionModal({ open, onClose }: Props) {
   const cfg = selected ? actionConfig.find((a) => a.key === selected) : null;
 
   return (
-    <Modal open={open} onClose={handleClose} title={step === "select" ? "Quick action" : cfg?.label ?? "New entry"}>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={step === "select" ? "Quick action" : (cfg?.label ?? "New entry")}
+    >
       {done ? (
         <div className="p-10 flex flex-col items-center justify-center gap-4">
           <span className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary">
             <Check className="h-8 w-8" />
           </span>
           <p className="font-display text-2xl text-center">Added successfully</p>
-          <p className="text-muted-foreground text-sm text-center">Your update is now visible on the timeline.</p>
+          <p className="text-muted-foreground text-sm text-center">
+            Your update is now visible on the timeline.
+          </p>
         </div>
       ) : step === "select" ? (
         <div className="p-3">
@@ -120,12 +176,16 @@ export function QuickActionModal({ open, onClose }: Props) {
                 onClick={() => handleSelect(key)}
                 className="lux-card p-4 text-left flex items-start gap-3 hover:-translate-y-0.5"
               >
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary ${color}`}>
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary ${color}`}
+                >
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
                 <span>
                   <span className="block text-[14px] font-medium">{label}</span>
-                  <span className="block text-[12px] text-muted-foreground mt-0.5">{description}</span>
+                  <span className="block text-[12px] text-muted-foreground mt-0.5">
+                    {description}
+                  </span>
                 </span>
               </button>
             ))}
@@ -140,8 +200,11 @@ export function QuickActionModal({ open, onClose }: Props) {
               value={horseId}
               onChange={(e) => setHorseId(e.target.value)}
             >
+              <option value="">Select a horse…</option>
               {horses.map((h) => (
-                <option key={h.id} value={h.id}>{h.name}</option>
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
               ))}
             </select>
           </div>
@@ -178,9 +241,10 @@ export function QuickActionModal({ open, onClose }: Props) {
             <button
               type="submit"
               id="quick-action-submit"
-              className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
+              disabled={createUpdate.isPending}
+              className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              Save
+              {createUpdate.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
             </button>
           </div>
         </form>

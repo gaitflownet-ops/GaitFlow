@@ -15,10 +15,19 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as HorsesIndexRouteImport } from './routes/horses.index'
+import { Route as StallionsStallionIdRouteImport } from './routes/stallions.$stallionId'
+import { Route as ShowcaseHorseIdRouteImport } from './routes/showcase.$horseId'
+import { Route as MarketplaceStallionsRouteImport } from './routes/marketplace.stallions'
+import { Route as MarketplaceSalesRouteImport } from './routes/marketplace.sales'
+import { Route as MarketplaceGeneticsRouteImport } from './routes/marketplace.genetics'
 import { Route as HorsesHorseIdRouteImport } from './routes/horses_.$horseId'
+import { Route as FarmsFarmIdRouteImport } from './routes/farms.$farmId'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
@@ -50,6 +59,11 @@ const HealthRoute = HealthRouteImport.update({
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompetitionsRoute = CompetitionsRouteImport.update({
   id: '/competitions',
   path: '/competitions',
@@ -60,9 +74,39 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/marketplace/',
+  path: '/marketplace/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HorsesIndexRoute = HorsesIndexRouteImport.update({
   id: '/horses/',
   path: '/horses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StallionsStallionIdRoute = StallionsStallionIdRouteImport.update({
+  id: '/stallions/$stallionId',
+  path: '/stallions/$stallionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowcaseHorseIdRoute = ShowcaseHorseIdRouteImport.update({
+  id: '/showcase/$horseId',
+  path: '/showcase/$horseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceStallionsRoute = MarketplaceStallionsRouteImport.update({
+  id: '/marketplace/stallions',
+  path: '/marketplace/stallions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceSalesRoute = MarketplaceSalesRouteImport.update({
+  id: '/marketplace/sales',
+  path: '/marketplace/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceGeneticsRoute = MarketplaceGeneticsRouteImport.update({
+  id: '/marketplace/genetics',
+  path: '/marketplace/genetics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HorsesHorseIdRoute = HorsesHorseIdRouteImport.update({
@@ -70,94 +114,167 @@ const HorsesHorseIdRoute = HorsesHorseIdRouteImport.update({
   path: '/horses/$horseId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FarmsFarmIdRoute = FarmsFarmIdRouteImport.update({
+  id: '/farms/$farmId',
+  path: '/farms/$farmId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/marketplace/genetics': typeof MarketplaceGeneticsRoute
+  '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/stallions': typeof MarketplaceStallionsRoute
+  '/showcase/$horseId': typeof ShowcaseHorseIdRoute
+  '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses/': typeof HorsesIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/marketplace/genetics': typeof MarketplaceGeneticsRoute
+  '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/stallions': typeof MarketplaceStallionsRoute
+  '/showcase/$horseId': typeof ShowcaseHorseIdRoute
+  '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses': typeof HorsesIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/competitions': typeof CompetitionsRoute
+  '/dashboard': typeof DashboardRoute
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses_/$horseId': typeof HorsesHorseIdRoute
+  '/marketplace/genetics': typeof MarketplaceGeneticsRoute
+  '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/stallions': typeof MarketplaceStallionsRoute
+  '/showcase/$horseId': typeof ShowcaseHorseIdRoute
+  '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses/': typeof HorsesIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/competitions'
+    | '/dashboard'
     | '/health'
     | '/login'
     | '/notifications'
     | '/register'
     | '/settings'
     | '/team'
+    | '/auth/callback'
+    | '/farms/$farmId'
     | '/horses/$horseId'
+    | '/marketplace/genetics'
+    | '/marketplace/sales'
+    | '/marketplace/stallions'
+    | '/showcase/$horseId'
+    | '/stallions/$stallionId'
     | '/horses/'
+    | '/marketplace/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/competitions'
+    | '/dashboard'
     | '/health'
     | '/login'
     | '/notifications'
     | '/register'
     | '/settings'
     | '/team'
+    | '/auth/callback'
+    | '/farms/$farmId'
     | '/horses/$horseId'
+    | '/marketplace/genetics'
+    | '/marketplace/sales'
+    | '/marketplace/stallions'
+    | '/showcase/$horseId'
+    | '/stallions/$stallionId'
     | '/horses'
+    | '/marketplace'
   id:
     | '__root__'
     | '/'
     | '/competitions'
+    | '/dashboard'
     | '/health'
     | '/login'
     | '/notifications'
     | '/register'
     | '/settings'
     | '/team'
+    | '/auth/callback'
+    | '/farms/$farmId'
     | '/horses_/$horseId'
+    | '/marketplace/genetics'
+    | '/marketplace/sales'
+    | '/marketplace/stallions'
+    | '/showcase/$horseId'
+    | '/stallions/$stallionId'
     | '/horses/'
+    | '/marketplace/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompetitionsRoute: typeof CompetitionsRoute
+  DashboardRoute: typeof DashboardRoute
   HealthRoute: typeof HealthRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   TeamRoute: typeof TeamRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  FarmsFarmIdRoute: typeof FarmsFarmIdRoute
   HorsesHorseIdRoute: typeof HorsesHorseIdRoute
+  MarketplaceGeneticsRoute: typeof MarketplaceGeneticsRoute
+  MarketplaceSalesRoute: typeof MarketplaceSalesRoute
+  MarketplaceStallionsRoute: typeof MarketplaceStallionsRoute
+  ShowcaseHorseIdRoute: typeof ShowcaseHorseIdRoute
+  StallionsStallionIdRoute: typeof StallionsStallionIdRoute
   HorsesIndexRoute: typeof HorsesIndexRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/competitions': {
       id: '/competitions'
       path: '/competitions'
@@ -218,11 +342,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/marketplace'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/horses/': {
       id: '/horses/'
       path: '/horses'
       fullPath: '/horses/'
       preLoaderRoute: typeof HorsesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stallions/$stallionId': {
+      id: '/stallions/$stallionId'
+      path: '/stallions/$stallionId'
+      fullPath: '/stallions/$stallionId'
+      preLoaderRoute: typeof StallionsStallionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showcase/$horseId': {
+      id: '/showcase/$horseId'
+      path: '/showcase/$horseId'
+      fullPath: '/showcase/$horseId'
+      preLoaderRoute: typeof ShowcaseHorseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/stallions': {
+      id: '/marketplace/stallions'
+      path: '/marketplace/stallions'
+      fullPath: '/marketplace/stallions'
+      preLoaderRoute: typeof MarketplaceStallionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/sales': {
+      id: '/marketplace/sales'
+      path: '/marketplace/sales'
+      fullPath: '/marketplace/sales'
+      preLoaderRoute: typeof MarketplaceSalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/genetics': {
+      id: '/marketplace/genetics'
+      path: '/marketplace/genetics'
+      fullPath: '/marketplace/genetics'
+      preLoaderRoute: typeof MarketplaceGeneticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/horses_/$horseId': {
@@ -232,20 +398,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HorsesHorseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/farms/$farmId': {
+      id: '/farms/$farmId'
+      path: '/farms/$farmId'
+      fullPath: '/farms/$farmId'
+      preLoaderRoute: typeof FarmsFarmIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompetitionsRoute: CompetitionsRoute,
+  DashboardRoute: DashboardRoute,
   HealthRoute: HealthRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   TeamRoute: TeamRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  FarmsFarmIdRoute: FarmsFarmIdRoute,
   HorsesHorseIdRoute: HorsesHorseIdRoute,
+  MarketplaceGeneticsRoute: MarketplaceGeneticsRoute,
+  MarketplaceSalesRoute: MarketplaceSalesRoute,
+  MarketplaceStallionsRoute: MarketplaceStallionsRoute,
+  ShowcaseHorseIdRoute: ShowcaseHorseIdRoute,
+  StallionsStallionIdRoute: StallionsStallionIdRoute,
   HorsesIndexRoute: HorsesIndexRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

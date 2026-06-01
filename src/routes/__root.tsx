@@ -124,17 +124,31 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const publicPaths = ["/login", "/register"];
-  const isPublic = publicPaths.includes(location.pathname);
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isCallbackPage = location.pathname === "/auth/callback";
+  const isPublic =
+    location.pathname === "/" ||
+    location.pathname.startsWith("/marketplace") ||
+    location.pathname.startsWith("/showcase") ||
+    location.pathname.startsWith("/stallions") ||
+    location.pathname.startsWith("/farms") ||
+    isAuthPage ||
+    isCallbackPage;
 
   useEffect(() => {
+    if (state.authLoading) return;
+
     if (!state.isAuthenticated && !isPublic) {
       navigate({ to: "/login" });
     }
-    if (state.isAuthenticated && isPublic) {
-      navigate({ to: "/" });
+    if (state.isAuthenticated && isAuthPage) {
+      navigate({ to: "/dashboard" });
     }
-  }, [state.isAuthenticated, isPublic, navigate]);
+  }, [state.isAuthenticated, state.authLoading, isPublic, isAuthPage, navigate]);
+
+  if (state.authLoading) {
+    return null; // or a full-screen spinner
+  }
 
   return <>{children}</>;
 }

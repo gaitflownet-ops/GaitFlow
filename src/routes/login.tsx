@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useApp } from "@/lib/store";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
-import { images } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
+
+const images = {
+  hero: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&q=80",
+};
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -15,7 +18,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { login } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ function LoginPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -35,10 +37,18 @@ function LoginPage() {
     }
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      login();
-      navigate({ to: "/" });
-    }, 1200);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      navigate({ to: "/dashboard" });
+    }
   };
 
   const handleForgot = (e: React.FormEvent) => {
@@ -111,9 +121,7 @@ function LoginPage() {
         </div>
 
         <div className="w-full max-w-[400px] animate-fade-up">
-          <h1 className="font-display text-4xl text-white leading-tight">
-            Welcome back.
-          </h1>
+          <h1 className="font-display text-4xl text-white leading-tight">Welcome back.</h1>
           <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[15px]">
             Sign in to your EquiSales account.
           </p>
@@ -128,7 +136,10 @@ function LoginPage() {
                     We sent a reset link to <strong className="text-white">{forgotEmail}</strong>.
                   </p>
                   <button
-                    onClick={() => { setShowForgot(false); setForgotSent(false); }}
+                    onClick={() => {
+                      setShowForgot(false);
+                      setForgotSent(false);
+                    }}
                     className="mt-4 text-[13px] text-[var(--gold)] hover:underline"
                   >
                     Back to sign in
@@ -149,10 +160,18 @@ function LoginPage() {
                     className="w-full bg-[oklch(0.2_0.03_155)] border border-[oklch(0.28_0.04_155)] rounded-xl px-4 py-3 text-white placeholder:text-[oklch(0.5_0.02_155)] outline-none focus:border-[var(--gold)] text-[14px] transition-colors"
                   />
                   <div className="flex gap-3">
-                    <button type="button" onClick={() => setShowForgot(false)} className="flex-1 rounded-full bg-[oklch(0.2_0.03_155)] text-white py-2.5 text-sm hover:bg-[oklch(0.24_0.035_155)] transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgot(false)}
+                      className="flex-1 rounded-full bg-[oklch(0.2_0.03_155)] text-white py-2.5 text-sm hover:bg-[oklch(0.24_0.035_155)] transition-colors"
+                    >
                       Cancel
                     </button>
-                    <button type="submit" id="forgot-submit" className="flex-1 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] py-2.5 text-sm font-semibold hover:opacity-95">
+                    <button
+                      type="submit"
+                      id="forgot-submit"
+                      className="flex-1 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] py-2.5 text-sm font-semibold hover:opacity-95"
+                    >
                       Send link
                     </button>
                   </div>
@@ -242,7 +261,9 @@ function LoginPage() {
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <>Sign in <ArrowRight className="h-4 w-4" /></>
+                  <>
+                    Sign in <ArrowRight className="h-4 w-4" />
+                  </>
                 )}
               </button>
 
@@ -273,7 +294,11 @@ function LoginPage() {
               {/* Register link */}
               <p className="text-center text-[13px] text-[oklch(0.65_0.02_155)] mt-4">
                 New to EquiSales?{" "}
-                <Link to="/register" id="go-to-register" className="text-[var(--gold)] hover:underline font-medium">
+                <Link
+                  to="/register"
+                  id="go-to-register"
+                  className="text-[var(--gold)] hover:underline font-medium"
+                >
                   Create an account
                 </Link>
               </p>

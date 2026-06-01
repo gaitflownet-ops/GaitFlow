@@ -1,67 +1,40 @@
-import { createContext, useContext, useReducer, type ReactNode } from "react";
-import { notifications as initialNotifications, updates as initialUpdates } from "./data";
+import { createContext, useContext, useEffect, useReducer, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
+import type { Database } from "./supabase.types";
+import { useRealtimeSync } from "./hooks/useRealtimeSync";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "Owner" | "Trainer" | "Farm" | "Vet" | "Farrier";
-  stableName: string;
-  initials: string;
-  phone?: string;
-};
-
-export type AppNotification = {
-  id: string;
-  title: string;
-  body: string;
-  at: string;
-  kind: "win" | "media" | "health" | "service" | "reminder";
-  read: boolean;
-  horseId?: string;
-};
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type AppNotification = Database["public"]["Tables"]["notifications"]["Row"];
 
 type AppState = {
   isAuthenticated: boolean;
-  user: User | null;
+  user: Profile | null;
+  authLoading: boolean;
   notifications: AppNotification[];
-  updates: typeof initialUpdates;
   quickActionOpen: boolean;
   notificationDropdownOpen: boolean;
 };
 
 type Action =
-  | { type: "LOGIN"; payload: User }
-  | { type: "LOGOUT" }
+  | { type: "AUTH_STATE_CHANGE"; payload: { isAuthenticated: boolean; user: Profile | null } }
+  | { type: "SET_NOTIFICATIONS"; payload: AppNotification[] }
   | { type: "MARK_NOTIFICATION_READ"; id: string }
   | { type: "MARK_ALL_READ" }
-  | { type: "ADD_UPDATE"; update: (typeof initialUpdates)[0] }
   | { type: "TOGGLE_QUICK_ACTION" }
   | { type: "SET_QUICK_ACTION"; open: boolean }
   | { type: "TOGGLE_NOTIFICATION_DROPDOWN" }
   | { type: "SET_NOTIFICATION_DROPDOWN"; open: boolean };
 
-// ─── Default user (prototype: always logged in) ───────────────────────────────
-
-const DEFAULT_USER: User = {
-  id: "marisol-vega",
-  name: "Marisol Vega",
-  email: "marisol@liveoakstables.com",
-  role: "Owner",
-  stableName: "Live Oak Stables",
-  initials: "MV",
-  phone: "+1 (352) 555-0182",
-};
-
 // ─── Initial state ────────────────────────────────────────────────────────────
 
 const initialState: AppState = {
-  isAuthenticated: false, // starts false — login page sets to true
+  isAuthenticated: false,
   user: null,
-  notifications: initialNotifications.map((n) => ({ ...n, read: false })),
-  updates: initialUpdates,
+  authLoading: true,
+  notifications: [],
   quickActionOpen: false,
   notificationDropdownOpen: false,
 };
@@ -70,10 +43,15 @@ const initialState: AppState = {
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case "LOGIN":
-      return { ...state, isAuthenticated: true, user: action.payload };
-    case "LOGOUT":
-      return { ...state, isAuthenticated: false, user: null };
+    case "AUTH_STATE_CHANGE":
+      return {
+        ...state,
+        isAuthenticated: action.payload.isAuthenticated,
+        user: action.payload.user,
+        authLoading: false,
+      };
+    case "SET_NOTIFICATIONS":
+      return { ...state, notifications: action.payload };
     case "MARK_NOTIFICATION_READ":
       return {
         ...state,
@@ -86,8 +64,6 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         notifications: state.notifications.map((n) => ({ ...n, read: true })),
       };
-    case "ADD_UPDATE":
-      return { ...state, updates: [action.update, ...state.updates] };
     case "TOGGLE_QUICK_ACTION":
       return { ...state, quickActionOpen: !state.quickActionOpen };
     case "SET_QUICK_ACTION":
@@ -109,8 +85,7 @@ function reducer(state: AppState, action: Action): AppState {
 type AppContextType = {
   state: AppState;
   dispatch: React.Dispatch<Action>;
-  login: (user?: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   unreadCount: number;
 };
 
@@ -118,19 +93,117 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  useRealtimeSync();
 
-  const login = (user: User = DEFAULT_USER) => {
-    dispatch({ type: "LOGIN", payload: user });
-  };
+  useEffect(() => {
+    const getFallbackProfile = (user: User): Profile => {
+      const meta = user.user_metadata || {};
+      return {
+        id: user.id,
+        name: meta.name || user.email?.split("@")[0] || "New User",
+        role: meta.role || "Owner",
+        stable_name: meta.stable_name || null,
+        initials: meta.initials || "US",
+        phone: meta.phone || null,
+        created_at: new Date().toISOString(),
+      };
+    };
 
-  const logout = () => {
-    dispatch({ type: "LOGOUT" });
+    const loadOrCreateProfile = async (user: User) => {
+      const { data: existingProfile, error: selectError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        return existingProfile;
+      }
+
+      if (selectError) {
+        console.warn("Could not load profile, using auth metadata fallback.", selectError);
+      }
+
+      const fallbackProfile = getFallbackProfile(user);
+      const { data: repairedProfile, error: upsertError } = await (supabase.from("profiles") as any)
+        .upsert(fallbackProfile, { onConflict: "id" })
+        .select("*")
+        .single();
+
+      if (upsertError) {
+        console.warn("Could not repair profile, using auth metadata fallback.", upsertError);
+        return fallbackProfile;
+      }
+
+      return repairedProfile;
+    };
+
+    // 1. Check active session on mount
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const profile = await loadOrCreateProfile(session.user);
+
+        dispatch({
+          type: "AUTH_STATE_CHANGE",
+          payload: { isAuthenticated: true, user: profile || null },
+        });
+
+        // Fetch notifications
+        const { data: notifications } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", session.user.id);
+
+        if (notifications) {
+          dispatch({ type: "SET_NOTIFICATIONS", payload: notifications });
+        }
+      } else {
+        dispatch({
+          type: "AUTH_STATE_CHANGE",
+          payload: { isAuthenticated: false, user: null },
+        });
+      }
+    };
+
+    checkSession();
+
+    // 2. Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const profile = await loadOrCreateProfile(session.user);
+
+        dispatch({
+          type: "AUTH_STATE_CHANGE",
+          payload: { isAuthenticated: true, user: profile || null },
+        });
+      } else if (event === "SIGNED_OUT") {
+        dispatch({
+          type: "AUTH_STATE_CHANGE",
+          payload: { isAuthenticated: false, user: null },
+        });
+        dispatch({ type: "SET_NOTIFICATIONS", payload: [] });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   const unreadCount = state.notifications.filter((n) => !n.read).length;
 
   return (
-    <AppContext.Provider value={{ state, dispatch, login, logout, unreadCount }}>
+    <AppContext.Provider value={{ state, dispatch, logout, unreadCount }}>
       {children}
     </AppContext.Provider>
   );
@@ -141,5 +214,3 @@ export function useApp() {
   if (!ctx) throw new Error("useApp must be used within AppProvider");
   return ctx;
 }
-
-export { DEFAULT_USER };

@@ -1,6 +1,6 @@
 import { Modal } from "./Modal";
-import type { Competition } from "@/lib/data";
-import { horseById } from "@/lib/data";
+import type { Competition } from "@/lib/hooks/useCompetitions";
+import { useHorses } from "@/lib/hooks/useHorses";
 import { Trophy, MapPin, Calendar, User, DollarSign, Users, Share2 } from "lucide-react";
 
 type Props = {
@@ -10,9 +10,11 @@ type Props = {
 };
 
 export function CompetitionDetailModal({ open, onClose, competition: c }: Props) {
-  if (!c) return null;
-  const horse = horseById(c.horseId);
+  const { data: horses = [] } = useHorses();
 
+  if (!c) return null;
+
+  const horse = horses.find((h) => h.id === c.horse_id);
   const isWin = c.placement === "1st" || c.placement === "Champion";
 
   return (
@@ -27,23 +29,27 @@ export function CompetitionDetailModal({ open, onClose, competition: c }: Props)
       >
         <div className="flex items-start justify-between">
           <div>
-            <div className="eyebrow !text-primary-foreground/60">{c.date} · {c.location}</div>
-            <h2 className={`font-display text-3xl mt-2 leading-tight ${isWin ? "text-primary-foreground" : "text-foreground"}`}>
+            <div className="eyebrow !text-primary-foreground/60">
+              {c.date} · {c.location}
+            </div>
+            <h2
+              className={`font-display text-3xl mt-2 leading-tight ${isWin ? "text-primary-foreground" : "text-foreground"}`}
+            >
               {c.event}
             </h2>
-            <p className={`mt-1 text-sm ${isWin ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+            <p
+              className={`mt-1 text-sm ${isWin ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+            >
               {c.category}
             </p>
           </div>
           <div
             className={`grid h-16 w-16 place-items-center rounded-2xl font-display text-2xl ${
-              isWin
-                ? "bg-[var(--gradient-gold)] text-charcoal"
-                : "bg-card/20 text-foreground"
+              isWin ? "text-charcoal" : "bg-card/20 text-foreground"
             }`}
             style={{ background: isWin ? "var(--gradient-gold)" : undefined }}
           >
-            {c.placement.slice(0, 3)}
+            {c.placement?.slice(0, 3)}
           </div>
         </div>
 
@@ -52,13 +58,17 @@ export function CompetitionDetailModal({ open, onClose, competition: c }: Props)
           {[
             { k: "Placement", v: c.placement },
             { k: "Prize", v: c.prize },
-            { k: "Category", v: c.category.split(" ")[0] },
+            { k: "Category", v: c.category?.split(" ")[0] },
           ].map((s) => (
             <div key={s.k} className={`rounded-xl p-3 ${isWin ? "bg-white/10" : "bg-card/60"}`}>
-              <div className={`text-[10px] tracking-widest uppercase ${isWin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+              <div
+                className={`text-[10px] tracking-widest uppercase ${isWin ? "text-primary-foreground/60" : "text-muted-foreground"}`}
+              >
                 {s.k}
               </div>
-              <div className={`font-display text-xl mt-0.5 ${isWin ? "text-primary-foreground" : "text-foreground"}`}>
+              <div
+                className={`font-display text-xl mt-0.5 ${isWin ? "text-primary-foreground" : "text-foreground"}`}
+              >
                 {s.v}
               </div>
             </div>
@@ -71,7 +81,7 @@ export function CompetitionDetailModal({ open, onClose, competition: c }: Props)
         {/* Meta */}
         <div className="grid grid-cols-2 gap-4">
           {[
-            { icon: User, k: "Horse", v: horse?.name ?? c.horseId },
+            { icon: User, k: "Horse", v: horse?.name ?? "—" },
             { icon: User, k: "Rider", v: c.rider },
             { icon: MapPin, k: "Location", v: c.location },
             { icon: Calendar, k: "Date", v: c.date },

@@ -25,7 +25,7 @@ const tabs: { value: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 function Settings() {
-  const { state, login } = useApp();
+  const { state } = useApp();
   const [tab, setTab] = useState<Tab>("profile");
   const [saved, setSaved] = useState(false);
 
@@ -33,7 +33,7 @@ function Settings() {
 
   // Profile form state
   const [name, setName] = useState(user?.name ?? "Marisol Vega");
-  const [email, setEmail] = useState(user?.email ?? "marisol@liveoakstables.com");
+  const [email, setEmail] = useState("marisol@liveoakstables.com");
   const [phone, setPhone] = useState(user?.phone ?? "+1 (352) 555-0182");
 
   // Notification prefs
@@ -108,8 +108,13 @@ function Settings() {
                   </div>
                   <div>
                     <p className="text-[14px] font-medium">{user?.name ?? "Marisol Vega"}</p>
-                    <p className="text-[12px] text-muted-foreground">{user?.role} · {user?.stableName}</p>
-                    <button id="upload-photo-btn" className="mt-2 text-[12px] text-primary hover:underline">
+                    <p className="text-[12px] text-muted-foreground">
+                      {user?.role} · {user?.stable_name}
+                    </p>
+                    <button
+                      id="upload-photo-btn"
+                      className="mt-2 text-[12px] text-primary hover:underline"
+                    >
                       Upload new photo
                     </button>
                   </div>
@@ -152,7 +157,9 @@ function Settings() {
                     <label className="eyebrow block mb-1.5">Role</label>
                     <select className="lux-select" id="settings-role">
                       {["Owner", "Trainer", "Farm", "Vet", "Farrier"].map((r) => (
-                        <option key={r} value={r} selected={r === user?.role}>{r}</option>
+                        <option key={r} value={r} selected={r === user?.role}>
+                          {r}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -163,7 +170,13 @@ function Settings() {
                     onClick={handleSave}
                     className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
                   >
-                    {saved ? <><Check className="h-4 w-4" /> Saved</> : "Save changes"}
+                    {saved ? (
+                      <>
+                        <Check className="h-4 w-4" /> Saved
+                      </>
+                    ) : (
+                      "Save changes"
+                    )}
                   </button>
                 </div>
               </div>
@@ -177,9 +190,17 @@ function Settings() {
                 <h2 className="font-display text-xl mb-5">Stable information</h2>
                 <div className="space-y-4">
                   {[
-                    { id: "stable-name", label: "Stable / Farm name", placeholder: "Live Oak Stables" },
+                    {
+                      id: "stable-name",
+                      label: "Stable / Farm name",
+                      placeholder: "Live Oak Stables",
+                    },
                     { id: "stable-location", label: "Location", placeholder: "Ocala, FL 34471" },
-                    { id: "stable-website", label: "Website", placeholder: "https://liveoakstables.com" },
+                    {
+                      id: "stable-website",
+                      label: "Website",
+                      placeholder: "https://liveoakstables.com",
+                    },
                   ].map(({ id, label, placeholder }) => (
                     <div key={id}>
                       <label className="eyebrow block mb-1.5">{label}</label>
@@ -195,8 +216,18 @@ function Settings() {
                     </select>
                   </div>
                 </div>
-                <button id="settings-save-stable" onClick={handleSave} className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-95">
-                  {saved ? <><Check className="h-4 w-4" /> Saved</> : "Save stable settings"}
+                <button
+                  id="settings-save-stable"
+                  onClick={handleSave}
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-95"
+                >
+                  {saved ? (
+                    <>
+                      <Check className="h-4 w-4" /> Saved
+                    </>
+                  ) : (
+                    "Save stable settings"
+                  )}
                 </button>
               </div>
             </div>
@@ -209,15 +240,46 @@ function Settings() {
                 <h2 className="font-display text-xl mb-5">Notification preferences</h2>
                 <div className="space-y-1">
                   {[
-                    { key: "competitions" as const, label: "Competition results", description: "Win notifications and placings" },
-                    { key: "health" as const, label: "Health alerts", description: "Vet visits, vaccination reminders" },
-                    { key: "training" as const, label: "Training updates", description: "Session logs from trainers" },
-                    { key: "farrier" as const, label: "Farrier services", description: "Appointment completions" },
-                    { key: "media" as const, label: "Media uploads", description: "Photos and videos from your team" },
-                    { key: "reminders" as const, label: "Reminders", description: "Upcoming events and tasks" },
-                    { key: "weekly" as const, label: "Weekly digest", description: "Summary of the week every Monday" },
+                    {
+                      key: "competitions" as const,
+                      label: "Competition results",
+                      description: "Win notifications and placings",
+                    },
+                    {
+                      key: "health" as const,
+                      label: "Health alerts",
+                      description: "Vet visits, vaccination reminders",
+                    },
+                    {
+                      key: "training" as const,
+                      label: "Training updates",
+                      description: "Session logs from trainers",
+                    },
+                    {
+                      key: "farrier" as const,
+                      label: "Farrier services",
+                      description: "Appointment completions",
+                    },
+                    {
+                      key: "media" as const,
+                      label: "Media uploads",
+                      description: "Photos and videos from your team",
+                    },
+                    {
+                      key: "reminders" as const,
+                      label: "Reminders",
+                      description: "Upcoming events and tasks",
+                    },
+                    {
+                      key: "weekly" as const,
+                      label: "Weekly digest",
+                      description: "Summary of the week every Monday",
+                    },
                   ].map(({ key, label, description }) => (
-                    <div key={key} className="flex items-center justify-between py-4 border-b border-border last:border-b-0">
+                    <div
+                      key={key}
+                      className="flex items-center justify-between py-4 border-b border-border last:border-b-0"
+                    >
                       <div>
                         <p className="text-[14px] font-medium">{label}</p>
                         <p className="text-[12px] text-muted-foreground">{description}</p>
@@ -264,9 +326,17 @@ function Settings() {
                     <p className="text-[14px] font-medium">Visa ending in 4242</p>
                     <p className="text-[12px] text-muted-foreground">Expires 08/2028</p>
                   </div>
-                  <button id="update-payment" className="ml-auto text-[13px] text-primary hover:underline">Update</button>
+                  <button
+                    id="update-payment"
+                    className="ml-auto text-[13px] text-primary hover:underline"
+                  >
+                    Update
+                  </button>
                 </div>
-                <button id="billing-history" className="mt-4 text-[13px] text-muted-foreground hover:text-foreground underline">
+                <button
+                  id="billing-history"
+                  className="mt-4 text-[13px] text-muted-foreground hover:text-foreground underline"
+                >
                   View billing history
                 </button>
               </div>
@@ -285,18 +355,28 @@ function Settings() {
                   <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 flex items-center justify-between">
                     <div>
                       <p className="text-[14px] font-medium">Delete all data</p>
-                      <p className="text-[12px] text-muted-foreground mt-0.5">Remove all horses, records and media</p>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">
+                        Remove all horses, records and media
+                      </p>
                     </div>
-                    <button id="delete-data-btn" className="rounded-full border border-destructive text-destructive px-4 py-2 text-[13px] font-medium hover:bg-destructive hover:text-white transition-colors">
+                    <button
+                      id="delete-data-btn"
+                      className="rounded-full border border-destructive text-destructive px-4 py-2 text-[13px] font-medium hover:bg-destructive hover:text-white transition-colors"
+                    >
                       Delete
                     </button>
                   </div>
                   <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 flex items-center justify-between">
                     <div>
                       <p className="text-[14px] font-medium">Close account</p>
-                      <p className="text-[12px] text-muted-foreground mt-0.5">Permanently remove your EquiSales account</p>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">
+                        Permanently remove your EquiSales account
+                      </p>
                     </div>
-                    <button id="close-account-btn" className="rounded-full border border-destructive text-destructive px-4 py-2 text-[13px] font-medium hover:bg-destructive hover:text-white transition-colors">
+                    <button
+                      id="close-account-btn"
+                      className="rounded-full border border-destructive text-destructive px-4 py-2 text-[13px] font-medium hover:bg-destructive hover:text-white transition-colors"
+                    >
                       Close
                     </button>
                   </div>

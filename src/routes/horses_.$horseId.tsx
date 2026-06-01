@@ -1,8 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { horseById, horses, updates, competitions, team, images } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { useState } from "react";
+import { useHorse, useHorses } from "@/lib/hooks/useHorses";
+import { useUpdates } from "@/lib/hooks/useUpdates";
+import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import { useHealthRecords } from "@/lib/hooks/useHealth";
 import {
   MapPin,
   User,
@@ -22,23 +25,16 @@ import {
   MessageCircle,
   Camera,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { AddUpdateModal } from "@/components/modals/AddUpdateModal";
 import { LightboxModal } from "@/components/modals/LightboxModal";
 import { CompetitionDetailModal } from "@/components/modals/CompetitionDetailModal";
-import type { Competition } from "@/lib/data";
+import type { Competition } from "@/lib/hooks/useCompetitions";
 
 export const Route = createFileRoute("/horses_/$horseId")({
-  loader: ({ params }) => {
-    const horse = horseById(params.horseId);
-    if (!horse) throw notFound();
-    return { horse };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.horse.name} — EquiSales` : "Horse — EquiSales" },
-      { name: "description", content: loaderData?.horse.latestAchievement ?? "Horse profile" },
-    ],
+  head: () => ({
+    meta: [{ title: "Horse — EquiSales" }, { name: "description", content: "Horse profile" }],
   }),
   component: HorseProfile,
   notFoundComponent: () => (
@@ -57,8 +53,8 @@ const tabs = ["Timeline", "Health", "Competitions", "Media", "Team", "Reproducti
 type Tab = (typeof tabs)[number];
 
 function HorseProfile() {
-  const { horse } = Route.useLoaderData();
-  const { state, dispatch } = useApp();
+  const { horseId } = Route.useParams();
+  const { state } = useApp();
   const [tab, setTab] = useState<Tab>("Timeline");
   const [addUpdateOpen, setAddUpdateOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -67,17 +63,46 @@ function HorseProfile() {
   const [likedUpdates, setLikedUpdates] = useState<Set<string>>(new Set());
   const [favorited, setFavorited] = useState(false);
 
-  const horseUpdates = [...state.updates, ...updates].filter((u) => u.horseId === horse.id);
-  const horseComps = competitions.filter((c) => c.horseId === horse.id);
-  const otherHorses = horses.filter((h) => h.id !== horse.id);
+  const { data: horse, isLoading } = useHorse(horseId);
+  const { data: horseUpdates = [] } = useUpdates(horse?.id);
+  const { data: horseComps = [] } = useCompetitions(horse?.id);
+  const { data: healthRecords = [] } = useHealthRecords(horse?.id);
+  const { data: allHorses = [] } = useHorses();
 
+  const otherHorses = allHorses.filter((h) => h.id !== horse?.id);
+
+  // Media gallery (hardcoded for now since Supabase schema doesn't have a media table yet)
   const mediaItems = [
-    { src: images.hero, caption: "Northern Flame — Spring Derby" },
-    { src: images.chestnut, caption: "Ember Rose — Dressage session" },
-    { src: images.black, caption: "Midnight Oak — Easy hack" },
-    { src: images.stable, caption: "Grid work session", type: "video" as const },
-    { src: images.farm, caption: "Aerial view — Pinewood Farm" },
-    { src: horse.image, caption: `${horse.name} — Portrait` },
+    {
+      src:
+        horse?.image_url ||
+        "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&q=80",
+      caption: "Northern Flame — Spring Derby",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&q=80",
+      caption: "Ember Rose — Dressage session",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1534005828468-b7fb473dcc08?auto=format&fit=crop&q=80",
+      caption: "Midnight Oak — Easy hack",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1621245842828-569b3f46f483?auto=format&fit=crop&q=80",
+      caption: "Grid work session",
+      type: "video" as const,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1500217032126-787114c000d6?auto=format&fit=crop&q=80",
+      caption: "Aerial view — Pinewood Farm",
+    },
+  ];
+
+  const dummyTeam = [
+    { name: "Marisol Vega", role: "Owner / Manager", initials: "MV", last: "Active 2h ago" },
+    { name: "Dr. Anika Patel", role: "Veterinarian", initials: "AP", last: "Active 1d ago" },
+    { name: "Liam O'Connor", role: "Farrier", initials: "LO", last: "Active 3d ago" },
+    { name: "Sarah Jenkins", role: "Head Groom", initials: "SJ", last: "Active 5m ago" },
   ];
 
   const handleLike = (id: string) => {
@@ -88,6 +113,29 @@ function HorseProfile() {
       return next;
     });
   };
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div className="flex items-center justify-center py-40">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!horse) {
+    return (
+      <AppShell>
+        <div className="py-20 text-center">
+          <h1 className="font-display text-3xl">Horse not found</h1>
+          <Link to="/horses" className="mt-4 inline-block text-primary hover:underline">
+            Back to barn
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -103,7 +151,7 @@ function HorseProfile() {
       <section className="relative mt-4 overflow-hidden rounded-[2rem] border border-border">
         <div className="relative aspect-[16/9] md:aspect-[21/9]">
           <img
-            src={horse.image}
+            src={horse.image_url || ""}
             alt={horse.name}
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -137,7 +185,7 @@ function HorseProfile() {
             </div>
             <h1 className="font-display text-5xl md:text-7xl leading-[0.95]">{horse.name}</h1>
             <p className="mt-3 text-primary-foreground/85 text-[15px] max-w-2xl">
-              <span className="gold-text font-medium">{horse.latestAchievement}</span> ·{" "}
+              <span className="gold-text font-medium">{horse.latest_achievement}</span> ·{" "}
               {horse.bloodline}
             </p>
 
@@ -147,7 +195,7 @@ function HorseProfile() {
                 { k: "Age", v: `${horse.age} yrs` },
                 { k: "Sex", v: horse.sex },
                 { k: "Color", v: horse.color },
-                { k: "Called", v: `"${horse.barnName}"` },
+                { k: "Called", v: `"${horse.barn_name}"` },
               ].map((s) => (
                 <div key={s.k}>
                   <div className="text-[10px] tracking-[0.2em] uppercase text-primary-foreground/55">
@@ -165,11 +213,11 @@ function HorseProfile() {
       <div className="mt-6 lux-card p-5 flex flex-wrap gap-x-8 gap-y-4 items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.82_0.12_80)] to-[oklch(0.55_0.09_55)] text-[13px] font-semibold text-charcoal">
-            MV
+            {state.user?.initials ?? "O"}
           </div>
           <div>
             <div className="eyebrow">Owner</div>
-            <div className="text-[14px] font-medium">{horse.owner}</div>
+            <div className="text-[14px] font-medium">{state.user?.name ?? "Owner"}</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -196,7 +244,9 @@ function HorseProfile() {
           </span>
           <div>
             <div className="eyebrow">Career</div>
-            <div className="text-[14px] font-medium">{horse.wins ?? 14} wins · {horse.earnings ?? "$284k"}</div>
+            <div className="text-[14px] font-medium">
+              {horse.wins ?? 0} wins · {horse.earnings ?? "—"}
+            </div>
           </div>
         </div>
         <button
@@ -239,7 +289,10 @@ function HorseProfile() {
               {horseUpdates.length === 0 && (
                 <div className="text-center py-10">
                   <p className="text-muted-foreground text-sm">No updates yet.</p>
-                  <button onClick={() => setAddUpdateOpen(true)} className="mt-3 text-sm text-primary hover:underline">
+                  <button
+                    onClick={() => setAddUpdateOpen(true)}
+                    className="mt-3 text-sm text-primary hover:underline"
+                  >
                     Add the first update
                   </button>
                 </div>
@@ -259,18 +312,20 @@ function HorseProfile() {
                       <h3 className="font-display text-xl leading-tight">{u.title}</h3>
                       <span className="shrink-0 text-[11px] text-muted-foreground">{u.at}</span>
                     </div>
-                    <p className="mt-1.5 text-[14px] text-muted-foreground leading-relaxed">{u.body}</p>
-                    {u.media && (
+                    <p className="mt-1.5 text-[14px] text-muted-foreground leading-relaxed">
+                      {u.body}
+                    </p>
+                    {u.media_url && (
                       <div
                         className="mt-4 overflow-hidden rounded-xl aspect-[16/9] relative group cursor-pointer"
                         onClick={() => {
-                          const idx = mediaItems.findIndex((m) => m.src === u.media);
+                          const idx = mediaItems.findIndex((m) => m.src === u.media_url);
                           setLightboxIndex(idx >= 0 ? idx : 0);
                           setLightboxOpen(true);
                         }}
                       >
                         <img
-                          src={u.media}
+                          src={u.media_url}
                           alt=""
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
@@ -292,10 +347,15 @@ function HorseProfile() {
                           onClick={() => handleLike(u.id)}
                           className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${likedUpdates.has(u.id) ? "text-destructive" : ""}`}
                         >
-                          <Heart className={`h-3.5 w-3.5 ${likedUpdates.has(u.id) ? "fill-current" : ""}`} />
+                          <Heart
+                            className={`h-3.5 w-3.5 ${likedUpdates.has(u.id) ? "fill-current" : ""}`}
+                          />
                           {(u.likes ?? 0) + (likedUpdates.has(u.id) ? 1 : 0)}
                         </button>
-                        <button id={`comment-${u.id}`} className="inline-flex items-center gap-1 hover:text-foreground">
+                        <button
+                          id={`comment-${u.id}`}
+                          className="inline-flex items-center gap-1 hover:text-foreground"
+                        >
                           <MessageCircle className="h-3.5 w-3.5" /> {u.comments ?? 0}
                         </button>
                         <button id={`share-${u.id}`} className="hover:text-foreground">
@@ -312,23 +372,21 @@ function HorseProfile() {
           {/* ── HEALTH ── */}
           {tab === "Health" && (
             <div className="space-y-4">
-              {[
-                { t: "Spring vaccinations", d: "EEE/WEE · West Nile · Rabies · Influenza", w: "Dr. Anika Patel", at: "May 14, 2026" },
-                { t: "Dental floating", d: "Routine · no abnormalities", w: "Dr. Rivera", at: "Apr 02, 2026" },
-                { t: "Coggins test", d: "Negative · valid 12 months", w: "Dr. Anika Patel", at: "Feb 11, 2026" },
-                { t: "Hoof X-rays", d: "Front feet · balanced, no findings", w: "Dr. Patel + Tom Beckett", at: "Jan 22, 2026" },
-              ].map((r, i) => (
-                <div key={i} className="lux-card p-5 flex gap-4">
+              {healthRecords.length === 0 && (
+                <p className="text-sm text-muted-foreground">No health records logged yet.</p>
+              )}
+              {healthRecords.map((r) => (
+                <div key={r.id} className="lux-card p-5 flex gap-4">
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-primary shrink-0">
                     <HeartPulse className="h-[18px] w-[18px]" />
                   </span>
                   <div className="flex-1">
                     <div className="flex items-baseline justify-between gap-3">
-                      <h4 className="font-display text-lg">{r.t}</h4>
-                      <span className="text-[11px] text-muted-foreground">{r.at}</span>
+                      <h4 className="font-display text-lg">{r.title}</h4>
+                      <span className="text-[11px] text-muted-foreground">{r.date}</span>
                     </div>
-                    <p className="text-[13px] text-muted-foreground mt-1">{r.d}</p>
-                    <p className="text-[11px] text-muted-foreground/80 mt-2">By {r.w}</p>
+                    <p className="text-[13px] text-muted-foreground mt-1">{r.notes}</p>
+                    <p className="text-[11px] text-muted-foreground/80 mt-2">By {r.professional}</p>
                   </div>
                 </div>
               ))}
@@ -353,7 +411,7 @@ function HorseProfile() {
                       className="grid place-items-center w-14 h-14 shrink-0 rounded-2xl text-charcoal font-display text-xl"
                       style={{ background: "var(--gradient-gold)" }}
                     >
-                      {c.placement.slice(0, 3)}
+                      {c.placement?.slice(0, 3)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-3">
@@ -383,7 +441,9 @@ function HorseProfile() {
           {tab === "Media" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-[14px] text-muted-foreground">{mediaItems.length} items · click to expand</p>
+                <p className="text-[14px] text-muted-foreground">
+                  {mediaItems.length} items · click to expand
+                </p>
                 <button
                   id="upload-media-btn"
                   className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-[13px] font-medium hover:bg-muted"
@@ -396,7 +456,10 @@ function HorseProfile() {
                   <button
                     key={i}
                     id={`media-item-${i}`}
-                    onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
+                    onClick={() => {
+                      setLightboxIndex(i);
+                      setLightboxOpen(true);
+                    }}
                     className="relative aspect-square overflow-hidden rounded-2xl group"
                   >
                     <img
@@ -422,7 +485,7 @@ function HorseProfile() {
           {/* ── TEAM ── */}
           {tab === "Team" && (
             <div className="grid sm:grid-cols-2 gap-3">
-              {team.map((m) => (
+              {dummyTeam.map((m) => (
                 <div key={m.name} className="lux-card p-5 flex gap-4 items-center">
                   <div className="grid h-12 w-12 place-items-center rounded-full bg-secondary text-primary font-display text-[15px]">
                     {m.initials}
@@ -430,7 +493,9 @@ function HorseProfile() {
                   <div className="min-w-0 flex-1">
                     <div className="font-display text-lg leading-tight">{m.name}</div>
                     <div className="text-[12px] text-muted-foreground">{m.role}</div>
-                    <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">{m.last}</div>
+                    <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">
+                      {m.last}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -451,10 +516,13 @@ function HorseProfile() {
               </p>
               <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { k: "Sire", v: horse.bloodline.split("×")[0]?.trim() ?? "—" },
-                  { k: "Dam", v: horse.bloodline.split("×")[1]?.trim() ?? "—" },
+                  { k: "Sire", v: horse.bloodline?.split("×")[0]?.trim() ?? "—" },
+                  { k: "Dam", v: horse.bloodline?.split("×")[1]?.trim() ?? "—" },
                   { k: "Foals", v: horse.sex === "Stallion" ? "6 on the ground" : "—" },
-                  { k: "Registry", v: horse.breed === "Hanoverian" ? "Hanoverian Verband" : "Jockey Club" },
+                  {
+                    k: "Registry",
+                    v: horse.breed === "Hanoverian" ? "Hanoverian Verband" : "Jockey Club",
+                  },
                 ].map((s) => (
                   <div key={s.k}>
                     <div className="eyebrow">{s.k}</div>
@@ -478,35 +546,19 @@ function HorseProfile() {
         <aside className="space-y-8">
           <div className="lux-card p-6 bg-gradient-to-br from-[oklch(0.22_0.04_155)] to-[oklch(0.18_0.018_60)] text-primary-foreground border-transparent">
             <div className="eyebrow !text-primary-foreground/60">Season highlight</div>
-            <h3 className="font-display text-2xl mt-2 leading-tight">{horse.latestAchievement}</h3>
+            <h3 className="font-display text-2xl mt-2 leading-tight">{horse.latest_achievement}</h3>
             <p className="text-[13px] text-primary-foreground/75 mt-3">
               A defining performance — three clean rounds across a demanding week.
             </p>
             <button
               id="read-recap-btn"
-              onClick={() => { if (horseComps[0]) setSelectedComp(horseComps[0]); }}
+              onClick={() => {
+                if (horseComps[0]) setSelectedComp(horseComps[0]);
+              }}
               className="mt-5 inline-flex items-center gap-1.5 text-[12px] text-[var(--gold)]"
             >
               Read the recap <ChevronRight className="h-3.5 w-3.5" />
             </button>
-          </div>
-
-          <div>
-            <h3 className="font-display text-xl mb-4">From the team</h3>
-            <div className="lux-card divide-y divide-border">
-              {team.slice(0, 4).map((m) => (
-                <div key={m.name} className="p-4 flex gap-3 items-center">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-primary text-[12px] font-semibold">
-                    {m.initials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-medium">{m.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{m.role}</div>
-                  </div>
-                  <span className="text-[11px] text-primary">active</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div>
@@ -516,12 +568,12 @@ function HorseProfile() {
                 <Link
                   key={h.id}
                   to="/horses/$horseId"
-                  params={{ horseId: h.id }}
+                  params={{ horseId: h.slug || h.id }}
                   id={`other-horse-${h.id}`}
                   className="lux-card p-3 flex items-center gap-4 hover:-translate-y-0.5 transition-transform block"
                 >
                   <img
-                    src={h.image}
+                    src={h.image_url || ""}
                     alt=""
                     className="h-14 w-14 rounded-xl object-cover"
                     loading="lazy"
@@ -545,7 +597,7 @@ function HorseProfile() {
       {/* Modals */}
       <AddUpdateModal
         open={addUpdateOpen}
-        onClose={() => setAddUpdateOpen(false)}
+        onOpenChange={setAddUpdateOpen}
         defaultHorseId={horse.id}
       />
       <LightboxModal

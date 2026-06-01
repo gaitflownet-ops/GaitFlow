@@ -36,7 +36,10 @@ export function LightboxModal({ open, onClose, items, index, onIndexChange }: Pr
   if (!open || !item) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[oklch(0.1_0.01_60/0.97)] animate-fade-up" style={{ animationDuration: "180ms" }}>
+    <div
+      className="fixed inset-0 z-[60] flex flex-col bg-[oklch(0.1_0.01_60/0.97)] animate-fade-up"
+      style={{ animationDuration: "180ms" }}
+    >
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4 shrink-0">
         <span className="text-[13px] text-white/50">
@@ -110,7 +113,9 @@ export function LightboxModal({ open, onClose, items, index, onIndexChange }: Pr
               id={`lightbox-thumb-${i}`}
               onClick={() => onIndexChange(i)}
               className={`h-12 w-12 overflow-hidden rounded-lg transition-all ${
-                i === index ? "ring-2 ring-[var(--gold)] opacity-100" : "opacity-40 hover:opacity-70"
+                i === index
+                  ? "ring-2 ring-[var(--gold)] opacity-100"
+                  : "opacity-40 hover:opacity-70"
               }`}
             >
               <img src={it.src} alt="" className="h-full w-full object-cover" />

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { horses } from "@/lib/data";
-import { Check } from "lucide-react";
+import { useApp } from "@/lib/store";
+import { useHorses } from "@/lib/hooks/useHorses";
+import { useCreateHealthRecord } from "@/lib/hooks/useHealth";
+import { Check, Loader2 } from "lucide-react";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   defaultHorseId?: string;
 };
 
@@ -20,9 +22,13 @@ const types: { value: RecordType; label: string }[] = [
   { value: "xray", label: "X-Ray" },
 ];
 
-export function AddHealthRecordModal({ open, onClose, defaultHorseId }: Props) {
+export function AddHealthRecordModal({ open, onOpenChange, defaultHorseId }: Props) {
+  const { state } = useApp();
+  const { data: horses = [] } = useHorses();
+  const createRecord = useCreateHealthRecord();
+
   const [type, setType] = useState<RecordType>("vet");
-  const [horseId, setHorseId] = useState(defaultHorseId ?? horses[0].id);
+  const [horseId, setHorseId] = useState(defaultHorseId ?? "");
   const [title, setTitle] = useState("");
   const [professional, setProfessional] = useState("");
   const [notes, setNotes] = useState("");
@@ -31,7 +37,7 @@ export function AddHealthRecordModal({ open, onClose, defaultHorseId }: Props) {
 
   const reset = () => {
     setType("vet");
-    setHorseId(defaultHorseId ?? horses[0].id);
+    setHorseId(defaultHorseId ?? "");
     setTitle("");
     setProfessional("");
     setNotes("");
@@ -41,11 +47,27 @@ export function AddHealthRecordModal({ open, onClose, defaultHorseId }: Props) {
 
   const handleClose = () => {
     reset();
-    onClose();
+    onOpenChange(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const targetHorseId = horseId || horses[0]?.id;
+    if (!targetHorseId || !title) return;
+
+    const horse = horses.find((h) => h.id === targetHorseId);
+
+    await createRecord.mutateAsync({
+      horse_id: targetHorseId,
+      horse_name: horse?.name ?? "Unknown",
+      type,
+      title,
+      notes,
+      professional,
+      date,
+      status: "completed",
+    });
+
     setDone(true);
     setTimeout(() => handleClose(), 1400);
   };
@@ -92,8 +114,11 @@ export function AddHealthRecordModal({ open, onClose, defaultHorseId }: Props) {
               value={horseId}
               onChange={(e) => setHorseId(e.target.value)}
             >
+              <option value="">Select a horse…</option>
               {horses.map((h) => (
-                <option key={h.id} value={h.id}>{h.name}</option>
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
               ))}
             </select>
           </div>
@@ -149,11 +174,24 @@ export function AddHealthRecordModal({ open, onClose, defaultHorseId }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={handleClose} className="flex-1 rounded-full bg-secondary px-4 py-2.5 text-sm font-medium hover:bg-muted">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 rounded-full bg-secondary px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
               Cancel
             </button>
-            <button type="submit" id="health-submit" className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95">
-              Save record
+            <button
+              type="submit"
+              id="health-submit"
+              disabled={createRecord.isPending}
+              className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-70 inline-flex items-center justify-center gap-2"
+            >
+              {createRecord.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Save record"
+              )}
             </button>
           </div>
         </form>

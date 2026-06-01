@@ -28,7 +28,11 @@ export function Modal({ open, onClose, title, children, size = "default" }: Prop
   if (!open) return null;
 
   const sizeClass =
-    size === "xl" ? "modal-content modal-content-xl" : size === "lg" ? "modal-content modal-content-lg" : "modal-content";
+    size === "xl"
+      ? "modal-content modal-content-xl"
+      : size === "lg"
+        ? "modal-content modal-content-lg"
+        : "modal-content";
 
   return (
     <>

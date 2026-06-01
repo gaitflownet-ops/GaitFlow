@@ -18,7 +18,7 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { QuickActionModal } from "./modals/QuickActionModal";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutGrid },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { to: "/horses", label: "Horses", icon: Sparkles },
   { to: "/competitions", label: "Competitions", icon: Trophy },
   { to: "/health", label: "Health & Care", icon: HeartPulse },
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Nav */}
           <nav className="px-4 flex-1 space-y-0.5" aria-label="Main navigation">
             {nav.map(({ to, label, icon: Icon }) => {
-              const active = to === "/" ? path === "/" : path.startsWith(to);
+              const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
               return (
                 <Link
                   key={to}
@@ -101,7 +101,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                       : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                   }`}
                 >
-                  <Icon className={`h-[18px] w-[18px] ${active ? "text-sidebar-primary" : "opacity-70"}`} />
+                  <Icon
+                    className={`h-[18px] w-[18px] ${active ? "text-sidebar-primary" : "opacity-70"}`}
+                  />
                   <span className="font-medium">{label}</span>
                 </Link>
               );
@@ -117,7 +119,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
               }`}
             >
-              <Settings className={`h-[18px] w-[18px] ${path === "/settings" ? "text-sidebar-primary" : "opacity-70"}`} />
+              <Settings
+                className={`h-[18px] w-[18px] ${path === "/settings" ? "text-sidebar-primary" : "opacity-70"}`}
+              />
               <span className="font-medium">Settings</span>
             </Link>
           </nav>
@@ -138,10 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                     {user?.name ?? "Marisol Vega"}
                   </div>
                   <div className="text-[11px] text-sidebar-foreground/60">
-                    {user?.role ?? "Owner"} · {user?.stableName ?? "Live Oak Stables"}
+                    {user?.role ?? "Owner"} · {user?.stable_name ?? "Live Oak Stables"}
                   </div>
                 </div>
-                <ChevronRight className={`h-4 w-4 text-sidebar-foreground/40 transition-transform ${userMenuOpen ? "rotate-90" : ""}`} />
+                <ChevronRight
+                  className={`h-4 w-4 text-sidebar-foreground/40 transition-transform ${userMenuOpen ? "rotate-90" : ""}`}
+                />
               </div>
             </button>
 
@@ -221,10 +227,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[var(--gold)] pulse-dot" />
                     )}
                   </button>
-                  <NotificationDropdown
-                    open={notifOpen}
-                    onClose={() => setNotifOpen(false)}
-                  />
+                  <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
                 </div>
               </div>
             </div>
@@ -235,7 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Mobile bottom nav */}
           <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-full bg-sidebar text-sidebar-foreground px-2 py-2 shadow-[var(--shadow-lift)]">
             {nav.map(({ to, label, icon: Icon }) => {
-              const active = to === "/" ? path === "/" : path.startsWith(to);
+              const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
               return (
                 <Link
                   key={to}
