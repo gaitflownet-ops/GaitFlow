@@ -11,19 +11,49 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  ListChecks,
+  Leaf,
+  MapPin,
+  Contact2,
+  FolderLock,
+  Wallet,
+  Baby,
+  Store,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { QuickActionModal } from "./modals/QuickActionModal";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { to: "/horses", label: "Horses", icon: Sparkles },
-  { to: "/competitions", label: "Competitions", icon: Trophy },
-  { to: "/health", label: "Health & Care", icon: HeartPulse },
-  { to: "/team", label: "Team", icon: Users },
-] as const;
+type NavItem = { to: string; label: string; icon: typeof LayoutGrid };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  { label: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutGrid }] },
+  {
+    label: "Operations",
+    items: [
+      { to: "/horses", label: "Horses", icon: Sparkles },
+      { to: "/health", label: "Health & Care", icon: HeartPulse },
+      { to: "/tasks", label: "Tasks", icon: ListChecks },
+      { to: "/nutrition", label: "Nutrition", icon: Leaf },
+      { to: "/locations", label: "Locations", icon: MapPin },
+      { to: "/competitions", label: "Competitions", icon: Trophy },
+    ],
+  },
+  {
+    label: "Business",
+    items: [
+      { to: "/crm", label: "CRM", icon: Contact2 },
+      { to: "/documents", label: "Documents", icon: FolderLock },
+      { to: "/finance", label: "Finance", icon: Wallet },
+      { to: "/breeding", label: "Breeding", icon: Baby },
+      { to: "/marketplace", label: "Marketplace", icon: Store },
+      { to: "/team", label: "Team", icon: Users },
+    ],
+  },
+];
+
+const nav: NavItem[] = navGroups.flatMap((g) => g.items);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -72,58 +102,71 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* ── Sidebar ── */}
         <aside className="hidden lg:flex sticky top-0 h-screen w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground">
           {/* Logo */}
-          <div className="px-7 pt-8 pb-10">
+          <div className="px-7 pt-8 pb-6">
             <Link to="/" className="flex items-center gap-2.5" id="sidebar-logo">
               <div className="grid h-8 w-8 place-items-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground font-display text-[15px] font-semibold">
-                ES
+                GF
               </div>
               <div className="leading-tight">
-                <div className="font-display text-xl tracking-tight">EquiSales</div>
+                <div className="font-display text-xl tracking-tight">GateFlow</div>
                 <div className="text-[10px] tracking-[0.22em] uppercase text-sidebar-foreground/60">
-                  Premium Equine Platform
+                  Equine Operations OS
                 </div>
               </div>
             </Link>
           </div>
 
           {/* Nav */}
-          <nav className="px-4 flex-1 space-y-0.5" aria-label="Main navigation">
-            {nav.map(({ to, label, icon: Icon }) => {
-              const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  id={`nav-${label.toLowerCase().replace(/[^a-z]/g, "-")}`}
-                  className={`group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14px] transition-colors ${
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-                  }`}
-                >
-                  <Icon
-                    className={`h-[18px] w-[18px] ${active ? "text-sidebar-primary" : "opacity-70"}`}
-                  />
-                  <span className="font-medium">{label}</span>
-                </Link>
-              );
-            })}
+          <nav
+            className="px-4 flex-1 overflow-y-auto pb-4 space-y-4"
+            aria-label="Main navigation"
+          >
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <div className="px-3 mb-1.5 text-[10px] tracking-[0.22em] uppercase text-sidebar-foreground/40">
+                  {group.label}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map(({ to, label, icon: Icon }) => {
+                    const active = path === to || path.startsWith(to + "/");
+                    return (
+                      <Link
+                        key={to}
+                        to={to}
+                        id={`nav-${label.toLowerCase().replace(/[^a-z]/g, "-")}`}
+                        className={`group flex items-center gap-3 rounded-xl px-3.5 py-2 text-[13px] transition-colors ${
+                          active
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-[17px] w-[17px] ${active ? "text-sidebar-primary" : "opacity-70"}`}
+                        />
+                        <span className="font-medium">{label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
-            {/* Settings */}
-            <Link
-              to="/settings"
-              id="nav-settings"
-              className={`group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14px] transition-colors ${
-                path === "/settings"
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-              }`}
-            >
-              <Settings
-                className={`h-[18px] w-[18px] ${path === "/settings" ? "text-sidebar-primary" : "opacity-70"}`}
-              />
-              <span className="font-medium">Settings</span>
-            </Link>
+            <div className="pt-2 border-t border-sidebar-border/40">
+              <Link
+                to="/settings"
+                id="nav-settings"
+                className={`group flex items-center gap-3 rounded-xl px-3.5 py-2 text-[13px] transition-colors ${
+                  path === "/settings"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                }`}
+              >
+                <Settings
+                  className={`h-[17px] w-[17px] ${path === "/settings" ? "text-sidebar-primary" : "opacity-70"}`}
+                />
+                <span className="font-medium">Settings & Roles</span>
+              </Link>
+            </div>
           </nav>
 
           {/* User card */}
@@ -182,9 +225,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               {/* Mobile logo */}
               <div className="lg:hidden flex items-center gap-2">
                 <div className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground font-display text-[11px]">
-                  ES
+                  GF
                 </div>
-                <span className="font-display text-lg">EquiSales</span>
+                <span className="font-display text-lg">GateFlow</span>
               </div>
 
               {/* Search */}
@@ -237,7 +280,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {/* Mobile bottom nav */}
           <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-full bg-sidebar text-sidebar-foreground px-2 py-2 shadow-[var(--shadow-lift)]">
-            {nav.map(({ to, label, icon: Icon }) => {
+            {nav.slice(0, 5).map(({ to, label, icon: Icon }) => {
               const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
               return (
                 <Link
