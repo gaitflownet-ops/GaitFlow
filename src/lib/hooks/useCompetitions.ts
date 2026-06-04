@@ -24,9 +24,9 @@ export function useCompetitions(horseId?: string) {
 export function useCreateCompetition() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Competition, Error, Database["public"]["Tables"]["competitions"]["Insert"]>({
     mutationFn: async (newComp: Database["public"]["Tables"]["competitions"]["Insert"]) => {
-      const { data, error } = await (supabase.from("competitions") as any).insert(newComp).select().single();
+      const { data, error } = await supabase.from("competitions").insert(newComp).select().single();
 
       if (error) throw error;
       return data;

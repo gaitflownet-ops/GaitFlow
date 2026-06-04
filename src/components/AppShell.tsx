@@ -11,6 +11,14 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  MapPin,
+  CheckSquare,
+  DollarSign,
+  Baby,
+  Sprout,
+  ShoppingBag,
+  FolderOpen,
+  Contact,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import { useApp } from "@/lib/store";
@@ -19,9 +27,17 @@ import { QuickActionModal } from "./modals/QuickActionModal";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+  { to: "/tasks", label: "Flow Engine", icon: CheckSquare },
   { to: "/horses", label: "Horses", icon: Sparkles },
-  { to: "/competitions", label: "Competitions", icon: Trophy },
+  { to: "/locations", label: "Facilities", icon: MapPin },
   { to: "/health", label: "Health & Care", icon: HeartPulse },
+  { to: "/nutrition", label: "Nutrition", icon: Sprout },
+  { to: "/breeding", label: "Breeding", icon: Baby },
+  { to: "/competitions", label: "Competitions", icon: Trophy },
+  { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+  { to: "/financials", label: "Financials", icon: DollarSign },
+  { to: "/crm", label: "CRM", icon: Contact },
+  { to: "/vault", label: "Vault", icon: FolderOpen },
   { to: "/team", label: "Team", icon: Users },
 ] as const;
 

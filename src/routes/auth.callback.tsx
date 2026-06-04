@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { profileFromAuthUser, upsertProfile } from "@/lib/auth-profile";
 
 export const Route = createFileRoute("/auth/callback")({
   head: () => ({
@@ -32,38 +33,7 @@ function AuthCallbackPage() {
           return;
         }
 
-        const metadata = user.user_metadata ?? {};
-        const profileName =
-          typeof metadata.name === "string" && metadata.name.trim()
-            ? metadata.name
-            : user.email?.split("@")[0] || "New User";
-        const safeRole =
-          typeof metadata.role === "string" && metadata.role ? metadata.role : "Owner";
-        const stableName = typeof metadata.stable_name === "string" ? metadata.stable_name : null;
-        const phone = typeof metadata.phone === "string" ? metadata.phone : null;
-        const initials =
-          profileName
-            .split(" ")
-            .map((word) => word[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase() || "US";
-
-        const { error: profileError } = await (supabase.from("profiles") as any).upsert(
-          {
-            id: user.id,
-            name: profileName,
-            role: safeRole,
-            stable_name: stableName,
-            phone,
-            initials,
-          },
-          { onConflict: "id" },
-        );
-
-        if (profileError) {
-          throw profileError;
-        }
+        await upsertProfile(profileFromAuthUser(user));
 
         if (!isMounted) {
           return;

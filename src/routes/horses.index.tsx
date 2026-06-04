@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { HorseCard } from "@/components/HorseCard";
-import { useHorses } from "@/lib/hooks/useHorses";
+import { useDeleteHorse, useHorses, type Horse } from "@/lib/hooks/useHorses";
 import { useState } from "react";
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle, Pencil, Plus, Trash2 } from "lucide-react";
 import { AddHorseModal } from "@/components/modals/AddHorseModal";
 
 export const Route = createFileRoute("/horses/")({
@@ -22,8 +22,11 @@ const statusFilters: StatusFilter[] = ["all", "Competing", "In Training", "Resti
 
 function Horses() {
   const { data: horses = [], isLoading, isError, error, refetch } = useHorses();
+  const deleteHorse = useDeleteHorse();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [editingHorse, setEditingHorse] = useState<Horse | null>(null);
+  const [mutationError, setMutationError] = useState("");
 
   const filtered = filter === "all" ? horses : horses.filter((h) => h.status === filter);
 
@@ -39,7 +42,10 @@ function Horses() {
         </div>
         <button
           id="add-horse-btn"
-          onClick={() => setAddOpen(true)}
+          onClick={() => {
+            setEditingHorse(null);
+            setAddOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
         >
           <Plus className="h-4 w-4" /> Add horse
@@ -70,6 +76,12 @@ function Horses() {
       </div>
 
       {/* Grid */}
+      {mutationError && (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-4 text-sm text-destructive">
+          {mutationError}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
           <div className="h-[400px] bg-secondary rounded-[2rem]"></div>
@@ -99,7 +111,44 @@ function Horses() {
       ) : (
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((h) => (
-            <HorseCard key={h.id} horse={h} />
+            <div key={h.id} className="relative group/card">
+              <div className="absolute right-4 top-4 z-20 flex gap-2 opacity-0 transition-opacity group-hover/card:opacity-100">
+                <button
+                  id={`edit-horse-${h.id}`}
+                  onClick={() => {
+                    setEditingHorse(h);
+                    setAddOpen(true);
+                  }}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-background/90 text-foreground shadow hover:bg-background"
+                  aria-label={`Edit ${h.name}`}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  id={`delete-horse-${h.id}`}
+                  onClick={async () => {
+                    setMutationError("");
+                    const confirmed = window.confirm(`Delete ${h.name}?`);
+                    if (!confirmed) return;
+
+                    try {
+                      await deleteHorse.mutateAsync(h.id);
+                    } catch (err) {
+                      setMutationError(
+                        err instanceof Error
+                          ? err.message
+                          : "Could not delete this horse. Check related records.",
+                      );
+                    }
+                  }}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-background/90 text-destructive shadow hover:bg-background"
+                  aria-label={`Delete ${h.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <HorseCard horse={h} />
+            </div>
           ))}
         </div>
       )}
@@ -116,7 +165,14 @@ function Horses() {
         </div>
       )}
 
-      <AddHorseModal open={addOpen} onOpenChange={setAddOpen} />
+      <AddHorseModal
+        open={addOpen}
+        onOpenChange={(open) => {
+          setAddOpen(open);
+          if (!open) setEditingHorse(null);
+        }}
+        horse={editingHorse}
+      />
 
       <div className="h-24 lg:h-12" />
     </AppShell>

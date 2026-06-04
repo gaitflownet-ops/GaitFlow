@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase";
+import type { Database } from "../supabase.types";
+
+type CompetitionMetric = Pick<
+  Database["public"]["Tables"]["competitions"]["Row"],
+  "placement" | "prize"
+>;
 
 const moneyToNumber = (value: string | null) => {
   if (!value) return 0;
@@ -44,7 +50,7 @@ export function useDashboardMetrics() {
         horsesResult.error || competitionsResult.error || updatesResult.error || healthResult.error;
       if (firstError) throw firstError;
 
-      const competitions = (competitionsResult.data as any[]) ?? [];
+      const competitions = (competitionsResult.data ?? []) as CompetitionMetric[];
       const starts = competitions.length;
       const wins = competitions.filter((competition) =>
         isWinningPlacement(competition.placement),

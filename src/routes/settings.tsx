@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useApp } from "@/lib/store";
-import { useState } from "react";
-import { User, Bell, Shield, CreditCard, Trash2, Check, Camera } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Bell, Shield, CreditCard, Trash2, Check, Camera, Loader2 } from "lucide-react";
+import { useUpdateProfile } from "@/lib/hooks/useProfiles";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -25,9 +26,11 @@ const tabs: { value: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 function Settings() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+  const updateProfile = useUpdateProfile();
   const [tab, setTab] = useState<Tab>("profile");
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const user = state.user;
 
@@ -35,6 +38,16 @@ function Settings() {
   const [name, setName] = useState(user?.name ?? "Marisol Vega");
   const [email, setEmail] = useState("marisol@liveoakstables.com");
   const [phone, setPhone] = useState(user?.phone ?? "+1 (352) 555-0182");
+  const [role, setRole] = useState(user?.role ?? "Owner");
+  const [stableName, setStableName] = useState(user?.stable_name ?? "");
+
+  useEffect(() => {
+    if (!user) return;
+    setName(user.name);
+    setPhone(user.phone ?? "");
+    setRole(user.role);
+    setStableName(user.stable_name ?? "");
+  }, [user]);
 
   // Notification prefs
   const [prefs, setPrefs] = useState({
@@ -51,9 +64,37 @@ function Settings() {
     setPrefs((p) => ({ ...p, [key]: !p[key] }));
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (!user?.id) return;
+    setSaveError("");
+
+    try {
+      const updatedProfile = await updateProfile.mutateAsync({
+        id: user.id,
+        updates: {
+          name,
+          phone: phone || null,
+          role,
+          stable_name: stableName || null,
+          initials:
+            name
+              .split(" ")
+              .map((word) => word[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase() || "US",
+        },
+      });
+
+      dispatch({
+        type: "AUTH_STATE_CHANGE",
+        payload: { isAuthenticated: true, user: updatedProfile },
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Could not save settings.");
+    }
   };
 
   return (
@@ -155,22 +196,37 @@ function Settings() {
                   </div>
                   <div>
                     <label className="eyebrow block mb-1.5">Role</label>
-                    <select className="lux-select" id="settings-role">
+                    <select
+                      className="lux-select"
+                      id="settings-role"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                    >
                       {["Owner", "Trainer", "Farm", "Vet", "Farrier"].map((r) => (
-                        <option key={r} value={r} selected={r === user?.role}>
+                        <option key={r} value={r}>
                           {r}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
+                {saveError && (
+                  <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {saveError}
+                  </p>
+                )}
                 <div className="mt-6 flex items-center gap-3">
                   <button
                     id="settings-save-profile"
                     onClick={handleSave}
+                    disabled={updateProfile.isPending}
                     className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
                   >
-                    {saved ? (
+                    {updateProfile.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving
+                      </>
+                    ) : saved ? (
                       <>
                         <Check className="h-4 w-4" /> Saved
                       </>
@@ -189,24 +245,32 @@ function Settings() {
               <div className="lux-card p-6">
                 <h2 className="font-display text-xl mb-5">Stable information</h2>
                 <div className="space-y-4">
-                  {[
-                    {
-                      id: "stable-name",
-                      label: "Stable / Farm name",
-                      placeholder: "Live Oak Stables",
-                    },
-                    { id: "stable-location", label: "Location", placeholder: "Ocala, FL 34471" },
-                    {
-                      id: "stable-website",
-                      label: "Website",
-                      placeholder: "https://liveoakstables.com",
-                    },
-                  ].map(({ id, label, placeholder }) => (
-                    <div key={id}>
-                      <label className="eyebrow block mb-1.5">{label}</label>
-                      <input className="lux-input" id={id} placeholder={placeholder} />
-                    </div>
-                  ))}
+                  <div>
+                    <label className="eyebrow block mb-1.5">Stable / Farm name</label>
+                    <input
+                      className="lux-input"
+                      id="stable-name"
+                      placeholder="Live Oak Stables"
+                      value={stableName}
+                      onChange={(e) => setStableName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="eyebrow block mb-1.5">Location</label>
+                    <input
+                      className="lux-input"
+                      id="stable-location"
+                      placeholder="Ocala, FL 34471"
+                    />
+                  </div>
+                  <div>
+                    <label className="eyebrow block mb-1.5">Website</label>
+                    <input
+                      className="lux-input"
+                      id="stable-website"
+                      placeholder="https://liveoakstables.com"
+                    />
+                  </div>
                   <div>
                     <label className="eyebrow block mb-1.5">Number of horses</label>
                     <select className="lux-select" id="stable-horses">

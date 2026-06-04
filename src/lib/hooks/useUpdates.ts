@@ -24,9 +24,9 @@ export function useUpdates(horseId?: string) {
 export function useCreateUpdate() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Update, Error, Database["public"]["Tables"]["updates"]["Insert"]>({
     mutationFn: async (newUpdate: Database["public"]["Tables"]["updates"]["Insert"]) => {
-      const { data, error } = await (supabase.from("updates") as any).insert(newUpdate).select().single();
+      const { data, error } = await supabase.from("updates").insert(newUpdate).select().single();
 
       if (error) throw error;
       return data;

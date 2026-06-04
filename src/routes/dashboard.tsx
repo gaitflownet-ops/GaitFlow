@@ -26,6 +26,7 @@ import {
 import { AddUpdateModal } from "@/components/modals/AddUpdateModal";
 import { AddHealthRecordModal } from "@/components/modals/AddHealthRecordModal";
 import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
+import { HoltWintersPanel } from "@/components/HoltWintersPanel";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -351,13 +352,7 @@ function Dashboard() {
 
         {/* Side rail widgets */}
         <div className="space-y-6 lg:mt-14">
-          <div className="lux-card p-6 bg-secondary/30">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-xl">Upcoming</h3>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-sm text-muted-foreground">Feature coming soon.</div>
-          </div>
+          <HoltWintersPanel />
         </div>
       </div>
 

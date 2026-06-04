@@ -361,6 +361,309 @@ export interface Database {
           created_at?: string | null;
         };
       };
+      locations: {
+        Row: {
+          id: string;
+          farm_id: string;
+          name: string;
+          type: string;
+          capacity: number | null;
+          status: string | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farm_id: string;
+          name: string;
+          type: string;
+          capacity?: number | null;
+          status?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farm_id?: string;
+          name?: string;
+          type?: string;
+          capacity?: number | null;
+          status?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
+      stall_assignments: {
+        Row: {
+          id: string;
+          location_id: string;
+          horse_id: string;
+          start_date: string | null;
+          end_date: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          location_id: string;
+          horse_id: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          location_id?: string;
+          horse_id?: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          created_at?: string | null;
+        };
+      };
+      tasks: {
+        Row: {
+          id: string;
+          farm_id: string;
+          horse_id: string | null;
+          assignee_id: string | null;
+          title: string;
+          description: string | null;
+          priority: string | null;
+          status: string | null;
+          due_date: string | null;
+          recurrence: string | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farm_id: string;
+          horse_id?: string | null;
+          assignee_id?: string | null;
+          title: string;
+          description?: string | null;
+          priority?: string | null;
+          status?: string | null;
+          due_date?: string | null;
+          recurrence?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farm_id?: string;
+          horse_id?: string | null;
+          assignee_id?: string | null;
+          title?: string;
+          description?: string | null;
+          priority?: string | null;
+          status?: string | null;
+          due_date?: string | null;
+          recurrence?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
+      nutrition_plans: {
+        Row: {
+          id: string;
+          horse_id: string;
+          plan_name: string;
+          ingredients: Json;
+          start_date: string | null;
+          end_date: string | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          horse_id: string;
+          plan_name: string;
+          ingredients: Json;
+          start_date?: string | null;
+          end_date?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          horse_id?: string;
+          plan_name?: string;
+          ingredients?: Json;
+          start_date?: string | null;
+          end_date?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
+      invoices: {
+        Row: {
+          id: string;
+          farm_id: string;
+          client_id: string | null;
+          type: string;
+          category: string;
+          amount: number;
+          currency: string | null;
+          status: string | null;
+          due_date: string | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farm_id: string;
+          client_id?: string | null;
+          type: string;
+          category: string;
+          amount: number;
+          currency?: string | null;
+          status?: string | null;
+          due_date?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farm_id?: string;
+          client_id?: string | null;
+          type?: string;
+          category?: string;
+          amount?: number;
+          currency?: string | null;
+          status?: string | null;
+          due_date?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
+      breeding_records: {
+        Row: {
+          id: string;
+          mare_id: string;
+          stallion_id: string;
+          method: string | null;
+          insemination_date: string;
+          pregnancy_status: string | null;
+          expected_foaling_date: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          mare_id: string;
+          stallion_id: string;
+          method?: string | null;
+          insemination_date: string;
+          pregnancy_status?: string | null;
+          expected_foaling_date?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          mare_id?: string;
+          stallion_id?: string;
+          method?: string | null;
+          insemination_date?: string;
+          pregnancy_status?: string | null;
+          expected_foaling_date?: string | null;
+          created_at?: string | null;
+        };
+      };
+      genetic_inventory: {
+        Row: {
+          id: string;
+          farm_id: string;
+          material_type: string;
+          donor_id: string | null;
+          status: string | null;
+          storage_location: string | null;
+          cost: number | null;
+          expiration_date: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farm_id: string;
+          material_type: string;
+          donor_id?: string | null;
+          status?: string | null;
+          storage_location?: string | null;
+          cost?: number | null;
+          expiration_date?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farm_id?: string;
+          material_type?: string;
+          donor_id?: string | null;
+          status?: string | null;
+          storage_location?: string | null;
+          cost?: number | null;
+          expiration_date?: string | null;
+          created_at?: string | null;
+        };
+      };
+      marketplace_listings: {
+        Row: {
+          id: string;
+          horse_id: string | null;
+          genetic_id: string | null;
+          seller_id: string;
+          price: number;
+          currency: string | null;
+          status: string | null;
+          description: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          horse_id?: string | null;
+          genetic_id?: string | null;
+          seller_id: string;
+          price: number;
+          currency?: string | null;
+          status?: string | null;
+          description?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          horse_id?: string | null;
+          genetic_id?: string | null;
+          seller_id?: string;
+          price?: number;
+          currency?: string | null;
+          status?: string | null;
+          description?: string | null;
+          created_at?: string | null;
+        };
+      };
+      hw_forecasts: {
+        Row: {
+          id: string;
+          target_type: string;
+          target_id: string | null;
+          forecast_data: Json;
+          confidence_score: number | null;
+          generated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          target_type: string;
+          target_id?: string | null;
+          forecast_data: Json;
+          confidence_score?: number | null;
+          generated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          target_type?: string;
+          target_id?: string | null;
+          forecast_data?: Json;
+          confidence_score?: number | null;
+          generated_at?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

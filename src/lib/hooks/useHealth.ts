@@ -24,22 +24,25 @@ export function useHealthRecords(horseId?: string) {
 export function useCreateHealthRecord() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (newRecord: Database["public"]["Tables"]["health_records"]["Insert"]) => {
-      const { data, error } = await (supabase.from("health_records") as any)
-        .insert(newRecord)
-        .select()
-        .single();
+  return useMutation<HealthRecord, Error, Database["public"]["Tables"]["health_records"]["Insert"]>(
+    {
+      mutationFn: async (newRecord: Database["public"]["Tables"]["health_records"]["Insert"]) => {
+        const { data, error } = await supabase
+          .from("health_records")
+          .insert(newRecord)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({ queryKey: ["health_records"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+        if (variables.horse_id) {
+          queryClient.invalidateQueries({ queryKey: ["health_records", variables.horse_id] });
+        }
+      },
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["health_records"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
-      if (variables.horse_id) {
-        queryClient.invalidateQueries({ queryKey: ["health_records", variables.horse_id] });
-      }
-    },
-  });
+  );
 }

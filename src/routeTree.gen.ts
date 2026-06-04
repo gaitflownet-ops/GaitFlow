@@ -9,14 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VaultRouteImport } from './routes/vault'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CrmRouteImport } from './routes/crm'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
+import { Route as BreedingRouteImport } from './routes/breeding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as HorsesIndexRouteImport } from './routes/horses.index'
@@ -29,9 +36,19 @@ import { Route as HorsesHorseIdRouteImport } from './routes/horses_.$horseId'
 import { Route as FarmsFarmIdRouteImport } from './routes/farms.$farmId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const VaultRoute = VaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -44,6 +61,11 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NutritionRoute = NutritionRouteImport.update({
+  id: '/nutrition',
+  path: '/nutrition',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -54,9 +76,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationsRoute = LocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinancialsRoute = FinancialsRouteImport.update({
+  id: '/financials',
+  path: '/financials',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -64,9 +96,19 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmRoute = CrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompetitionsRoute = CompetitionsRouteImport.update({
   id: '/competitions',
   path: '/competitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BreedingRoute = BreedingRouteImport.update({
+  id: '/breeding',
+  path: '/breeding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -127,14 +169,21 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
+  '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
+  '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
+  '/vault': typeof VaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
@@ -148,14 +197,21 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
+  '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
+  '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
+  '/vault': typeof VaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
@@ -170,14 +226,21 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
+  '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
+  '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
+  '/vault': typeof VaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses_/$horseId': typeof HorsesHorseIdRoute
@@ -193,14 +256,21 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/breeding'
     | '/competitions'
+    | '/crm'
     | '/dashboard'
+    | '/financials'
     | '/health'
+    | '/locations'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
+    | '/vault'
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses/$horseId'
@@ -214,14 +284,21 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/breeding'
     | '/competitions'
+    | '/crm'
     | '/dashboard'
+    | '/financials'
     | '/health'
+    | '/locations'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
+    | '/vault'
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses/$horseId'
@@ -235,14 +312,21 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/breeding'
     | '/competitions'
+    | '/crm'
     | '/dashboard'
+    | '/financials'
     | '/health'
+    | '/locations'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
+    | '/vault'
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses_/$horseId'
@@ -257,14 +341,21 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BreedingRoute: typeof BreedingRoute
   CompetitionsRoute: typeof CompetitionsRoute
+  CrmRoute: typeof CrmRoute
   DashboardRoute: typeof DashboardRoute
+  FinancialsRoute: typeof FinancialsRoute
   HealthRoute: typeof HealthRoute
+  LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
+  NutritionRoute: typeof NutritionRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
+  TasksRoute: typeof TasksRoute
   TeamRoute: typeof TeamRoute
+  VaultRoute: typeof VaultRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   FarmsFarmIdRoute: typeof FarmsFarmIdRoute
   HorsesHorseIdRoute: typeof HorsesHorseIdRoute
@@ -279,11 +370,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vault': {
+      id: '/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof VaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team': {
       id: '/team'
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -300,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nutrition': {
+      id: '/nutrition'
+      path: '/nutrition'
+      fullPath: '/nutrition'
+      preLoaderRoute: typeof NutritionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notifications': {
       id: '/notifications'
       path: '/notifications'
@@ -314,11 +426,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health': {
       id: '/health'
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financials': {
+      id: '/financials'
+      path: '/financials'
+      fullPath: '/financials'
+      preLoaderRoute: typeof FinancialsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -328,11 +454,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm': {
+      id: '/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof CrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/competitions': {
       id: '/competitions'
       path: '/competitions'
       fullPath: '/competitions'
       preLoaderRoute: typeof CompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/breeding': {
+      id: '/breeding'
+      path: '/breeding'
+      fullPath: '/breeding'
+      preLoaderRoute: typeof BreedingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -417,14 +557,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BreedingRoute: BreedingRoute,
   CompetitionsRoute: CompetitionsRoute,
+  CrmRoute: CrmRoute,
   DashboardRoute: DashboardRoute,
+  FinancialsRoute: FinancialsRoute,
   HealthRoute: HealthRoute,
+  LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
+  NutritionRoute: NutritionRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
+  TasksRoute: TasksRoute,
   TeamRoute: TeamRoute,
+  VaultRoute: VaultRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   FarmsFarmIdRoute: FarmsFarmIdRoute,
   HorsesHorseIdRoute: HorsesHorseIdRoute,

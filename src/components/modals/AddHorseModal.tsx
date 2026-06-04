@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { Modal } from "./Modal";
 import { useApp } from "@/lib/store";
-import { useCreateHorse } from "@/lib/hooks/useHorses";
+import { useCreateHorse, useUpdateHorse, type Horse } from "@/lib/hooks/useHorses";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  horse?: Horse | null;
 };
 
 const slugify = (value: string) =>
@@ -16,9 +17,11 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-export function AddHorseModal({ open, onOpenChange }: Props) {
+export function AddHorseModal({ open, onOpenChange, horse }: Props) {
   const { state } = useApp();
   const createHorse = useCreateHorse();
+  const updateHorse = useUpdateHorse();
+  const isEditing = !!horse;
   const [name, setName] = useState("");
   const [barnName, setBarnName] = useState("");
   const [breed, setBreed] = useState("");
@@ -36,6 +39,23 @@ export function AddHorseModal({ open, onOpenChange }: Props) {
     const base = slugify(name || barnName || "horse");
     return `${base}-${Date.now().toString(36)}`;
   }, [barnName, name]);
+
+  useEffect(() => {
+    if (!open || !horse) return;
+
+    setName(horse.name);
+    setBarnName(horse.barn_name);
+    setBreed(horse.breed ?? "");
+    setAge(horse.age?.toString() ?? "");
+    setSex(horse.sex ?? "Mare");
+    setDiscipline(horse.discipline ?? "");
+    setTrainer(horse.trainer ?? "");
+    setLocation(horse.location ?? "");
+    setImageUrl(horse.image_url ?? "");
+    setStatus(horse.status ?? "In Training");
+    setDone(false);
+    setError("");
+  }, [horse, open]);
 
   const reset = () => {
     setName("");
@@ -67,10 +87,9 @@ export function AddHorseModal({ open, onOpenChange }: Props) {
     }
 
     try {
-      await createHorse.mutateAsync({
+      const payload = {
         name,
         barn_name: barnName || name,
-        slug: generatedSlug,
         breed: breed || null,
         age: age ? Number(age) : null,
         sex: sex || null,
@@ -79,28 +98,45 @@ export function AddHorseModal({ open, onOpenChange }: Props) {
         location: location || null,
         image_url: imageUrl || null,
         status,
-        owner_id: state.user.id,
-        latest_achievement: "Horse profile created.",
-        is_public: true,
-        wins: 0,
-        sale_status: "Not for Sale",
-      });
+      };
+
+      if (horse) {
+        await updateHorse.mutateAsync({
+          id: horse.id,
+          updates: payload,
+        });
+      } else {
+        await createHorse.mutateAsync({
+          ...payload,
+          slug: generatedSlug,
+          owner_id: state.user.id,
+          latest_achievement: "Horse profile created.",
+          is_public: true,
+          wins: 0,
+          sale_status: "Not for Sale",
+        });
+      }
 
       setDone(true);
       setTimeout(() => handleClose(), 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the horse.");
+      setError(err instanceof Error ? err.message : "Could not save the horse.");
     }
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Add horse" size="lg">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={isEditing ? "Edit horse" : "Add horse"}
+      size="lg"
+    >
       {done ? (
         <div className="p-10 flex flex-col items-center gap-4 text-center">
           <span className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary">
             <Check className="h-8 w-8" />
           </span>
-          <p className="font-display text-2xl">Horse added</p>
+          <p className="font-display text-2xl">{isEditing ? "Horse updated" : "Horse added"}</p>
           <p className="text-sm text-muted-foreground">The barn and dashboard are updating now.</p>
         </div>
       ) : (
@@ -239,11 +275,13 @@ export function AddHorseModal({ open, onOpenChange }: Props) {
             <button
               type="submit"
               id="horse-submit"
-              disabled={createHorse.isPending}
+              disabled={createHorse.isPending || updateHorse.isPending}
               className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-70 inline-flex items-center justify-center gap-2"
             >
-              {createHorse.isPending ? (
+              {createHorse.isPending || updateHorse.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isEditing ? (
+                "Save horse"
               ) : (
                 "Create horse"
               )}

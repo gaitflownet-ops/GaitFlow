@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ArrowLeft, Loader2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { buildProfileInput, upsertProfile } from "@/lib/auth-profile";
 
 const images = {
   farm: "https://images.unsplash.com/photo-1500217032126-787114c000d6?auto=format&fit=crop&q=80",
@@ -94,13 +95,13 @@ function RegisterPage() {
     const profileName = name || "New User";
     const safeRole = role ?? "Owner";
 
-    const profileInitials =
-      profileName
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase() || "US";
+    const profileInput = buildProfileInput({
+      id: "pending",
+      name: profileName,
+      role: safeRole,
+      stableName: stable,
+      phone,
+    });
 
     // 1. Sign up user
     const { data, error: authError } = await supabase.auth.signUp({
@@ -112,7 +113,7 @@ function RegisterPage() {
           role: safeRole,
           stable_name: stable || null,
           phone: phone || null,
-          initials: profileInitials,
+          initials: profileInput.initials,
         },
         emailRedirectTo: appUrl ? `${appUrl}/auth/callback` : undefined,
       },
@@ -132,21 +133,12 @@ function RegisterPage() {
       return;
     }
 
-    // 2. Create or repair profile
-    const { error: profileError } = await (supabase.from("profiles") as any).upsert(
-      {
-        id: data.user.id,
-        name: profileName,
-        role: safeRole,
-        stable_name: stable || null,
-        phone: phone || null,
-        initials: profileInitials,
-      },
-      { onConflict: "id" },
-    );
-
-    if (profileError) {
-      setError(profileError.message);
+    try {
+      await upsertProfile({ ...profileInput, id: data.user.id });
+    } catch (profileError) {
+      setError(
+        profileError instanceof Error ? profileError.message : "No pudimos crear tu perfil.",
+      );
       setLoading(false);
       return;
     }

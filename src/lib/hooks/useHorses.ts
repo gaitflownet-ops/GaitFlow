@@ -52,9 +52,9 @@ export function useHorse(slugOrId: string) {
 export function useCreateHorse() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Horse, Error, Database["public"]["Tables"]["horses"]["Insert"]>({
     mutationFn: async (newHorse: Database["public"]["Tables"]["horses"]["Insert"]) => {
-      const { data, error } = await (supabase.from("horses") as any).insert(newHorse).select().single();
+      const { data, error } = await supabase.from("horses").insert(newHorse).select().single();
 
       if (error) throw error;
       return data;
@@ -69,7 +69,11 @@ export function useCreateHorse() {
 export function useUpdateHorse() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    Horse,
+    Error,
+    { id: string; updates: Database["public"]["Tables"]["horses"]["Update"] }
+  >({
     mutationFn: async ({
       id,
       updates,
@@ -77,7 +81,8 @@ export function useUpdateHorse() {
       id: string;
       updates: Database["public"]["Tables"]["horses"]["Update"];
     }) => {
-      const { data, error } = await (supabase.from("horses") as any)
+      const { data, error } = await supabase
+        .from("horses")
         .update(updates)
         .eq("id", id)
         .select()
@@ -86,7 +91,7 @@ export function useUpdateHorse() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (horse: any) => {
+    onSuccess: (horse) => {
       queryClient.invalidateQueries({ queryKey: ["horses"] });
       queryClient.invalidateQueries({ queryKey: ["horse", horse?.slug] });
       queryClient.invalidateQueries({ queryKey: ["horse", horse?.id] });
