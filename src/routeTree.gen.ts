@@ -13,6 +13,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HealthRouteImport } from './routes/health'
@@ -48,6 +49,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NutritionRoute = NutritionRouteImport.update({
+  id: '/nutrition',
+  path: '/nutrition',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/health': typeof HealthRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/login'
     | '/notifications'
+    | '/nutrition'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   HealthRoute: typeof HealthRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
+  NutritionRoute: typeof NutritionRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nutrition': {
+      id: '/nutrition'
+      path: '/nutrition'
+      fullPath: '/nutrition'
+      preLoaderRoute: typeof NutritionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -442,6 +462,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthRoute: HealthRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
+  NutritionRoute: NutritionRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
