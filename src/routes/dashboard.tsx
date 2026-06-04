@@ -208,6 +208,45 @@ function Dashboard() {
       </section>
 
       {/* Your Horses */}
+      {/* HW Predictive Intelligence Panel */}
+      <section className="mt-16">
+        <div className="flex items-baseline justify-between mb-4">
+          <div>
+            <div className="eyebrow">Holt-Winters Intelligence</div>
+            <h2 className="font-display text-3xl mt-1">Predictive panel</h2>
+          </div>
+          <span className="text-xs text-muted-foreground hidden md:block">
+            Live forecasts across all modules
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <RevenueForecastCard
+            series={[42, 48, 51, 47, 55, 62, 58, 64, 70, 73, 71, 78]}
+            projection={[82, 88, 91, 95, 99, 104]}
+            anomaly="Boarding revenue trending 12% below seasonal pattern."
+          />
+          <SeasonalRiskBar score={6.4} label="Spring respiratory + colic exposure rising." />
+          <FeedRestockAlert
+            product="Pavo Sport Performance"
+            daysRemaining={6}
+            projectedConsumption="Avg 12 bags / month · auto-reorder ready"
+          />
+          <PriceForecastCard current={185000} forecastLow={170000} forecastHigh={210000} trend="up" />
+          <GestationProbability probability={78} />
+          <div className="lux-card p-5 bg-gradient-to-br from-[var(--forest)] to-[var(--forest-deep)] text-primary-foreground">
+            <div className="eyebrow !text-primary-foreground/70">All-in summary</div>
+            <h3 className="font-display text-2xl mt-2 leading-tight">
+              5 predictive signals are favorable, 2 require action.
+            </h3>
+            <p className="mt-3 text-[13px] text-primary-foreground/80">
+              Open the Holt-Winters report for full breakdown across health,
+              breeding, nutrition, marketplace and finance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Your Horses */}
       <section className="mt-16 animate-fade-up-delay-2">
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="font-display text-3xl">Your string</h2>
