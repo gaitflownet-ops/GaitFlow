@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -32,6 +33,11 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
     | '/auth/callback'
     | '/farms/$farmId'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
     | '/auth/callback'
     | '/farms/$farmId'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/register'
     | '/settings'
+    | '/tasks'
     | '/team'
     | '/auth/callback'
     | '/farms/$farmId'
@@ -264,6 +276,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
+  TasksRoute: typeof TasksRoute
   TeamRoute: typeof TeamRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   FarmsFarmIdRoute: typeof FarmsFarmIdRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -424,6 +444,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
+  TasksRoute: TasksRoute,
   TeamRoute: TeamRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   FarmsFarmIdRoute: FarmsFarmIdRoute,
@@ -439,3 +460,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
