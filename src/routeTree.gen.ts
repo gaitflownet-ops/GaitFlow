@@ -18,6 +18,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as FinanceRouteImport } from './routes/finance'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CrmRouteImport } from './routes/crm'
@@ -77,6 +78,11 @@ const LocationsRoute = LocationsRouteImport.update({
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceRoute = FinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/finance': typeof FinanceRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/finance': typeof FinanceRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/finance': typeof FinanceRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/dashboard'
     | '/documents'
+    | '/finance'
     | '/health'
     | '/locations'
     | '/login'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/dashboard'
     | '/documents'
+    | '/finance'
     | '/health'
     | '/locations'
     | '/login'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/dashboard'
     | '/documents'
+    | '/finance'
     | '/health'
     | '/locations'
     | '/login'
@@ -321,6 +333,7 @@ export interface RootRouteChildren {
   CrmRoute: typeof CrmRoute
   DashboardRoute: typeof DashboardRoute
   DocumentsRoute: typeof DocumentsRoute
+  FinanceRoute: typeof FinanceRoute
   HealthRoute: typeof HealthRoute
   LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance': {
+      id: '/finance'
+      path: '/finance'
+      fullPath: '/finance'
+      preLoaderRoute: typeof FinanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -521,6 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   CrmRoute: CrmRoute,
   DashboardRoute: DashboardRoute,
   DocumentsRoute: DocumentsRoute,
+  FinanceRoute: FinanceRoute,
   HealthRoute: HealthRoute,
   LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
