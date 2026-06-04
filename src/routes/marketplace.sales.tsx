@@ -28,6 +28,19 @@ function SalesMarketplace() {
           </p>
         </div>
 
+        <section className="mb-16">
+          <div className="flex items-center gap-2 mb-5">
+            <Sparkles className="h-4 w-4 text-[var(--gold)]" />
+            <h2 className="font-display text-2xl">Predictive price intelligence</h2>
+            <span className="text-[11px] text-muted-foreground">· Holt-Winters · 90-day forecast</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <PriceForecastCard current={185000} forecastLow={170000} forecastHigh={210000} trend="up" />
+            <PriceForecastCard current={92000} forecastLow={95000} forecastHigh={120000} trend="up" />
+            <PriceForecastCard current={245000} forecastLow={200000} forecastHigh={235000} trend="down" />
+          </div>
+        </section>
+
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
