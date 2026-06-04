@@ -225,9 +225,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               {/* Mobile logo */}
               <div className="lg:hidden flex items-center gap-2">
                 <div className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground font-display text-[11px]">
-                  ES
+                  GF
                 </div>
-                <span className="font-display text-lg">EquiSales</span>
+                <span className="font-display text-lg">GateFlow</span>
               </div>
 
               {/* Search */}
