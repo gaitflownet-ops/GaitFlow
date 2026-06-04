@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicShell } from "@/components/PublicShell";
 import { useHorses } from "@/lib/hooks/useHorses";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2, Sparkles } from "lucide-react";
 import { ReputationBadges } from "@/components/ReputationBadges";
+import { PriceForecastCard } from "@/components/hw/HWWidgets";
 
 export const Route = createFileRoute("/marketplace/sales")({
   component: SalesMarketplace,
