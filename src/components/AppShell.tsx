@@ -11,19 +11,49 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  ListChecks,
+  Leaf,
+  MapPin,
+  Contact2,
+  FolderLock,
+  Wallet,
+  Baby,
+  Store,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { QuickActionModal } from "./modals/QuickActionModal";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { to: "/horses", label: "Horses", icon: Sparkles },
-  { to: "/competitions", label: "Competitions", icon: Trophy },
-  { to: "/health", label: "Health & Care", icon: HeartPulse },
-  { to: "/team", label: "Team", icon: Users },
-] as const;
+type NavItem = { to: string; label: string; icon: typeof LayoutGrid };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  { label: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutGrid }] },
+  {
+    label: "Operations",
+    items: [
+      { to: "/horses", label: "Horses", icon: Sparkles },
+      { to: "/health", label: "Health & Care", icon: HeartPulse },
+      { to: "/tasks", label: "Tasks", icon: ListChecks },
+      { to: "/nutrition", label: "Nutrition", icon: Leaf },
+      { to: "/locations", label: "Locations", icon: MapPin },
+      { to: "/competitions", label: "Competitions", icon: Trophy },
+    ],
+  },
+  {
+    label: "Business",
+    items: [
+      { to: "/crm", label: "CRM", icon: Contact2 },
+      { to: "/documents", label: "Documents", icon: FolderLock },
+      { to: "/finance", label: "Finance", icon: Wallet },
+      { to: "/breeding", label: "Breeding", icon: Baby },
+      { to: "/marketplace", label: "Marketplace", icon: Store },
+      { to: "/team", label: "Team", icon: Users },
+    ],
+  },
+];
+
+const nav: NavItem[] = navGroups.flatMap((g) => g.items);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
