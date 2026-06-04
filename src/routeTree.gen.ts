@@ -23,6 +23,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
+import { Route as BreedingRouteImport } from './routes/breeding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as HorsesIndexRouteImport } from './routes/horses.index'
@@ -105,6 +106,11 @@ const CompetitionsRoute = CompetitionsRouteImport.update({
   path: '/competitions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BreedingRoute = BreedingRouteImport.update({
+  id: '/breeding',
+  path: '/breeding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -163,6 +169,7 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/breeding': typeof BreedingRoute
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/breeding'
     | '/competitions'
     | '/crm'
     | '/dashboard'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/breeding'
     | '/competitions'
     | '/crm'
     | '/dashboard'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/breeding'
     | '/competitions'
     | '/crm'
     | '/dashboard'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BreedingRoute: typeof BreedingRoute
   CompetitionsRoute: typeof CompetitionsRoute
   CrmRoute: typeof CrmRoute
   DashboardRoute: typeof DashboardRoute
@@ -455,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompetitionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/breeding': {
+      id: '/breeding'
+      path: '/breeding'
+      fullPath: '/breeding'
+      preLoaderRoute: typeof BreedingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -537,6 +557,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BreedingRoute: BreedingRoute,
   CompetitionsRoute: CompetitionsRoute,
   CrmRoute: CrmRoute,
   DashboardRoute: DashboardRoute,
