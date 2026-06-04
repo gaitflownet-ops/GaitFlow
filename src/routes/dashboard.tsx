@@ -26,6 +26,13 @@ import {
 import { AddUpdateModal } from "@/components/modals/AddUpdateModal";
 import { AddHealthRecordModal } from "@/components/modals/AddHealthRecordModal";
 import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
+import {
+  PriceForecastCard,
+  SeasonalRiskBar,
+  FeedRestockAlert,
+  RevenueForecastCard,
+  GestationProbability,
+} from "@/components/hw/HWWidgets";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
