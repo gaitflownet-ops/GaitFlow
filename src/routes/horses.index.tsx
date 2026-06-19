@@ -9,7 +9,7 @@ import { AddHorseModal } from "@/components/modals/AddHorseModal";
 export const Route = createFileRoute("/horses/")({
   head: () => ({
     meta: [
-      { title: "The Barn — EquiSales" },
+      { title: "The Barn — GaitFlow" },
       { name: "description", content: "All horses in your stable, beautifully organised." },
     ],
   }),
@@ -31,7 +31,7 @@ function Horses() {
     <AppShell>
       <div className="flex items-baseline justify-between">
         <div>
-          <div className="eyebrow">EquiSales</div>
+          <div className="eyebrow">GaitFlow</div>
           <h1 className="font-display text-4xl lg:text-5xl mt-2">The barn</h1>
           <p className="text-muted-foreground mt-2 text-[15px]">
             {isLoading ? "..." : horses.length} horses · all beautifully captured

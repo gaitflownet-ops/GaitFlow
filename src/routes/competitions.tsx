@@ -11,7 +11,7 @@ import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
 export const Route = createFileRoute("/competitions")({
   head: () => ({
     meta: [
-      { title: "Competitions — EquiSales" },
+      { title: "Competitions — GaitFlow" },
       { name: "description", content: "A championship-grade record of every result." },
     ],
   }),

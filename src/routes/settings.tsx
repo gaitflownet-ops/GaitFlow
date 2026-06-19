@@ -7,8 +7,8 @@ import { User, Bell, Shield, CreditCard, Trash2, Check, Camera } from "lucide-re
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — EquiSales" },
-      { name: "description", content: "Manage your EquiSales account and preferences." },
+      { title: "Settings — GaitFlow" },
+      { name: "description", content: "Manage your GaitFlow account and preferences." },
     ],
   }),
   component: Settings,
@@ -307,7 +307,7 @@ function Settings() {
             <div className="animate-fade-up space-y-5">
               <div className="lux-card p-6 bg-gradient-to-br from-[oklch(0.22_0.04_155)] to-[oklch(0.18_0.018_60)] text-primary-foreground border-transparent">
                 <div className="eyebrow !text-primary-foreground/60">Current plan</div>
-                <div className="font-display text-4xl mt-2 gold-text">EquiSales Pro</div>
+                <div className="font-display text-4xl mt-2 gold-text">GaitFlow Pro</div>
                 <p className="text-[14px] text-primary-foreground/70 mt-2">
                   Unlimited horses · Full team access · Priority support
                 </p>
@@ -370,7 +370,7 @@ function Settings() {
                     <div>
                       <p className="text-[14px] font-medium">Close account</p>
                       <p className="text-[12px] text-muted-foreground mt-0.5">
-                        Permanently remove your EquiSales account
+                        Permanently remove your GaitFlow account
                       </p>
                     </div>
                     <button

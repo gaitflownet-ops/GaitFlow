@@ -24,7 +24,7 @@ export function useRealtimeSync() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const channel = supabase.channel("equisales-realtime-sync");
+    const channel = supabase.channel("gaitflow-realtime-sync");
 
     for (const table of tables) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {

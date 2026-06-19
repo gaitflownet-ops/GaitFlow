@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 GF
               </div>
               <div className="leading-tight">
-                <div className="font-display text-xl tracking-tight">GateFlow</div>
+                <div className="font-display text-xl tracking-tight">GaitFlow</div>
                 <div className="text-[10px] tracking-[0.22em] uppercase text-sidebar-foreground/60">
                   Equine Operations OS
                 </div>
@@ -117,10 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Nav */}
-          <nav
-            className="px-4 flex-1 overflow-y-auto pb-4 space-y-4"
-            aria-label="Main navigation"
-          >
+          <nav className="px-4 flex-1 overflow-y-auto pb-4 space-y-4" aria-label="Main navigation">
             {navGroups.map((group) => (
               <div key={group.label}>
                 <div className="px-3 mb-1.5 text-[10px] tracking-[0.22em] uppercase text-sidebar-foreground/40">
@@ -227,7 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground font-display text-[11px]">
                   GF
                 </div>
-                <span className="font-display text-lg">GateFlow</span>
+                <span className="font-display text-lg">GaitFlow</span>
               </div>
 
               {/* Search */}

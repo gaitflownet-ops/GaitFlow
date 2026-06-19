@@ -56,7 +56,9 @@ export function NotificationDropdown({ open, onClose }: Props) {
   const markAll = async () => {
     dispatch({ type: "MARK_ALL_READ" });
     if (state.user) {
-      await (supabase.from("notifications") as any).update({ read: true }).eq("user_id", state.user.id);
+      await (supabase.from("notifications") as any)
+        .update({ read: true })
+        .eq("user_id", state.user.id);
     }
   };
 

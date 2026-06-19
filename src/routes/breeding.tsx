@@ -6,7 +6,7 @@ import { Plus, Calendar, Dna, Baby as BabyIcon } from "lucide-react";
 export const Route = createFileRoute("/breeding")({
   head: () => ({
     meta: [
-      { title: "Breeding — GateFlow" },
+      { title: "Breeding — GaitFlow" },
       { name: "description", content: "Mares, stallions, inseminations and foal tracking." },
     ],
   }),
@@ -14,15 +14,51 @@ export const Route = createFileRoute("/breeding")({
 });
 
 const mares = [
-  { name: "Madeira", stallion: "Vega del Sol", date: "Feb 14", probability: 78, status: "Confirmed in foal" },
-  { name: "Lyra", stallion: "Northern Flame", date: "Feb 22", probability: 62, status: "Cycle 2 · monitoring" },
-  { name: "Aurelia", stallion: "Royal Cadence", date: "Mar 02", probability: 41, status: "Cycle 1 · early" },
+  {
+    name: "Madeira",
+    stallion: "Vega del Sol",
+    date: "Feb 14",
+    probability: 78,
+    status: "Confirmed in foal",
+  },
+  {
+    name: "Lyra",
+    stallion: "Northern Flame",
+    date: "Feb 22",
+    probability: 62,
+    status: "Cycle 2 · monitoring",
+  },
+  {
+    name: "Aurelia",
+    stallion: "Royal Cadence",
+    date: "Mar 02",
+    probability: 41,
+    status: "Cycle 1 · early",
+  },
 ];
 
 const genetics = [
-  { code: "VDS-2025-014", donor: "Vega del Sol", type: "Frozen semen", straws: 22, expires: "2032" },
-  { code: "NFL-2025-008", donor: "Northern Flame", type: "Fresh — cooled", straws: 6, expires: "2026" },
-  { code: "RCD-2024-031", donor: "Royal Cadence", type: "Frozen embryo", straws: 4, expires: "2034" },
+  {
+    code: "VDS-2025-014",
+    donor: "Vega del Sol",
+    type: "Frozen semen",
+    straws: 22,
+    expires: "2032",
+  },
+  {
+    code: "NFL-2025-008",
+    donor: "Northern Flame",
+    type: "Fresh — cooled",
+    straws: 6,
+    expires: "2026",
+  },
+  {
+    code: "RCD-2024-031",
+    donor: "Royal Cadence",
+    type: "Frozen embryo",
+    straws: 4,
+    expires: "2034",
+  },
 ];
 
 function BreedingPage() {
@@ -33,8 +69,8 @@ function BreedingPage() {
           <div className="eyebrow">Section I · Breeding & Gestation</div>
           <h1 className="font-display text-4xl mt-1">Breeding program</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Insemination registry, cycle tracking and genetic inventory with
-            Holt-Winters reproductive success forecasting.
+            Insemination registry, cycle tracking and genetic inventory with Holt-Winters
+            reproductive success forecasting.
           </p>
         </div>
         <button className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium inline-flex items-center gap-2">

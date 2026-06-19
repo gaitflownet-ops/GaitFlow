@@ -55,7 +55,7 @@ import { Modal } from "@/components/modals/Modal";
 export const Route = createFileRoute("/team")({
   head: () => ({
     meta: [
-      { title: "Team — EquiSales" },
+      { title: "Team — GaitFlow" },
       { name: "description", content: "Owners, trainers, vets and farriers in one elegant place." },
     ],
   }),

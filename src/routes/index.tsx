@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicShell } from "@/components/PublicShell";
-import { ArrowRight, Star, ArrowUpRight, Award, Flame } from "lucide-react";
+import { ArrowRight, Star, ArrowUpRight, Award, Flame, MessageSquareQuote } from "lucide-react";
+import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
 
 const images = {
   hero: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&q=80",
@@ -13,7 +14,7 @@ const images = {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "EquiSales — The Premium Equine Ecosystem" },
+      { title: "GaitFlow — The Premium Equine Ecosystem" },
       {
         name: "description",
         content:
@@ -190,6 +191,37 @@ function DiscoverPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Success Stories */}
+      <section className="py-24 border-t border-border/50">
+        <div className="max-w-7xl mx-auto px-6 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 text-[var(--gold)] text-[11px] uppercase tracking-widest mb-3">
+                <MessageSquareQuote className="h-4 w-4" /> Success Stories
+              </div>
+              <h2 className="font-display text-4xl md:text-5xl">
+                What Ocala's Best
+                <br />
+                <span className="gold-text italic">Are Saying</span>
+              </h2>
+              <p className="mt-4 text-muted-foreground max-w-lg text-lg font-light">
+                From breeding operations and show stables to bloodstock traders — real results from
+                the equestrian professionals who run on GaitFlow.
+              </p>
+            </div>
+            <div className="flex flex-col items-start md:items-end gap-2 text-right">
+              <div className="text-5xl font-display gold-text">60%</div>
+              <div className="text-sm text-muted-foreground uppercase tracking-widest">
+                avg. reduction in
+                <br />
+                administrative time
+              </div>
+            </div>
+          </div>
+        </div>
+        <StaggerTestimonials />
       </section>
     </PublicShell>
   );

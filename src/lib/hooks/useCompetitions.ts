@@ -26,7 +26,10 @@ export function useCreateCompetition() {
 
   return useMutation({
     mutationFn: async (newComp: Database["public"]["Tables"]["competitions"]["Insert"]) => {
-      const { data, error } = await (supabase.from("competitions") as any).insert(newComp).select().single();
+      const { data, error } = await (supabase.from("competitions") as any)
+        .insert(newComp)
+        .select()
+        .single();
 
       if (error) throw error;
       return data;

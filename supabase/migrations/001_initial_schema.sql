@@ -1,4 +1,4 @@
--- Create tables for EquiSales
+-- Create tables for GaitFlow
 
 -- 1. Profiles
 CREATE TABLE profiles (

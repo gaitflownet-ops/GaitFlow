@@ -5,7 +5,7 @@ import { Plus, Mail, Phone, Tag } from "lucide-react";
 export const Route = createFileRoute("/crm")({
   head: () => ({
     meta: [
-      { title: "CRM — GateFlow" },
+      { title: "CRM — GaitFlow" },
       { name: "description", content: "Owners, buyers, vets and suppliers in one directory." },
     ],
   }),
@@ -13,11 +13,46 @@ export const Route = createFileRoute("/crm")({
 });
 
 const contacts = [
-  { name: "Alessandra Conti", role: "Buyer", company: "Conti Equestrian", tag: "Hot lead", email: "ac@conti.eq", phone: "+1 352 555 0117" },
-  { name: "Dr. Aman Patel", role: "Veterinarian", company: "Ocala Equine Hosp.", tag: "Vendor", email: "patel@oeh.com", phone: "+1 352 555 0192" },
-  { name: "Hiroshi Yamamoto", role: "Owner", company: "Yamamoto Bloodstock", tag: "Client", email: "hy@yb.jp", phone: "+81 90 4400 8821" },
-  { name: "Marie Dubois", role: "Buyer", company: "Haras Dubois", tag: "Warm lead", email: "marie@haras.fr", phone: "+33 6 14 22 88 12" },
-  { name: "Tom Hartwell", role: "Farrier", company: "Hartwell Hoof Care", tag: "Vendor", email: "tom@hhc.us", phone: "+1 352 555 0044" },
+  {
+    name: "Alessandra Conti",
+    role: "Buyer",
+    company: "Conti Equestrian",
+    tag: "Hot lead",
+    email: "ac@conti.eq",
+    phone: "+1 352 555 0117",
+  },
+  {
+    name: "Dr. Aman Patel",
+    role: "Veterinarian",
+    company: "Ocala Equine Hosp.",
+    tag: "Vendor",
+    email: "patel@oeh.com",
+    phone: "+1 352 555 0192",
+  },
+  {
+    name: "Hiroshi Yamamoto",
+    role: "Owner",
+    company: "Yamamoto Bloodstock",
+    tag: "Client",
+    email: "hy@yb.jp",
+    phone: "+81 90 4400 8821",
+  },
+  {
+    name: "Marie Dubois",
+    role: "Buyer",
+    company: "Haras Dubois",
+    tag: "Warm lead",
+    email: "marie@haras.fr",
+    phone: "+33 6 14 22 88 12",
+  },
+  {
+    name: "Tom Hartwell",
+    role: "Farrier",
+    company: "Hartwell Hoof Care",
+    tag: "Vendor",
+    email: "tom@hhc.us",
+    phone: "+1 352 555 0044",
+  },
 ];
 
 const stages = ["New", "Qualified", "Demo", "Negotiation", "Closed"];
@@ -30,8 +65,8 @@ function CRMPage() {
           <div className="eyebrow">Section G.1 · CRM</div>
           <h1 className="font-display text-4xl mt-1">Relationships pipeline</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Owners, buyers, vets, farriers and suppliers — every contact tied to
-            the horses and invoices they touch.
+            Owners, buyers, vets, farriers and suppliers — every contact tied to the horses and
+            invoices they touch.
           </p>
         </div>
         <button className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium inline-flex items-center gap-2">

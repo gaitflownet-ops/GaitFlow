@@ -6,7 +6,7 @@ import { Plus, GripVertical, Clock, User2, Filter } from "lucide-react";
 export const Route = createFileRoute("/tasks")({
   head: () => ({
     meta: [
-      { title: "Tasks — GateFlow" },
+      { title: "Tasks — GaitFlow" },
       { name: "description", content: "Daily task engine for your stable team." },
     ],
   }),
@@ -25,13 +25,68 @@ type Task = {
 };
 
 const seed: Task[] = [
-  { id: "t1", title: "Morning feeding — Block A", horse: "Northern Flame", assignee: "Carlos R.", due: "07:00", priority: "high", status: "Today" },
-  { id: "t2", title: "Lunge 25 min", horse: "Silver Aria", assignee: "Mia O.", due: "09:30", priority: "med", status: "Today" },
-  { id: "t3", title: "Farrier — front shoes", horse: "Royal Cadence", assignee: "Tom H.", due: "11:00", priority: "high", status: "In Progress" },
-  { id: "t4", title: "Vet recheck", horse: "Madeira", assignee: "Dr. Patel", due: "Tomorrow", priority: "med", status: "Backlog" },
-  { id: "t5", title: "Wash & braid", horse: "Northern Flame", assignee: "Sofia K.", due: "Fri", priority: "low", status: "Backlog" },
-  { id: "t6", title: "Update Coggins paperwork", assignee: "Marisol V.", due: "Done", priority: "med", status: "Done" },
-  { id: "t7", title: "Hand-walk 20 min", horse: "Lyra", assignee: "Carlos R.", due: "16:00", priority: "low", status: "In Progress" },
+  {
+    id: "t1",
+    title: "Morning feeding — Block A",
+    horse: "Northern Flame",
+    assignee: "Carlos R.",
+    due: "07:00",
+    priority: "high",
+    status: "Today",
+  },
+  {
+    id: "t2",
+    title: "Lunge 25 min",
+    horse: "Silver Aria",
+    assignee: "Mia O.",
+    due: "09:30",
+    priority: "med",
+    status: "Today",
+  },
+  {
+    id: "t3",
+    title: "Farrier — front shoes",
+    horse: "Royal Cadence",
+    assignee: "Tom H.",
+    due: "11:00",
+    priority: "high",
+    status: "In Progress",
+  },
+  {
+    id: "t4",
+    title: "Vet recheck",
+    horse: "Madeira",
+    assignee: "Dr. Patel",
+    due: "Tomorrow",
+    priority: "med",
+    status: "Backlog",
+  },
+  {
+    id: "t5",
+    title: "Wash & braid",
+    horse: "Northern Flame",
+    assignee: "Sofia K.",
+    due: "Fri",
+    priority: "low",
+    status: "Backlog",
+  },
+  {
+    id: "t6",
+    title: "Update Coggins paperwork",
+    assignee: "Marisol V.",
+    due: "Done",
+    priority: "med",
+    status: "Done",
+  },
+  {
+    id: "t7",
+    title: "Hand-walk 20 min",
+    horse: "Lyra",
+    assignee: "Carlos R.",
+    due: "16:00",
+    priority: "low",
+    status: "In Progress",
+  },
 ];
 
 const columns: Status[] = ["Backlog", "Today", "In Progress", "Done"];
@@ -53,8 +108,8 @@ function TasksPage() {
           <div className="eyebrow">Section D · Task Engine</div>
           <h1 className="font-display text-4xl mt-1">Today at the barn</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Drag tasks across columns to update status. Repeating templates feed the
-            collaborator and admin views automatically.
+            Drag tasks across columns to update status. Repeating templates feed the collaborator
+            and admin views automatically.
           </p>
         </div>
         <div className="flex gap-2">

@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown, AlertTriangle, Sparkles, Activity } from "luc
 
 /* =========================================================================
    Holt-Winters Predictive Intelligence — Visual Components
-   These components surface AI forecasts described in the GateFlow doc.
+   These components surface AI forecasts described in the GaitFlow doc.
    ========================================================================= */
 
 export function HWBadge({ children }: { children: React.ReactNode }) {
@@ -54,9 +54,7 @@ export function PriceForecastCard({
               95,
               Math.max(
                 5,
-                ((current - forecastLow * 0.7) /
-                  (forecastHigh * 1.3 - forecastLow * 0.7)) *
-                  100,
+                ((current - forecastLow * 0.7) / (forecastHigh * 1.3 - forecastLow * 0.7)) * 100,
               ),
             )}%`,
           }}
@@ -112,12 +110,7 @@ export function SeasonalRiskBar({
   label?: string;
 }) {
   const pct = (Math.max(0, Math.min(10, score)) / 10) * 100;
-  const tone =
-    score >= 7
-      ? "bg-destructive"
-      : score >= 4
-        ? "bg-[var(--gold)]"
-        : "bg-emerald-500";
+  const tone = score >= 7 ? "bg-destructive" : score >= 4 ? "bg-[var(--gold)]" : "bg-emerald-500";
   return (
     <div className="lux-card p-5">
       <div className="flex items-center justify-between mb-2">
@@ -222,11 +215,7 @@ export function RevenueForecastCard({
             <stop offset="100%" stopColor="var(--forest)" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <polyline
-          points={`0,${h} ${points} ${w},${h}`}
-          fill="url(#hw5-grad)"
-          stroke="none"
-        />
+        <polyline points={`0,${h} ${points} ${w},${h}`} fill="url(#hw5-grad)" stroke="none" />
         <polyline points={points} fill="none" stroke="var(--forest)" strokeWidth="2" />
         <line
           x1={split}

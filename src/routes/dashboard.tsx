@@ -37,7 +37,7 @@ import {
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — EquiSales" },
+      { title: "Dashboard — GaitFlow" },
       {
         name: "description",
         content: "The premium operating system for horse owners, farms, and trainers.",
@@ -231,7 +231,12 @@ function Dashboard() {
             daysRemaining={6}
             projectedConsumption="Avg 12 bags / month · auto-reorder ready"
           />
-          <PriceForecastCard current={185000} forecastLow={170000} forecastHigh={210000} trend="up" />
+          <PriceForecastCard
+            current={185000}
+            forecastLow={170000}
+            forecastHigh={210000}
+            trend="up"
+          />
           <GestationProbability probability={78} />
           <div className="lux-card p-5 bg-gradient-to-br from-[var(--forest)] to-[var(--forest-deep)] text-primary-foreground">
             <div className="eyebrow !text-primary-foreground/70">All-in summary</div>
@@ -239,8 +244,8 @@ function Dashboard() {
               5 predictive signals are favorable, 2 require action.
             </h3>
             <p className="mt-3 text-[13px] text-primary-foreground/80">
-              Open the Holt-Winters report for full breakdown across health,
-              breeding, nutrition, marketplace and finance.
+              Open the Holt-Winters report for full breakdown across health, breeding, nutrition,
+              marketplace and finance.
             </p>
           </div>
         </div>

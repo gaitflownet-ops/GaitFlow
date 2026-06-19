@@ -75,21 +75,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EquiSales — Premium Equine Platform" },
+      { title: "GaitFlow — Premium Equine Platform" },
       {
         name: "description",
         content:
           "The future operating system of the premium equine industry. Manage, track, and grow your equine operations.",
       },
-      { name: "author", content: "EquiSales" },
-      { property: "og:title", content: "EquiSales — Premium Equine Platform" },
+      { name: "author", content: "GaitFlow" },
+      { property: "og:title", content: "GaitFlow — Premium Equine Platform" },
       {
         property: "og:description",
         content: "The future operating system of the premium equine industry.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@EquiSales" },
+      { name: "twitter:site", content: "@GaitFlow" },
     ],
     links: [
       {

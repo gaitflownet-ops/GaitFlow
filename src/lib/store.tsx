@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer, type ReactNode } from
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import type { Database } from "./supabase.types";
+import type { UserRole } from "./supabase.types";
 import { useRealtimeSync } from "./hooks/useRealtimeSync";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -102,10 +103,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: user.id,
         name: meta.name || user.email?.split("@")[0] || "New User",
         role: meta.role || "Owner",
+        user_role: (meta.user_role as UserRole) || "OWNER",
+        stable_id: meta.stable_id || null,
         stable_name: meta.stable_name || null,
         initials: meta.initials || "US",
         phone: meta.phone || null,
+        mfa_enabled: false,
+        last_login_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
     };
 

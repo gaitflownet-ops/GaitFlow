@@ -10,8 +10,8 @@ const images = {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in — EquiSales" },
-      { name: "description", content: "Sign in to your EquiSales account." },
+      { title: "Sign in — GaitFlow" },
+      { name: "description", content: "Sign in to your GaitFlow account." },
     ],
   }),
   component: LoginPage,
@@ -74,7 +74,7 @@ function LoginPage() {
               ES
             </div>
             <div>
-              <div className="font-display text-2xl tracking-tight">EquiSales</div>
+              <div className="font-display text-2xl tracking-tight">GaitFlow</div>
               <div className="text-[10px] tracking-[0.22em] uppercase text-white/50">
                 Premium Equine Platform
               </div>
@@ -89,7 +89,7 @@ function LoginPage() {
             <div className="mt-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-white/20" />
               <span className="text-[11px] tracking-[0.2em] uppercase text-white/50">
-                EquiSales · 2026
+                GaitFlow · 2026
               </span>
             </div>
           </div>
@@ -117,13 +117,13 @@ function LoginPage() {
           <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] font-display text-[14px] font-semibold">
             ES
           </div>
-          <span className="font-display text-2xl text-white">EquiSales</span>
+          <span className="font-display text-2xl text-white">GaitFlow</span>
         </div>
 
         <div className="w-full max-w-[400px] animate-fade-up">
           <h1 className="font-display text-4xl text-white leading-tight">Welcome back.</h1>
           <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[15px]">
-            Sign in to your EquiSales account.
+            Sign in to your GaitFlow account.
           </p>
 
           {/* Forgot password */}
@@ -293,7 +293,7 @@ function LoginPage() {
 
               {/* Register link */}
               <p className="text-center text-[13px] text-[oklch(0.65_0.02_155)] mt-4">
-                New to EquiSales?{" "}
+                New to GaitFlow?{" "}
                 <Link
                   to="/register"
                   id="go-to-register"

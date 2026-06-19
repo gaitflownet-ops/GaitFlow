@@ -14,9 +14,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             to="/"
             className="font-display text-2xl tracking-tight text-foreground flex items-center gap-2 group"
           >
-            Equi
+            Gait
             <span className="text-primary group-hover:text-[var(--gold)] transition-colors">
-              Sales
+              Flow
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-[13px] font-medium tracking-wide">
@@ -77,7 +77,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-7xl px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-[13px]">
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="font-display text-2xl tracking-tight text-foreground">
-              EquiSales
+              GaitFlow
             </Link>
             <p className="mt-4 text-muted-foreground max-w-sm leading-relaxed">
               The digital infrastructure for the modern premium equine industry. Discover, manage,
@@ -137,7 +137,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="mx-auto max-w-7xl px-6 mt-16 pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-muted-foreground uppercase tracking-widest">
-          <span>&copy; {new Date().getFullYear()} EquiSales Platform</span>
+          <span>&copy; {new Date().getFullYear()} GaitFlow Platform</span>
           <div className="flex gap-6">
             <a href="#" className="hover:text-foreground transition-colors">
               Privacy

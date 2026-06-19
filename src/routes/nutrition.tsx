@@ -6,7 +6,7 @@ import { Leaf, Plus, Wheat, Droplet } from "lucide-react";
 export const Route = createFileRoute("/nutrition")({
   head: () => ({
     meta: [
-      { title: "Nutrition — GateFlow" },
+      { title: "Nutrition — GaitFlow" },
       { name: "description", content: "Personalized rations, supplements and feed inventory." },
     ],
   }),
@@ -34,8 +34,8 @@ function NutritionPage() {
           <div className="eyebrow">Section E · Nutrition & Wellness</div>
           <h1 className="font-display text-4xl mt-1">Personalized equine nutrition</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Rations, supplements, water tracking and feed inventory — predictive
-            restock powered by Holt-Winters.
+            Rations, supplements, water tracking and feed inventory — predictive restock powered by
+            Holt-Winters.
           </p>
         </div>
         <button className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium inline-flex items-center gap-2">

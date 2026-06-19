@@ -7,8 +7,8 @@ import { Bell, Trophy, Video, HeartPulse, Wrench, BellOff } from "lucide-react";
 export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
-      { title: "Notifications — EquiSales" },
-      { name: "description", content: "All your EquiSales notifications in one place." },
+      { title: "Notifications — GaitFlow" },
+      { name: "description", content: "All your GaitFlow notifications in one place." },
     ],
   }),
   component: Notifications,

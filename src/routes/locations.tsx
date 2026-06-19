@@ -5,7 +5,7 @@ import { MapPin, Home, Users, Plus } from "lucide-react";
 export const Route = createFileRoute("/locations")({
   head: () => ({
     meta: [
-      { title: "Locations & Teams — GateFlow" },
+      { title: "Locations & Teams — GaitFlow" },
       { name: "description", content: "Stalls, paddocks and team coverage." },
     ],
   }),
@@ -44,8 +44,7 @@ function LocationsPage() {
           <div className="eyebrow">Section F · Locations & Teams</div>
           <h1 className="font-display text-4xl mt-1">Where every horse lives</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Stall-by-stall occupancy across farms, with crew shifts and daily
-            coverage logs.
+            Stall-by-stall occupancy across farms, with crew shifts and daily coverage logs.
           </p>
         </div>
         <button className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium inline-flex items-center gap-2">

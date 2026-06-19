@@ -5,7 +5,7 @@ import { FolderLock, FileText, ShieldCheck, AlertTriangle, Upload } from "lucide
 export const Route = createFileRoute("/documents")({
   head: () => ({
     meta: [
-      { title: "Document Vault — GateFlow" },
+      { title: "Document Vault — GaitFlow" },
       { name: "description", content: "Secure vault for contracts, passports and registries." },
     ],
   }),
@@ -20,11 +20,41 @@ const categories = [
 ];
 
 const docs = [
-  { name: "Northern_Flame_USEF_Passport.pdf", owner: "Northern Flame", category: "Passport", expires: "Mar 2027", status: "valid" },
-  { name: "Coggins_Test_Royal_Cadence.pdf", owner: "Royal Cadence", category: "Vet", expires: "Jul 2026", status: "warning" },
-  { name: "Bill_of_Sale_Madeira_2024.pdf", owner: "Madeira", category: "Contract", expires: "—", status: "valid" },
-  { name: "Insurance_Policy_LiveOak.pdf", owner: "Live Oak Stables", category: "Insurance", expires: "Jan 2026", status: "expired" },
-  { name: "Stallion_Service_Contract_Vega.pdf", owner: "Vega Bloodstock", category: "Contract", expires: "Dec 2026", status: "valid" },
+  {
+    name: "Northern_Flame_USEF_Passport.pdf",
+    owner: "Northern Flame",
+    category: "Passport",
+    expires: "Mar 2027",
+    status: "valid",
+  },
+  {
+    name: "Coggins_Test_Royal_Cadence.pdf",
+    owner: "Royal Cadence",
+    category: "Vet",
+    expires: "Jul 2026",
+    status: "warning",
+  },
+  {
+    name: "Bill_of_Sale_Madeira_2024.pdf",
+    owner: "Madeira",
+    category: "Contract",
+    expires: "—",
+    status: "valid",
+  },
+  {
+    name: "Insurance_Policy_LiveOak.pdf",
+    owner: "Live Oak Stables",
+    category: "Insurance",
+    expires: "Jan 2026",
+    status: "expired",
+  },
+  {
+    name: "Stallion_Service_Contract_Vega.pdf",
+    owner: "Vega Bloodstock",
+    category: "Contract",
+    expires: "Dec 2026",
+    status: "valid",
+  },
 ];
 
 function DocumentsPage() {
@@ -35,8 +65,8 @@ function DocumentsPage() {
           <div className="eyebrow">Section G.2 · Document Vault</div>
           <h1 className="font-display text-4xl mt-1">Encrypted document vault</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Passports, registries, contracts and insurance with expiration tracking
-            and role-based access.
+            Passports, registries, contracts and insurance with expiration tracking and role-based
+            access.
           </p>
         </div>
         <button className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium inline-flex items-center gap-2">

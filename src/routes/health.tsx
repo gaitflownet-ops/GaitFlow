@@ -22,7 +22,7 @@ type HealthRecord = Database["public"]["Tables"]["health_records"]["Row"];
 export const Route = createFileRoute("/health")({
   head: () => ({
     meta: [
-      { title: "Health & Care — EquiSales" },
+      { title: "Health & Care — GaitFlow" },
       {
         name: "description",
         content: "Veterinary, farrier, and wellness records for your horses.",

@@ -10,8 +10,8 @@ const images = {
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Create account — EquiSales" },
-      { name: "description", content: "Join EquiSales — the premium equine platform." },
+      { title: "Create account — GaitFlow" },
+      { name: "description", content: "Join GaitFlow — the premium equine platform." },
     ],
   }),
   component: RegisterPage,
@@ -169,7 +169,7 @@ function RegisterPage() {
               ES
             </div>
             <div>
-              <div className="font-display text-2xl tracking-tight">EquiSales</div>
+              <div className="font-display text-2xl tracking-tight">GaitFlow</div>
               <div className="text-[10px] tracking-[0.22em] uppercase text-white/50">
                 Premium Equine Platform
               </div>
@@ -180,7 +180,7 @@ function RegisterPage() {
               Built for the world's finest horses.
             </p>
             <p className="mt-4 text-white/60 text-[15px] max-w-xs">
-              Join 140+ premium farms and studs using EquiSales to manage, track, and grow their
+              Join 140+ premium farms and studs using GaitFlow to manage, track, and grow their
               equine operations.
             </p>
           </div>
@@ -469,7 +469,7 @@ function RegisterPage() {
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      Launch EquiSales <ArrowRight className="h-4 w-4" />
+                      Launch GaitFlow <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>

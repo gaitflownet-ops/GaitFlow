@@ -6,7 +6,7 @@ import { Plus, Download, ArrowUpRight, ArrowDownRight } from "lucide-react";
 export const Route = createFileRoute("/finance")({
   head: () => ({
     meta: [
-      { title: "Finance — GateFlow" },
+      { title: "Finance — GaitFlow" },
       { name: "description", content: "Invoices, expenses and predictive cash flow." },
     ],
   }),
@@ -15,7 +15,13 @@ export const Route = createFileRoute("/finance")({
 
 const invoices = [
   { no: "INV-2026-0114", client: "Conti Equestrian", amount: 18500, status: "paid", due: "Mar 12" },
-  { no: "INV-2026-0115", client: "Yamamoto Bloodstock", amount: 42000, status: "sent", due: "Apr 02" },
+  {
+    no: "INV-2026-0115",
+    client: "Yamamoto Bloodstock",
+    amount: 42000,
+    status: "sent",
+    due: "Apr 02",
+  },
   { no: "INV-2026-0116", client: "Haras Dubois", amount: 7800, status: "overdue", due: "Feb 18" },
   { no: "INV-2026-0117", client: "Magnolia Training", amount: 11200, status: "draft", due: "—" },
   { no: "INV-2026-0118", client: "Conti Equestrian", amount: 3450, status: "paid", due: "Mar 28" },
@@ -36,8 +42,8 @@ function FinancePage() {
           <div className="eyebrow">Section H · Financial Core</div>
           <h1 className="font-display text-4xl mt-1">Financial cockpit</h1>
           <p className="text-muted-foreground mt-1 max-w-xl">
-            Invoices, expenses and Holt-Winters cash projection for the next six
-            months with anomaly detection.
+            Invoices, expenses and Holt-Winters cash projection for the next six months with anomaly
+            detection.
           </p>
         </div>
         <div className="flex gap-2">
