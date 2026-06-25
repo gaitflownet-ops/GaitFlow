@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Dna,
   MapPin,
+  MessageSquareQuote,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────
