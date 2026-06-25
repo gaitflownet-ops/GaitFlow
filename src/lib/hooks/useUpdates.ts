@@ -48,7 +48,12 @@ export function useUpdates(horseId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Update[];
+      return (data as Update[]).map((u) => {
+        if (u.media_url?.startsWith('/src/assets/')) {
+          u.media_url = u.media_url.replace('/src/assets/', '/media/');
+        }
+        return u;
+      });
     },
   });
 }

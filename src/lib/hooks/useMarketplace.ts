@@ -45,7 +45,12 @@ export function useListings(typeFilter?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as any[];
+      return (data as any[]).map((listing) => {
+        if (listing.horses && listing.horses.image_url?.startsWith('/src/assets/')) {
+          listing.horses.image_url = listing.horses.image_url.replace('/src/assets/', '/media/');
+        }
+        return listing;
+      });
     },
   });
 }

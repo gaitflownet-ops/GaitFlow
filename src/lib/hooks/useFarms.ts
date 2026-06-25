@@ -4,6 +4,13 @@ import type { Database } from "../supabase.types";
 
 export type Farm = Database["public"]["Tables"]["farms"]["Row"];
 
+export const mapFarmImageFallback = (f: Farm): Farm => {
+  if (f.cover_image_url?.startsWith('/src/assets/')) {
+    f.cover_image_url = f.cover_image_url.replace('/src/assets/', '/media/');
+  }
+  return f;
+};
+
 export function useFarms() {
   return useQuery<Farm[]>({
     queryKey: ["farms"],
@@ -14,7 +21,7 @@ export function useFarms() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Farm[];
+      return (data as Farm[]).map(mapFarmImageFallback);
     },
   });
 }
@@ -42,7 +49,7 @@ export function useFarm(slugOrId: string) {
         throw error;
       }
 
-      return data as unknown as Farm;
+      return mapFarmImageFallback(data as unknown as Farm);
     },
     enabled: !!slugOrId,
   });

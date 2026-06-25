@@ -14,7 +14,12 @@ export function useGenetics() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as GeneticItem[];
+      return (data as GeneticItem[]).map((g) => {
+        if (g.image_url?.startsWith('/src/assets/')) {
+          g.image_url = g.image_url.replace('/src/assets/', '/media/');
+        }
+        return g;
+      });
     },
   });
 }

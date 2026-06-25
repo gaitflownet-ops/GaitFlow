@@ -6,6 +6,9 @@ import { horses as mockHorses } from "../data";
 export type Horse = Database["public"]["Tables"]["horses"]["Row"];
 
 export const mapHorseImageFallback = (h: Horse): Horse => {
+  if (h.image_url?.startsWith('/src/assets/')) {
+    h.image_url = h.image_url.replace('/src/assets/', '/media/');
+  }
   if (h.name) {
     const nameLower = h.name.toLowerCase();
     if (nameLower.includes("carbonero")) {
