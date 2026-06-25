@@ -35,7 +35,7 @@ import { StableOperationsWidget } from "@/components/dashboard/StableOperationsW
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — EquiSales" },
+      { title: "Dashboard — GaitFlow" },
       {
         name: "description",
         content: "The premium operating system for horse owners, farms, and trainers.",

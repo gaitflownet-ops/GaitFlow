@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode, useMemo } from "react";
 import { supabase } from "./supabase";
 import type { Database } from "./supabase.types";
+import type { UserRole } from "./supabase.types";
 import { useRealtimeSync } from "./hooks/useRealtimeSync";
 import { loadOrCreateProfile } from "./auth-profile";
 import { useTasks } from "./hooks/useTasks";

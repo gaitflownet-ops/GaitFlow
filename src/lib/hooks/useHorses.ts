@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../supabase";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import type { Database } from "../supabase.types";
+import { horses as mockHorses } from "../data";
 
 export type Horse = Database["public"]["Tables"]["horses"]["Row"];
 
@@ -40,6 +41,13 @@ export function useHorse(slugOrId: string) {
   return useQuery<Horse>({
     queryKey: ["horse", slugOrId],
     queryFn: async () => {
+      if (!isSupabaseConfigured) {
+        const list = getLocalStorageHorses();
+        const found = list.find((h) => h.slug === slugOrId || h.id === slugOrId);
+        if (!found) throw new Error("Horse not found");
+        return found;
+      }
+
       // Try to fetch by slug first, then ID
       const { data: horseBySlug, error } = await (supabase
         .from("horses") as any)
@@ -97,6 +105,25 @@ export function useUpdateHorse() {
       id: string;
       updates: Database["public"]["Tables"]["horses"]["Update"];
     }) => {
+      if (!isSupabaseConfigured) {
+        const list = getLocalStorageHorses();
+        const index = list.findIndex((h) => h.id === id);
+        if (index === -1) throw new Error("Horse not found");
+        
+        const existing = list[index];
+        const updatedHorse: Horse = {
+          ...existing,
+          ...updates,
+          // Deep merge ownership history if updated
+          ownership_history: updates.ownership_history !== undefined ? updates.ownership_history : existing.ownership_history,
+        } as Horse;
+
+        const updatedList = [...list];
+        updatedList[index] = updatedHorse;
+        saveLocalStorageHorses(updatedList);
+        return updatedHorse;
+      }
+
       const { data, error } = await (supabase.from("horses") as any)
         .update(updates)
         .eq("id", id)

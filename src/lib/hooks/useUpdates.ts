@@ -1,8 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../supabase";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import type { Database } from "../supabase.types";
+import { updates as mockUpdates } from "../data";
 
 export type Update = Database["public"]["Tables"]["updates"]["Row"];
+
+// Initial mapped data for updates fallback
+const seededUpdates: Update[] = mockUpdates.map((u) => ({
+  id: u.id,
+  horse_id: u.horseId,
+  owner_id: "00000000-0000-0000-0000-000000000000",
+  type: u.type,
+  title: u.title,
+  body: u.body,
+  media_url: u.media || null,
+  likes: u.likes ?? 0,
+  comments: u.comments ?? 0,
+  by: u.by,
+  at: u.at,
+  created_at: new Date().toISOString(),
+}));
+
+function getLocalStorageUpdates(): Update[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem("gaitflow_updates");
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  localStorage.setItem("gaitflow_updates", JSON.stringify(seededUpdates));
+  return seededUpdates;
+}
+
+function saveLocalStorageUpdates(list: Update[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("gaitflow_updates", JSON.stringify(list));
+}
 
 export function useUpdates(horseId?: string) {
   return useQuery<Update[]>({

@@ -356,7 +356,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {/* Mobile bottom nav */}
           <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-full bg-sidebar text-sidebar-foreground px-2 py-2 shadow-[var(--shadow-lift)]">
-            {nav.map(({ to, label, icon: Icon }) => {
+            {nav.slice(0, 5).map(({ to, label, icon: Icon }) => {
               const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
               return (
                 <Link

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../supabase";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import type { Database } from "../supabase.types";
+import { healthRecords as mockHealth } from "../data";
 
 export type HealthRecord = Database["public"]["Tables"]["health_records"]["Row"];
 
