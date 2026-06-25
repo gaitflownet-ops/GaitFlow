@@ -32,8 +32,7 @@ export function profileFromAuthUser(user: User): ProfileUpsert {
 }
 
 export async function upsertProfile(profile: ProfileUpsert) {
-  const { data, error } = await supabase
-    .from("profiles")
+  const { data, error } = await (supabase.from("profiles") as any)
     .upsert(profile, { onConflict: "id" })
     .select("*")
     .single();
@@ -43,8 +42,7 @@ export async function upsertProfile(profile: ProfileUpsert) {
 }
 
 export async function loadOrCreateProfile(user: User): Promise<Profile> {
-  const { data: existingProfile, error: selectError } = await supabase
-    .from("profiles")
+  const { data: existingProfile, error: selectError } = await (supabase.from("profiles") as any)
     .select("*")
     .eq("id", user.id)
     .maybeSingle();

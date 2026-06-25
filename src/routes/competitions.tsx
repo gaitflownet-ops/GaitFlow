@@ -11,8 +11,8 @@ import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
 export const Route = createFileRoute("/competitions")({
   head: () => ({
     meta: [
-      { title: "Competitions — EquiSales" },
-      { name: "description", content: "A championship-grade record of every result." },
+      { title: "Ferias / Pistas — GaitFlow" },
+      { name: "description", content: "Un registro de nivel de campeonato para cada resultado." },
     ],
   }),
   component: Competitions,
@@ -25,11 +25,22 @@ function Competitions() {
   const { data: competitions = [], isLoading, isError, error, refetch } = useCompetitions();
   const { data: horses = [] } = useHorses();
 
-  const wins = competitions.filter(
-    (c) => c.placement === "1st" || c.placement === "Champion",
-  ).length;
+  const wins = competitions.filter((c) => {
+    const p = (c.placement || "").toLowerCase();
+    return p.includes("1") || p.includes("azul") || p.includes("champ") || p.includes("campe") || p.includes("primer");
+  }).length;
 
-  const earnings = competitions.reduce((sum, c) => {
+  const top3 = competitions.filter((c) => {
+    const p = (c.placement || "").toLowerCase();
+    return (
+      p.includes("1") || p.includes("2") || p.includes("3") ||
+      p.includes("azul") || p.includes("roja") || p.includes("amarilla") ||
+      p.includes("primer") || p.includes("segundo") || p.includes("tercer") ||
+      p.includes("champ") || p.includes("campe")
+    );
+  }).length;
+
+  const totalPoints = competitions.reduce((sum, c) => {
     if (!c.prize) return sum;
     const amount = parseInt(c.prize.replace(/\D/g, ""), 10);
     return isNaN(amount) ? sum : sum + amount;
@@ -39,10 +50,10 @@ function Competitions() {
     <AppShell>
       <div className="flex items-baseline justify-between">
         <div>
-          <div className="eyebrow">Season 2026</div>
-          <h1 className="font-display text-4xl lg:text-5xl mt-2">Competition history</h1>
+          <div className="eyebrow">Temporada 2026</div>
+          <h1 className="font-display text-4xl lg:text-5xl mt-2">Historial de Ferias / Pistas</h1>
           <p className="text-muted-foreground mt-3 max-w-xl text-[15px]">
-            Every start, every placing, every prize — captured to grow the value of each horse.
+            Cada salida, cada puesto, cada premio — capturado para aumentar el valor de cada ejemplar.
           </p>
         </div>
         <button
@@ -50,17 +61,17 @@ function Competitions() {
           onClick={() => setAddOpen(true)}
           className="hidden md:inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95"
         >
-          <Plus className="h-4 w-4" /> Log result
+          <Plus className="h-4 w-4" /> Registrar resultado
         </button>
       </div>
 
       {/* Stats */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { k: "Starts", v: competitions.length },
-          { k: "Wins & Championships", v: wins },
-          { k: "Top 3 finishes", v: competitions.length }, // Ideally, count top 3 logic here
-          { k: "Total earnings", v: `$${earnings.toLocaleString()}` },
+          { k: "Salidas", v: competitions.length },
+          { k: "Victorias y Campeonatos", v: wins },
+          { k: "Podios (Top 3)", v: top3 },
+          { k: "Puntos Totales", v: `${totalPoints.toLocaleString()} Pts` },
         ].map((s) => (
           <div key={s.k} className="lux-card p-5">
             <div className="eyebrow">{s.k}</div>
@@ -72,15 +83,15 @@ function Competitions() {
       {/* Table */}
       <div className="mt-10 lux-card overflow-hidden min-h-[400px]">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-display text-xl">All results</h2>
-          <span className="text-[12px] text-muted-foreground">Click any row to expand</span>
+          <h2 className="font-display text-xl">Todos los resultados</h2>
+          <span className="text-[12px] text-muted-foreground">Haz clic en cualquier fila para expandir</span>
         </div>
         <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[80px_1fr_1fr_1fr_120px_32px] gap-x-6 px-6 py-4 text-[11px] uppercase tracking-[0.16em] text-muted-foreground border-b border-border">
-          <span>Result</span>
-          <span>Event</span>
-          <span className="hidden md:block">Horse · Rider</span>
-          <span className="hidden md:block">Category</span>
-          <span className="text-right">Prize</span>
+          <span>Resultado</span>
+          <span>Evento</span>
+          <span className="hidden md:block">Ejemplar · Montador</span>
+          <span className="hidden md:block">Categoría</span>
+          <span className="text-right">Premio</span>
           <span className="hidden md:block" />
         </div>
 
@@ -94,29 +105,29 @@ function Competitions() {
               <AlertCircle className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="font-display text-2xl">Could not load competitions</h3>
+              <h3 className="font-display text-2xl">No se pudieron cargar las ferias</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {error instanceof Error ? error.message : "Check your Supabase connection."}
+                {error instanceof Error ? error.message : "Verifica tu conexión a Supabase."}
               </p>
               <button
                 onClick={() => refetch()}
                 className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
-                Try again
+                Intentar de nuevo
               </button>
             </div>
           </div>
         ) : competitions.length === 0 ? (
           <div className="p-12 text-center">
-            <h3 className="font-display text-2xl">No results yet</h3>
+            <h3 className="font-display text-2xl">Sin resultados aún</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Log the first competition result to start building performance history.
+              Registra el primer resultado de feria para empezar a construir el historial de rendimiento.
             </p>
             <button
               onClick={() => setAddOpen(true)}
               className="mt-5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
             >
-              Log result
+              Registrar resultado
             </button>
           </div>
         ) : (

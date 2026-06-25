@@ -14,12 +14,14 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as FinancialsRouteImport } from './routes/financials'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
@@ -32,6 +34,7 @@ import { Route as ShowcaseHorseIdRouteImport } from './routes/showcase.$horseId'
 import { Route as MarketplaceStallionsRouteImport } from './routes/marketplace.stallions'
 import { Route as MarketplaceSalesRouteImport } from './routes/marketplace.sales'
 import { Route as MarketplaceGeneticsRouteImport } from './routes/marketplace.genetics'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as HorsesHorseIdRouteImport } from './routes/horses_.$horseId'
 import { Route as FarmsFarmIdRouteImport } from './routes/farms.$farmId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -59,6 +62,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NutritionRoute = NutritionRouteImport.update({
@@ -89,6 +97,11 @@ const HealthRoute = HealthRouteImport.update({
 const FinancialsRoute = FinancialsRouteImport.update({
   id: '/financials',
   path: '/financials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -151,6 +164,11 @@ const MarketplaceGeneticsRoute = MarketplaceGeneticsRouteImport.update({
   path: '/marketplace/genetics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HorsesHorseIdRoute = HorsesHorseIdRouteImport.update({
   id: '/horses_/$horseId',
   path: '/horses/$horseId',
@@ -173,12 +191,14 @@ export interface FileRoutesByFullPath {
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/nutrition': typeof NutritionRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -187,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
@@ -201,12 +222,14 @@ export interface FileRoutesByTo {
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/nutrition': typeof NutritionRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -215,6 +238,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
@@ -230,12 +254,14 @@ export interface FileRoutesById {
   '/competitions': typeof CompetitionsRoute
   '/crm': typeof CrmRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/financials': typeof FinancialsRoute
   '/health': typeof HealthRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/nutrition': typeof NutritionRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -244,6 +270,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses_/$horseId': typeof HorsesHorseIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
@@ -260,12 +287,14 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/crm'
     | '/dashboard'
+    | '/demo'
     | '/financials'
     | '/health'
     | '/locations'
     | '/login'
     | '/notifications'
     | '/nutrition'
+    | '/profile'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -274,6 +303,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses/$horseId'
+    | '/invite/$token'
     | '/marketplace/genetics'
     | '/marketplace/sales'
     | '/marketplace/stallions'
@@ -288,12 +318,14 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/crm'
     | '/dashboard'
+    | '/demo'
     | '/financials'
     | '/health'
     | '/locations'
     | '/login'
     | '/notifications'
     | '/nutrition'
+    | '/profile'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -302,6 +334,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses/$horseId'
+    | '/invite/$token'
     | '/marketplace/genetics'
     | '/marketplace/sales'
     | '/marketplace/stallions'
@@ -316,12 +349,14 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/crm'
     | '/dashboard'
+    | '/demo'
     | '/financials'
     | '/health'
     | '/locations'
     | '/login'
     | '/notifications'
     | '/nutrition'
+    | '/profile'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -330,6 +365,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/farms/$farmId'
     | '/horses_/$horseId'
+    | '/invite/$token'
     | '/marketplace/genetics'
     | '/marketplace/sales'
     | '/marketplace/stallions'
@@ -345,12 +381,14 @@ export interface RootRouteChildren {
   CompetitionsRoute: typeof CompetitionsRoute
   CrmRoute: typeof CrmRoute
   DashboardRoute: typeof DashboardRoute
+  DemoRoute: typeof DemoRoute
   FinancialsRoute: typeof FinancialsRoute
   HealthRoute: typeof HealthRoute
   LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   NutritionRoute: typeof NutritionRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -359,6 +397,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   FarmsFarmIdRoute: typeof FarmsFarmIdRoute
   HorsesHorseIdRoute: typeof HorsesHorseIdRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   MarketplaceGeneticsRoute: typeof MarketplaceGeneticsRoute
   MarketplaceSalesRoute: typeof MarketplaceSalesRoute
   MarketplaceStallionsRoute: typeof MarketplaceStallionsRoute
@@ -405,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nutrition': {
       id: '/nutrition'
       path: '/nutrition'
@@ -445,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/financials'
       fullPath: '/financials'
       preLoaderRoute: typeof FinancialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -531,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceGeneticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/horses_/$horseId': {
       id: '/horses_/$horseId'
       path: '/horses/$horseId'
@@ -561,12 +621,14 @@ const rootRouteChildren: RootRouteChildren = {
   CompetitionsRoute: CompetitionsRoute,
   CrmRoute: CrmRoute,
   DashboardRoute: DashboardRoute,
+  DemoRoute: DemoRoute,
   FinancialsRoute: FinancialsRoute,
   HealthRoute: HealthRoute,
   LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   NutritionRoute: NutritionRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
@@ -575,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   FarmsFarmIdRoute: FarmsFarmIdRoute,
   HorsesHorseIdRoute: HorsesHorseIdRoute,
+  InviteTokenRoute: InviteTokenRoute,
   MarketplaceGeneticsRoute: MarketplaceGeneticsRoute,
   MarketplaceSalesRoute: MarketplaceSalesRoute,
   MarketplaceStallionsRoute: MarketplaceStallionsRoute,

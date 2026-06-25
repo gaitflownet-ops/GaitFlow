@@ -30,8 +30,7 @@ export function useUpdateProfile() {
       id: string;
       updates: Database["public"]["Tables"]["profiles"]["Update"];
     }) => {
-      const { data, error } = await supabase
-        .from("profiles")
+      const { data, error } = await (supabase.from("profiles") as any)
         .update(updates)
         .eq("id", id)
         .select("*")

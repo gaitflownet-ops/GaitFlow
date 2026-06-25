@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, ArrowLeft, Loader2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { buildProfileInput, upsertProfile } from "@/lib/auth-profile";
+import { insertLeadCapture, storeUTM } from "@/lib/leads";
 
 const images = {
   farm: "https://images.unsplash.com/photo-1500217032126-787114c000d6?auto=format&fit=crop&q=80",
@@ -11,8 +12,11 @@ const images = {
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Create account — EquiSales" },
-      { name: "description", content: "Join EquiSales — the premium equine platform." },
+      { title: "Crear Criadero — GaitFlow" },
+      {
+        name: "description",
+        content: "Registra tu criadero en GaitFlow — la plataforma élite para el Caballo Criollo Colombiano.",
+      },
     ],
   }),
   component: RegisterPage,
@@ -21,10 +25,26 @@ export const Route = createFileRoute("/register")({
 type Role = "Owner" | "Trainer" | "Farm" | "Farrier" | "Vet";
 
 const roles: { value: Role; label: string; description: string }[] = [
-  { value: "Owner", label: "Horse Owner", description: "Manage and track your horses" },
-  { value: "Trainer", label: "Trainer", description: "Log sessions and competitions" },
-  { value: "Farm", label: "Farm / Stable", description: "Full operations for your operation" },
-  { value: "Farrier", label: "Farrier / Vet", description: "Record visits and health data" },
+  {
+    value: "Owner",
+    label: "Criador / Propietario",
+    description: "Maneja tus ejemplares, cruces y la administración general de tu criadero",
+  },
+  {
+    value: "Trainer",
+    label: "Montador / Chalán",
+    description: "Registra los entrenamientos, arrendadas y salidas a pista",
+  },
+  {
+    value: "Farm",
+    label: "Administrador / Mayordomo",
+    description: "Control total operativo de la finca, personal y labores diarias",
+  },
+  {
+    value: "Vet",
+    label: "Médico Veterinario",
+    description: "Lleva las hojas clínicas, palpaciones y cronogramas de sanidad",
+  },
 ];
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -92,7 +112,7 @@ function RegisterPage() {
     }
 
     const appUrl = typeof window !== "undefined" ? window.location.origin : undefined;
-    const profileName = name || "New User";
+    const profileName = name || "Usuario CCC";
     const safeRole = role ?? "Owner";
 
     const profileInput = buildProfileInput({
@@ -110,7 +130,7 @@ function RegisterPage() {
       options: {
         data: {
           name: profileName,
-          role: safeRole,
+          role: safeRole === "Owner" ? "Propietario" : safeRole, // Mapeo si es necesario
           stable_name: stable || null,
           phone: phone || null,
           initials: profileInput.initials,
@@ -143,7 +163,18 @@ function RegisterPage() {
       return;
     }
 
-    navigate({ to: "/dashboard" });
+    // Log lead capture in DB (non-fatal)
+    storeUTM();
+    await insertLeadCapture({
+      full_name: profileName,
+      email,
+      stable_name: stable || undefined,
+      plan_interest: undefined,
+      form_type: "registration",
+      profile_id: data.user.id,
+    });
+
+    navigate({ to: "/dashboard", search: { onboarding: "true" } });
   };
 
   const inputClass =
@@ -157,31 +188,30 @@ function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.14_0.025_155/0.92)] to-transparent" />
         <div className="relative flex flex-col justify-between p-12 text-white h-full">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] font-display text-[16px] font-semibold">
-              ES
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--gold)] text-[oklch(0.18_0.018_60)] font-display text-[14px] font-semibold">
+              GF
             </div>
             <div>
-              <div className="font-display text-2xl tracking-tight">EquiSales</div>
+              <div className="font-display text-2xl tracking-tight">GaitFlow</div>
               <div className="text-[10px] tracking-[0.22em] uppercase text-white/50">
-                Premium Equine Platform
+                Plataforma de Operaciones Equinas
               </div>
             </div>
           </div>
           <div>
             <p className="font-display text-5xl text-white leading-[1.05] max-w-xs">
-              Built for the world's finest horses.
+              Hecho para los criaderos más exigentes.
             </p>
             <p className="mt-4 text-white/60 text-[15px] max-w-xs">
-              Join 140+ premium farms and studs using EquiSales to manage, track, and grow their
-              equine operations.
+              Únete a más de 140 criaderos élite que usan GaitFlow para potenciar sus reproductores, llevar el día a día de sus fincas y llegar preparados a las grandes ferias.
             </p>
           </div>
           <div className="space-y-3">
             {[
-              "Unlimited horse profiles",
-              "Competition tracking & analytics",
-              "Team collaboration tools",
-              "Health & wellness records",
+              "Historial médico y calendario de sanidad",
+              "Gestión de personal y labores de pesebreras",
+              "Control de saltos, receptoras y destetes",
+              "Proyección financiera y costos por ejemplar",
             ].map((f) => (
               <div key={f} className="flex items-center gap-3">
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">
@@ -201,11 +231,11 @@ function RegisterPage() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] font-display text-[13px] font-semibold lg:hidden">
-                  ES
+                <div className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--gold)] text-[oklch(0.18_0.018_60)] font-display text-[13px] font-semibold lg:hidden">
+                  GF
                 </div>
                 <span className="text-[11px] tracking-[0.2em] uppercase text-[oklch(0.65_0.02_155)]">
-                  Step {step} of {totalSteps}
+                  Paso {step} de {totalSteps}
                 </span>
               </div>
               <span className="text-[11px] text-[oklch(0.5_0.02_155)]">
@@ -223,9 +253,9 @@ function RegisterPage() {
           {/* Step 1: Role */}
           {step === 1 && (
             <div className="animate-fade-up">
-              <h1 className="font-display text-3xl text-white">I am a…</h1>
+              <h1 className="font-display text-3xl text-white">¿Cuál es tu cargo?</h1>
               <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[14px]">
-                Choose the role that best describes you.
+                Selecciona el rol principal que desempeñas en la finca.
               </p>
               <div className="mt-6 space-y-3">
                 {roles.map(({ value, label, description }) => (
@@ -261,7 +291,7 @@ function RegisterPage() {
                 onClick={() => setStep(2)}
                 className="w-full mt-6 flex items-center justify-center gap-2 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] py-3.5 text-[15px] font-semibold hover:opacity-95 transition-opacity disabled:opacity-40"
               >
-                Continue <ArrowRight className="h-4 w-4" />
+                Siguiente Paso <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -269,46 +299,57 @@ function RegisterPage() {
           {/* Step 2: Profile */}
           {step === 2 && (
             <div className="animate-fade-up">
-              <h1 className="font-display text-3xl text-white">Your profile</h1>
+              <h1 className="font-display text-3xl text-white">Tu Perfil</h1>
               <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[14px]">
-                Tell us about you and your operation.
+                Cuéntanos sobre ti y tu criadero.
               </p>
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Full name
+                    Nombre Completo
                   </label>
                   <input
                     id="register-name"
                     className={inputClass}
-                    placeholder="Marisol Vega"
+                    placeholder="Mario Gaviria"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Stable / Farm name
+                    Nombre del Criadero
                   </label>
                   <input
                     id="register-stable"
                     className={inputClass}
-                    placeholder="Live Oak Stables"
+                    placeholder="Criadero San Juan"
                     value={stable}
                     onChange={(e) => setStable(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Phone number
+                    Teléfono Celular
                   </label>
                   <input
                     id="register-phone"
                     className={inputClass}
-                    placeholder="+1 (352) 555-0000"
+                    placeholder="300 123 4567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     type="tel"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
+                    Ubicación (Dpto / Ciudad)
+                  </label>
+                  <input
+                    id="register-location"
+                    className={inputClass}
+                    placeholder="Antioquia, Rionegro"
+                    onChange={(e) => {}}
                   />
                 </div>
               </div>
@@ -317,7 +358,7 @@ function RegisterPage() {
                   onClick={() => setStep(1)}
                   className="flex items-center gap-1.5 rounded-full bg-[oklch(0.2_0.03_155)] text-white px-5 py-3 text-sm hover:bg-[oklch(0.24_0.035_155)]"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  <ArrowLeft className="h-4 w-4" /> Volver
                 </button>
                 <button
                   id="register-next-2"
@@ -325,7 +366,7 @@ function RegisterPage() {
                   disabled={!name}
                   className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] py-3 text-[15px] font-semibold hover:opacity-95 disabled:opacity-40"
                 >
-                  Continue <ArrowRight className="h-4 w-4" />
+                  Siguiente <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -334,46 +375,46 @@ function RegisterPage() {
           {/* Step 3: Account */}
           {step === 3 && (
             <div className="animate-fade-up">
-              <h1 className="font-display text-3xl text-white">Account details</h1>
+              <h1 className="font-display text-3xl text-white">Datos de Acceso</h1>
               <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[14px]">
-                Create your login credentials.
+                Crea tus credenciales para ingresar a la plataforma.
               </p>
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Email address
+                    Correo Electrónico
                   </label>
                   <input
                     id="register-email"
                     type="email"
                     className={inputClass}
-                    placeholder="you@stablename.com"
+                    placeholder="tucorreo@criadero.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Password
+                    Contraseña
                   </label>
                   <input
                     id="register-password"
                     type="password"
                     className={inputClass}
-                    placeholder="min. 8 characters"
+                    placeholder="Mínimo 8 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] tracking-widest uppercase text-[oklch(0.65_0.02_155)] mb-1.5">
-                    Confirm password
+                    Confirmar Contraseña
                   </label>
                   <input
                     id="register-confirm"
                     type="password"
                     className={inputClass}
-                    placeholder="repeat password"
+                    placeholder="Repite la contraseña"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                   />
@@ -384,7 +425,7 @@ function RegisterPage() {
                   onClick={() => setStep(2)}
                   className="flex items-center gap-1.5 rounded-full bg-[oklch(0.2_0.03_155)] text-white px-5 py-3 text-sm hover:bg-[oklch(0.24_0.035_155)]"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  <ArrowLeft className="h-4 w-4" /> Volver
                 </button>
                 <button
                   id="register-next-3"
@@ -396,7 +437,7 @@ function RegisterPage() {
                   }
                   className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] py-3 text-[15px] font-semibold hover:opacity-95 disabled:opacity-40"
                 >
-                  Continue <ArrowRight className="h-4 w-4" />
+                  Continuar <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -405,16 +446,16 @@ function RegisterPage() {
           {/* Step 4: Confirm */}
           {step === 4 && (
             <div className="animate-fade-up">
-              <h1 className="font-display text-3xl text-white">Almost there.</h1>
+              <h1 className="font-display text-3xl text-white">¡Casi listos!</h1>
               <p className="mt-2 text-[oklch(0.65_0.02_155)] text-[14px]">
-                Review your details and launch your account.
+                Revisa tus datos antes de abrir las puertas de tu cuenta.
               </p>
               <div className="mt-6 rounded-2xl border border-[oklch(0.28_0.04_155)] bg-[oklch(0.18_0.03_155)] divide-y divide-[oklch(0.28_0.04_155)]">
                 {[
-                  { k: "Role", v: role },
-                  { k: "Name", v: name },
-                  { k: "Stable", v: stable || "—" },
-                  { k: "Email", v: email },
+                  { k: "Cargo", v: roles.find(r => r.value === role)?.label || role },
+                  { k: "Nombre", v: name },
+                  { k: "Criadero", v: stable || "—" },
+                  { k: "Correo", v: email },
                 ].map(({ k, v }) => (
                   <div key={k} className="flex items-center justify-between px-5 py-3">
                     <span className="text-[12px] text-[oklch(0.65_0.02_155)]">{k}</span>
@@ -430,12 +471,7 @@ function RegisterPage() {
                   <p className="mt-2 text-[13px] text-[oklch(0.75_0.02_155)]">
                     Enviamos las instrucciones a{" "}
                     <span className="font-medium text-white">{confirmationEmail || email}</span>.
-                    Cuando hagas clic en el enlace, volverás a la app y podrás iniciar sesión.
-                  </p>
-                  <p className="mt-3 text-[12px] text-[oklch(0.65_0.02_155)]">
-                    Si no ves el correo en pocos minutos, revisa la carpeta de spam. Si quieres
-                    probar la app sin email, desactiva "Confirm sign up" en Auth &gt; Settings de
-                    Supabase y vuelve a intentarlo.
+                    Cuando hagas clic en el enlace, volverás a la plataforma y podrás iniciar sesión.
                   </p>
                 </div>
               )}
@@ -449,7 +485,7 @@ function RegisterPage() {
                   onClick={() => setStep(3)}
                   className="flex items-center gap-1.5 rounded-full bg-[oklch(0.2_0.03_155)] text-white px-5 py-3 text-sm hover:bg-[oklch(0.24_0.035_155)]"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  <ArrowLeft className="h-4 w-4" /> Volver
                 </button>
                 <button
                   id="register-submit"
@@ -461,7 +497,7 @@ function RegisterPage() {
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      Launch EquiSales <ArrowRight className="h-4 w-4" />
+                      Registrar Criadero <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>
@@ -470,13 +506,13 @@ function RegisterPage() {
           )}
 
           <p className="mt-8 text-center text-[13px] text-[oklch(0.65_0.02_155)]">
-            Already have an account?{" "}
+            ¿Ya tienes un criadero registrado?{" "}
             <Link
               to="/login"
               id="go-to-login"
               className="text-[var(--gold)] hover:underline font-medium"
             >
-              Sign in
+              Ingresa aquí
             </Link>
           </p>
         </div>

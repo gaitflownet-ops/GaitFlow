@@ -17,11 +17,11 @@ function StallionsMarketplace() {
       <div className="max-w-7xl mx-auto px-6 py-20 w-full">
         <div className="mb-16">
           <div className="inline-block px-3 py-1 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-[10px] tracking-widest uppercase mb-4 flex items-center gap-2 w-max">
-            <Flame className="h-3 w-3" /> Breeding
+            <Flame className="h-3 w-3" /> Reproducción
           </div>
-          <h1 className="font-display text-5xl md:text-6xl">Elite Stallions</h1>
+          <h1 className="font-display text-5xl md:text-6xl">Reproductores de Élite</h1>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-            World-class sires offering proven genetics and exceptional progeny records.
+            Reproductores de clase mundial que ofrecen genética comprobada y registros de cría excepcionales.
           </p>
         </div>
 
@@ -60,13 +60,13 @@ function StallionsMarketplace() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
-                        Stud Fee
+                        Valor del Salto
                       </div>
-                      <div className="font-display text-xl">{horse.price || "Private Treaty"}</div>
+                      <div className="font-display text-xl">{horse.price || "Acuerdo Privado"}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
-                        Standing at
+                        Se encuentra en
                       </div>
                       <div className="text-sm">
                         {(horse.location || "USA").split("·")[0]?.trim() || "USA"}

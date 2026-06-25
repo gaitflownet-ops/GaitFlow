@@ -36,28 +36,17 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function test() {
   try {
-    // 1. Try querying profiles table
-    console.log("Querying profiles table...");
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("*")
-      .limit(5);
+    console.log("Querying ccc_nutrition_plans table...");
+    const { data: plans, error: plansError } = await supabase
+      .from("ccc_nutrition_plans")
+      .select("*, items:ccc_nutrition_items(*)");
 
-    if (profilesError) {
-      console.error("Error querying profiles:", profilesError);
+    if (plansError) {
+      console.error("Error querying plans:", plansError);
     } else {
-      console.log("Profiles query success! Count:", profiles?.length);
-      console.log("Profiles:", profiles);
-    }
-
-    // 2. Query horses
-    console.log("Querying horses table...");
-    const { data: horses, error: horsesError } = await supabase.from("horses").select("*").limit(5);
-
-    if (horsesError) {
-      console.error("Error querying horses:", horsesError);
-    } else {
-      console.log("Horses query success! Count:", horses?.length);
+      console.log("Plans query success! Count:", plans?.length);
+      console.log("Plans & Items Details:");
+      console.log(JSON.stringify(plans, null, 2));
     }
   } catch (err) {
     console.error("Exception occurred:", err);

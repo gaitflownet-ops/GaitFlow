@@ -16,13 +16,23 @@ const moneyToNumber = (value: string | null) => {
 const isWinningPlacement = (placement: string | null) => {
   if (!placement) return false;
   const normalized = placement.toLowerCase();
-  return normalized === "1st" || normalized.includes("champion") || normalized.includes("winner");
+  return (
+    normalized === "1st" || 
+    normalized.includes("champion") || 
+    normalized.includes("winner") || 
+    normalized.includes("campe") || 
+    normalized.includes("azul") || 
+    normalized.includes("1") || 
+    normalized.includes("primer")
+  );
 };
 
 const isTopThreePlacement = (placement: string | null) => {
   if (!placement) return false;
+  const normalized = placement.toLowerCase();
   return (
-    ["1st", "2nd", "3rd"].some((rank) => placement.includes(rank)) || isWinningPlacement(placement)
+    ["1st", "2nd", "3rd", "1", "2", "3", "primer", "segundo", "tercer", "azul", "roja", "amarilla"].some((rank) => normalized.includes(rank)) || 
+    isWinningPlacement(placement)
   );
 };
 

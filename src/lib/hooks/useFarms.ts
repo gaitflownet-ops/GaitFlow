@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Database } from "../supabase.types";
 
@@ -45,5 +45,24 @@ export function useFarm(slugOrId: string) {
       return data as unknown as Farm;
     },
     enabled: !!slugOrId,
+  });
+}
+
+export function useCreateFarm() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (farm: Omit<Database["public"]["Tables"]["farms"]["Insert"], "id">) => {
+      const { data, error } = await (supabase as any)
+        .from("farms")
+        .insert([farm as any])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["farms"] });
+    },
   });
 }

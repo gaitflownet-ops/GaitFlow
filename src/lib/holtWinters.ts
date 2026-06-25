@@ -1,7 +1,7 @@
 /**
  * Holt-Winters Triple Exponential Smoothing Implementation
- * 
- * This module provides the predictive intelligence layer for GateFlow.
+ *
+ * This module provides the predictive intelligence layer for GaitFlow.
  * It's used across multiple modules: Price Forecasting, Gestation Probability,
  * Health Risk Index, Feed Demand, and Financial Revenue/Expense projections.
  */
@@ -20,7 +20,7 @@ export interface HWForecast {
 
 export interface HWOptions {
   alpha: number; // Data smoothing factor (0-1)
-  beta: number;  // Trend smoothing factor (0-1)
+  beta: number; // Trend smoothing factor (0-1)
   gamma: number; // Seasonal smoothing factor (0-1)
   seasonLength: number; // Number of periods in a season
   m?: number; // Number of periods to forecast ahead (default 1)
@@ -28,7 +28,7 @@ export interface HWOptions {
 
 /**
  * Calculates Holt-Winters Triple Exponential Smoothing
- * 
+ *
  * @param series - Array of numerical data points (must be at least 2 complete seasons)
  * @param options - HW configuration options
  * @returns Array of forecasted values extending `m` periods into the future
@@ -38,7 +38,9 @@ export function calculateHoltWinters(series: number[], options: HWOptions): numb
   const n = series.length;
 
   if (n < seasonLength * 2) {
-    throw new Error("Holt-Winters requires at least two full seasons of data for accurate baseline calculation.");
+    throw new Error(
+      "Holt-Winters requires at least two full seasons of data for accurate baseline calculation.",
+    );
   }
 
   // Initialize arrays
@@ -96,8 +98,8 @@ export function calculateHoltWinters(series: number[], options: HWOptions): numb
   const futureForecasts: number[] = [];
   for (let i = 1; i <= m; i++) {
     // Wrap around the seasonal component index
-    const seasonalIndex = (n - 1) - seasonLength + 1 + ((i - 1) % seasonLength);
-    const predictedValue = lastLevel + (i * lastTrend) + seasonal[seasonalIndex];
+    const seasonalIndex = n - 1 - seasonLength + 1 + ((i - 1) % seasonLength);
+    const predictedValue = lastLevel + i * lastTrend + seasonal[seasonalIndex];
     futureForecasts.push(Math.max(0, predictedValue)); // Clamp to 0 to prevent negative predictions in real-world contexts
   }
 
@@ -110,11 +112,14 @@ export function calculateHoltWinters(series: number[], options: HWOptions): numb
  * HW-1: Marketplace Price Trend Forecasting
  * Analyzes past sales data to recommend optimal listing windows.
  */
-export function forecastMarketPrice(historicalPrices: number[], periodsAhead: number = 3): number[] {
+export function forecastMarketPrice(
+  historicalPrices: number[],
+  periodsAhead: number = 3,
+): number[] {
   // Assuming monthly data points with annual seasonality (12 months)
   return calculateHoltWinters(historicalPrices, {
     alpha: 0.3, // Medium adaptation to recent prices
-    beta: 0.1,  // Slow trend change
+    beta: 0.1, // Slow trend change
     gamma: 0.6, // High sensitivity to seasonality (Ocala Show Season peaks)
     seasonLength: 12,
     m: periodsAhead,
@@ -164,7 +169,10 @@ export function forecastHealthRiskIndex(historicalIncidents: number[]): number {
  * HW-4: Feed Consumption Demand
  * Forecasts feed requirement based on stable population and seasonal activity.
  */
-export function forecastFeedDemand(historicalConsumption: number[], periodsAhead: number = 3): number[] {
+export function forecastFeedDemand(
+  historicalConsumption: number[],
+  periodsAhead: number = 3,
+): number[] {
   return calculateHoltWinters(historicalConsumption, {
     alpha: 0.5,
     beta: 0.3,

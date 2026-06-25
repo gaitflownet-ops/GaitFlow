@@ -70,7 +70,7 @@ export function AddUpdateModal({ open, onOpenChange, defaultHorseId, defaultType
       type,
       title,
       body,
-      at: new Date().toLocaleDateString("en-US", {
+      at: new Date().toLocaleDateString("es-CO", {
         month: "short",
         day: "numeric",
         year: "numeric",

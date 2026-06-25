@@ -3,12 +3,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useApp } from "@/lib/store";
 import { Bell, Trophy, Video, HeartPulse, Wrench, BellOff } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
-      { title: "Notifications — EquiSales" },
-      { name: "description", content: "All your EquiSales notifications in one place." },
+      { title: "Notifications — GaitFlow" },
+      { name: "description", content: "All your GaitFlow notifications in one place." },
     ],
   }),
   component: Notifications,
@@ -56,9 +57,14 @@ function Notifications() {
 
   const unread = state.notifications.filter((n) => !n.read).length;
 
-  const handleClick = (id: string, horse_id?: string | null) => {
-    // Mark read locally (full Supabase update can be added later)
-    if (horse_id) navigate({ to: "/horses/$horseId", params: { horseId: horse_id } });
+  const handleClick = async (id: string, horse_id?: string | null) => {
+    dispatch({ type: "MARK_NOTIFICATION_READ", id });
+    if (isSupabaseConfigured) {
+      await (supabase.from("notifications") as any).update({ read: true }).eq("id", id);
+    }
+    if (horse_id) {
+      navigate({ to: "/horses/$horseId", params: { horseId: horse_id } });
+    }
   };
 
   const filterTabs: { value: FilterTab; label: string }[] = [
@@ -79,7 +85,12 @@ function Notifications() {
         {unread > 0 && (
           <button
             id="mark-all-read-page"
-            onClick={() => {}}
+            onClick={async () => {
+              dispatch({ type: "MARK_ALL_READ" });
+              if (isSupabaseConfigured && state.user) {
+                await (supabase.from("notifications") as any).update({ read: true }).eq("user_id", state.user.id);
+              }
+            }}
             className="text-sm text-primary hover:underline"
           >
             Mark all as read ({unread})

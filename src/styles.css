@@ -47,7 +47,7 @@
 :root {
   --radius: 0.875rem;
 
-  /* EquiSales luxury equestrian palette */
+  /* GaitFlow luxury equestrian palette */
   --ivory: oklch(0.972 0.012 85);
   --background: oklch(0.972 0.012 85);
   --foreground: oklch(0.18 0.018 60);
@@ -396,4 +396,124 @@
 }
 .animate-fade-up-delay-3 {
   animation: fade-up 400ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Slow zoom hero ── */
+@keyframes slow-zoom {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+.animate-slow-zoom {
+  animation: slow-zoom 18s ease-in-out infinite alternate;
+}
+
+/* ── Scroll fade-in (Intersection Observer) ── */
+@keyframes scroll-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-scroll-in {
+  animation: scroll-fade-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Pricing cards ── */
+.pricing-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-soft);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition:
+    box-shadow 250ms ease,
+    transform 250ms ease;
+}
+.pricing-card:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+.pricing-card-featured {
+  background: var(--foreground);
+  border-color: var(--gold);
+  box-shadow: 0 8px 40px oklch(0.18 0.018 60 / 0.15);
+  transform: scale(1.02);
+}
+
+/* ── FAQ accordion ── */
+.faq-item {
+  border: 1px solid oklch(0.88 0.012 80 / 0.6);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  transition: border-color 200ms ease;
+}
+.faq-item:hover {
+  border-color: var(--border);
+}
+.faq-answer {
+  border-top: 1px solid oklch(0.88 0.012 80 / 0.4);
+  padding: 1rem 1.5rem 1.25rem;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+/* ── Section label chip ── */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid oklch(0.78 0.13 80 / 0.3);
+  background: oklch(0.78 0.13 80 / 0.1);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+/* ── Mobile nav overlay ── */
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: oklch(0.18 0.018 60 / 0.4);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Demo step indicator ── */
+.demo-step-active {
+  background: var(--foreground);
+  color: var(--background);
+}
+.demo-step-done {
+  background: var(--gold);
+  color: oklch(0.18 0.018 60);
+}
+.demo-step-inactive {
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+/* ── Success story card metric ── */
+.story-metric {
+  background: oklch(0.78 0.13 80 / 0.08);
+  border: 1px solid oklch(0.78 0.13 80 / 0.2);
+  border-radius: var(--radius-xl);
+  padding: 1rem;
 }

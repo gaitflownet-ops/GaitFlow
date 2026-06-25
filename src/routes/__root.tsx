@@ -18,16 +18,16 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página no encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          La página que buscas no existe o ha sido trasladada.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-95"
           >
-            Go home
+            Ir al inicio
           </Link>
         </div>
       </div>
@@ -40,14 +40,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="font-display text-xl font-semibold text-foreground">
-          This page didn't load
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <div className="max-w-2xl w-full text-center">
+        <h1 className="font-display text-2xl font-semibold text-foreground">
+          Esta página no cargó
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong. You can try refreshing or head back home.
+          Algo salió mal. Puedes intentar recargar o volver al inicio.
         </p>
+        
+        {/* Error Detail Display */}
+        <div className="mt-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-left overflow-auto max-h-[300px] text-xs font-mono text-destructive-foreground">
+          <p className="font-bold text-sm mb-2">{error?.name}: {error?.message}</p>
+          <pre className="whitespace-pre-wrap">{error?.stack}</pre>
+        </div>
+
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -56,13 +63,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-95"
           >
-            Try again
+            Intentar de nuevo
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
           >
-            Go home
+            Ir al inicio
           </a>
         </div>
       </div>
@@ -75,26 +82,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EquiSales — Premium Equine Platform" },
+      { title: "GaitFlow — Plataforma Integral para Criaderos" },
       {
         name: "description",
         content:
-          "The future operating system of the premium equine industry. Manage, track, and grow your equine operations.",
+          "El sistema operativo para la industria del Caballo Criollo Colombiano. Gestiona, controla y haz crecer tu criadero.",
       },
-      { name: "author", content: "EquiSales" },
-      { property: "og:title", content: "EquiSales — Premium Equine Platform" },
+      { name: "author", content: "GaitFlow" },
+      { property: "og:title", content: "GaitFlow — Plataforma Integral para Criaderos" },
       {
         property: "og:description",
-        content: "The future operating system of the premium equine industry.",
+        content: "El sistema operativo para la industria del Caballo Criollo Colombiano.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@EquiSales" },
+      { name: "twitter:site", content: "@GaitFlow" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/favicon.png",
+      },
+      {
+        rel: "shortcut icon",
+        href: "/favicon.ico",
       },
     ],
   }),
@@ -106,7 +122,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <HeadContent />
       </head>
@@ -128,10 +144,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const isCallbackPage = location.pathname === "/auth/callback";
   const isPublic =
     location.pathname === "/" ||
+    location.pathname.startsWith("/demo") ||
     location.pathname.startsWith("/marketplace") ||
     location.pathname.startsWith("/showcase") ||
     location.pathname.startsWith("/stallions") ||
     location.pathname.startsWith("/farms") ||
+    location.pathname.startsWith("/invite") ||
     isAuthPage ||
     isCallbackPage;
 
@@ -148,6 +166,10 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (state.authLoading) {
     return null; // or a full-screen spinner
+  }
+
+  if (!state.isAuthenticated && !isPublic) {
+    return null;
   }
 
   return <>{children}</>;

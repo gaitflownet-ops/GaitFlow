@@ -6,8 +6,8 @@ import { profileFromAuthUser, upsertProfile } from "@/lib/auth-profile";
 export const Route = createFileRoute("/auth/callback")({
   head: () => ({
     meta: [
-      { title: "Confirming account — EquiSales" },
-      { name: "description", content: "Confirming your EquiSales account." },
+      { title: "Confirming account — GaitFlow" },
+      { name: "description", content: "Confirming your GaitFlow account." },
     ],
   }),
   component: AuthCallbackPage,
@@ -63,7 +63,7 @@ function AuthCallbackPage() {
     <div className="min-h-screen bg-[oklch(0.14_0.025_155)] text-white flex items-center justify-center px-6">
       <div className="w-full max-w-[420px] rounded-3xl border border-[oklch(0.28_0.04_155)] bg-[oklch(0.18_0.03_155)] p-8 text-center">
         <p className="text-[11px] tracking-[0.2em] uppercase text-[oklch(0.65_0.02_155)]">
-          EquiSales
+          GaitFlow
         </p>
         <h1 className="mt-4 font-display text-3xl">
           {error ? "No pudimos continuar" : "Confirmando tu cuenta"}

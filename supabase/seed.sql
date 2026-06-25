@@ -1,4 +1,4 @@
--- Seed file for EquiSales
+-- Seed file for GaitFlow
 
 -- Use a deterministic UUID for the main profile (for testing)
 -- You must first create a user in the Supabase Dashboard Authentication tab, then copy their UUID here.

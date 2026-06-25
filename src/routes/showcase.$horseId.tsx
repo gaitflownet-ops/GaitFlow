@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { PublicShell } from "@/components/PublicShell";
 import { useHorse } from "@/lib/hooks/useHorses";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
+import { useListings } from "@/lib/hooks/useMarketplace";
 import { ArrowLeft, Trophy, Video, Calendar, ArrowUpRight, Flame, Loader2 } from "lucide-react";
 import { ReputationBadges } from "@/components/ReputationBadges";
 import { PedigreeTree } from "@/components/PedigreeTree";
@@ -15,8 +16,12 @@ export const Route = createFileRoute("/showcase/$horseId")({
 function HorseShowcase() {
   const { horseId } = Route.useParams();
   const { data: horse, isLoading: isHorseLoading } = useHorse(horseId);
-  const { data: competitions = [] } = useCompetitions();
+  const { data: competitions = [] } = useCompetitions(horse?.id);
+  const { data: listings = [] } = useListings("horse");
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  const listing = listings.find((l) => l.horse_id === horse?.id);
+  const listingId = listing?.id || null;
 
   if (isHorseLoading) {
     return (
@@ -222,6 +227,7 @@ function HorseShowcase() {
         onClose={() => setInquiryOpen(false)}
         type={horse.sex === "Stallion" ? "breeding" : "sale"}
         subjectName={horse.name}
+        listingId={listingId}
       />
     </PublicShell>
   );

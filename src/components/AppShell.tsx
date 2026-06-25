@@ -19,26 +19,30 @@ import {
   ShoppingBag,
   FolderOpen,
   Contact,
+  User,
 } from "lucide-react";
-import { type ReactNode, useState, useRef, useEffect } from "react";
+import { type ReactNode, useState, useRef, useEffect, useMemo } from "react";
 import { useApp } from "@/lib/store";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { QuickActionModal } from "./modals/QuickActionModal";
+import { usePermissions } from "@/lib/hooks/usePermissions";
+import { getRoleDefinition } from "@/lib/roles";
+import logoUrl from "@/assets/logo.png";
 
 const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { to: "/tasks", label: "Flow Engine", icon: CheckSquare },
-  { to: "/horses", label: "Horses", icon: Sparkles },
-  { to: "/locations", label: "Facilities", icon: MapPin },
-  { to: "/health", label: "Health & Care", icon: HeartPulse },
-  { to: "/nutrition", label: "Nutrition", icon: Sprout },
-  { to: "/breeding", label: "Breeding", icon: Baby },
-  { to: "/competitions", label: "Competitions", icon: Trophy },
-  { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-  { to: "/financials", label: "Financials", icon: DollarSign },
-  { to: "/crm", label: "CRM", icon: Contact },
-  { to: "/vault", label: "Vault", icon: FolderOpen },
-  { to: "/team", label: "Team", icon: Users },
+  { to: "/dashboard", label: "Panel Principal", icon: LayoutGrid, module: "dashboard" },
+  { to: "/horses", label: "Ejemplares", icon: Sparkles, module: "horses" },
+  { to: "/tasks", label: "Labores Diarias", icon: CheckSquare, module: "tasks" },
+  { to: "/health", label: "Sanidad", icon: HeartPulse, module: "health" },
+  { to: "/nutrition", label: "Alimentación", icon: Sprout, module: "nutrition" },
+  { to: "/breeding", label: "Reproducción", icon: Baby, module: "breeding" },
+  { to: "/locations", label: "Fincas", icon: MapPin, module: "locations" },
+  { to: "/competitions", label: "Ferias / Pistas", icon: Trophy, module: "competitions" },
+  { to: "/marketplace", label: "Remates", icon: ShoppingBag, module: "marketplace" },
+  { to: "/financials", label: "Finanzas", icon: DollarSign, module: "financials" },
+  { to: "/crm", label: "CRM", icon: Contact, module: "crm" },
+  { to: "/vault", label: "Documentos", icon: FolderOpen, module: "vault" },
+  { to: "/team", label: "Equipo", icon: Users, module: "team" },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -49,19 +53,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [topbarMenuOpen, setTopbarMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const topbarMenuRef = useRef<HTMLDivElement>(null);
 
   // Close user menu on outside click
   useEffect(() => {
-    if (!userMenuOpen) return;
+    if (!userMenuOpen && !topbarMenuOpen) return;
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (topbarMenuRef.current && !topbarMenuRef.current.contains(e.target as Node)) {
+        setTopbarMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [userMenuOpen]);
+  }, [userMenuOpen, topbarMenuOpen]);
 
   // Cmd+K quick action shortcut
   useEffect(() => {
@@ -75,12 +84,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("keydown", handler);
   }, [dispatch]);
 
-  const handleLogout = () => {
-    logout();
-    navigate({ to: "/login" });
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
   };
 
   const user = state.user;
+  const { data: permissions = [] } = usePermissions();
+  const roleDef = getRoleDefinition(user?.role || "Propietario");
+
+  // Filtrar navegación por permisos del rol
+  const isOwner = user?.role === "Owner" || user?.role === "Propietario";
+  const filteredNav = useMemo(() => {
+    if (isOwner) return nav;
+    return nav.filter(item => {
+      const perm = permissions.find(p => p.module === item.module);
+      return perm ? perm.can_view : false;
+    });
+  }, [permissions, isOwner]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -89,22 +110,22 @@ export function AppShell({ children }: { children: ReactNode }) {
         <aside className="hidden lg:flex sticky top-0 h-screen w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground">
           {/* Logo */}
           <div className="px-7 pt-8 pb-10">
-            <Link to="/" className="flex items-center gap-2.5" id="sidebar-logo">
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground font-display text-[15px] font-semibold">
-                ES
+            <Link to={state.isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5" id="sidebar-logo">
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-sidebar-primary/20 p-1 shrink-0">
+                <img src={logoUrl} alt="GaitFlow Logo" className="h-full w-full object-contain rounded-md" />
               </div>
               <div className="leading-tight">
-                <div className="font-display text-xl tracking-tight">EquiSales</div>
-                <div className="text-[10px] tracking-[0.22em] uppercase text-sidebar-foreground/60">
-                  Premium Equine Platform
+                <div className="font-display text-xl tracking-tight">GaitFlow</div>
+                <div className="text-[10px] tracking-[0.22em] uppercase text-[var(--gold)]">
+                  Plataforma Élite CCC
                 </div>
               </div>
             </Link>
           </div>
 
           {/* Nav */}
-          <nav className="px-4 flex-1 space-y-0.5" aria-label="Main navigation">
-            {nav.map(({ to, label, icon: Icon }) => {
+          <nav className="px-4 flex-1 space-y-0.5" aria-label="Navegación principal">
+            {filteredNav.map(({ to, label, icon: Icon }) => {
               const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
               return (
                 <Link
@@ -138,7 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Settings
                 className={`h-[18px] w-[18px] ${path === "/settings" ? "text-sidebar-primary" : "opacity-70"}`}
               />
-              <span className="font-medium">Settings</span>
+              <span className="font-medium">Configuración</span>
             </Link>
           </nav>
 
@@ -155,10 +176,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
                 <div className="leading-tight flex-1 min-w-0">
                   <div className="text-sm font-medium text-sidebar-accent-foreground truncate">
-                    {user?.name ?? "Marisol Vega"}
+                    {user?.name ?? "Usuario"}
                   </div>
-                  <div className="text-[11px] text-sidebar-foreground/60">
-                    {user?.role ?? "Owner"} · {user?.stable_name ?? "Live Oak Stables"}
+                  <div className="text-[11px] text-sidebar-foreground/60 flex items-center gap-1">
+                    <span>{roleDef.icon}</span> {roleDef.label.split(" / ")[0]}
                   </div>
                 </div>
                 <ChevronRight
@@ -171,19 +192,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             {userMenuOpen && (
               <div className="absolute bottom-full left-0 right-0 mb-1 rounded-2xl border border-sidebar-border bg-[oklch(0.26_0.04_155)] shadow-[var(--shadow-modal)] overflow-hidden animate-slide-in-down">
                 <Link
+                  to="/profile"
+                  onClick={() => setUserMenuOpen(false)}
+                  id="user-menu-profile"
+                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                >
+                  <User className="h-4 w-4" /> Mi perfil
+                </Link>
+                <Link
                   to="/settings"
                   onClick={() => setUserMenuOpen(false)}
                   id="user-menu-settings"
-                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors border-t border-sidebar-border/40"
                 >
-                  <Settings className="h-4 w-4" /> Account settings
+                  <Settings className="h-4 w-4" /> Configuración
                 </Link>
                 <button
                   onClick={handleLogout}
                   id="user-menu-logout"
                   className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors border-t border-sidebar-border/60"
                 >
-                  <LogOut className="h-4 w-4" /> Sign out
+                  <LogOut className="h-4 w-4" /> Cerrar sesión
                 </button>
               </div>
             )}
@@ -196,12 +225,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
             <div className="flex items-center gap-3 px-6 lg:px-10 h-16">
               {/* Mobile logo */}
-              <div className="lg:hidden flex items-center gap-2">
-                <div className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground font-display text-[11px]">
-                  ES
+              <Link to={state.isAuthenticated ? "/dashboard" : "/"} className="lg:hidden flex items-center gap-2">
+                <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 p-0.5 shrink-0">
+                  <img src={logoUrl} alt="GaitFlow Logo" className="h-full w-full object-contain rounded" />
                 </div>
-                <span className="font-display text-lg">EquiSales</span>
-              </div>
+                <span className="font-display text-lg">GaitFlow</span>
+              </Link>
 
               {/* Search */}
               <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
@@ -234,6 +263,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     id="header-bell"
                     onClick={() => {
                       setNotifOpen((v) => !v);
+                      setTopbarMenuOpen(false);
                       setUserMenuOpen(false);
                     }}
                     className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition-colors"
@@ -244,6 +274,79 @@ export function AppShell({ children }: { children: ReactNode }) {
                     )}
                   </button>
                   <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
+                </div>
+
+                {/* ── User avatar (topbar) ── */}
+                <div className="relative" ref={topbarMenuRef}>
+                  <button
+                    id="topbar-user-btn"
+                    onClick={() => {
+                      setTopbarMenuOpen((v) => !v);
+                      setNotifOpen(false);
+                      setUserMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2.5 rounded-full border border-border bg-card pl-1 pr-3 py-1 hover:bg-secondary transition-colors group"
+                    aria-label="User menu"
+                  >
+                    <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.82_0.12_80)] to-[oklch(0.55_0.09_55)] text-[oklch(0.18_0.018_60)] font-display text-[13px] font-semibold shrink-0">
+                      {user?.initials ?? "GF"}
+                    </div>
+                    <span className="hidden sm:block text-[13px] font-medium text-foreground max-w-[120px] truncate">
+                      {user?.name ?? "Account"}
+                    </span>
+                    <ChevronRight
+                      className={`hidden sm:block h-3.5 w-3.5 text-muted-foreground transition-transform ${
+                        topbarMenuOpen ? "rotate-90" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Topbar dropdown */}
+                  {topbarMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-card shadow-[var(--shadow-modal)] overflow-hidden animate-slide-in-down z-50">
+                      {/* User info header */}
+                      <div className="px-4 py-3 border-b border-border/60">
+                        <p className="text-[13px] font-medium text-foreground truncate">
+                          {user?.name ?? "Account"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                          {user?.role ?? "Propietario"} · {user?.stable_name ?? "GaitFlow"}
+                        </p>
+                      </div>
+                      {/* Links */}
+                      <Link
+                        to="/profile"
+                        onClick={() => setTopbarMenuOpen(false)}
+                        id="topbar-profile-link"
+                        className="flex items-center gap-3 px-4 py-3 text-[13px] text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        Mi Perfil
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setTopbarMenuOpen(false)}
+                        id="topbar-settings-link"
+                        className="flex items-center gap-3 px-4 py-3 text-[13px] text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <Settings className="h-4 w-4 text-muted-foreground" />
+                        Configuración
+                      </Link>
+                      {/* Divider */}
+                      <div className="border-t border-border/60" />
+                      <button
+                        id="topbar-logout-btn"
+                        onClick={() => {
+                          setTopbarMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
