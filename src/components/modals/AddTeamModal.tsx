@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Loader2, Plus, X, Trash2 } from "lucide-react";
 import { Modal } from "./Modal";
 import { useHorses } from "@/lib/hooks/useHorses";
@@ -172,7 +172,7 @@ export function AddTeamModal({ open, onOpenChange, team }: Props) {
   };
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title={team ? "Editar Cuadrilla" : "Nueva Cuadrilla / Equipo"}>
+    <Modal open={open} onClose={() => onOpenChange(false)} title={team ? "Editar Cuadrilla" : "Nueva Cuadrilla"} size="lg">
       {done ? (
         <div className="py-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-300">
           <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mb-6">

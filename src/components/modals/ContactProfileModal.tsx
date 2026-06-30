@@ -1,0 +1,218 @@
+import { useState } from "react";
+import { Modal } from "./Modal";
+import { useActivityTimeline, useHorseContacts, useCreateActivityLog, Contact } from "@/lib/hooks/useCRM";
+import { Loader2, Calendar, Activity, Link as LinkIcon, FileText, Plus } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  contact: Contact | null;
+};
+
+export function ContactProfileModal({ open, onClose, contact }: Props) {
+  const [activeTab, setActiveTab] = useState<"timeline" | "horses" | "documents">("timeline");
+
+  const { data: timeline = [], isLoading: loadingTimeline } = useActivityTimeline(contact?.id || undefined);
+  const { data: linkedHorses = [], isLoading: loadingHorses } = useHorseContacts(contact?.id || undefined);
+  const createActivityLog = useCreateActivityLog();
+
+  const [newLogType, setNewLogType] = useState("Llamada");
+  const [newLogDetails, setNewLogDetails] = useState("");
+
+  if (!contact) return null;
+
+  const isLoading = loadingTimeline || loadingHorses;
+
+  const handleManualLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLogDetails) return;
+    
+    await createActivityLog.mutateAsync({
+      organization_id: contact.organization_id || "00000000-0000-0000-0000-000000000000",
+      user_id: null,
+      date: new Date().toISOString(),
+      module_source: "crm",
+      action_type: newLogType,
+      action_details: newLogDetails,
+      horse_id: null,
+      contact_id: contact.id,
+      reference_id: null,
+    });
+    
+    setNewLogDetails("");
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`}>
+      
+      <div className="flex gap-4 border-b border-border mb-6">
+        <button
+          onClick={() => setActiveTab("timeline")}
+          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "timeline" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          Historial de Interacciones
+        </button>
+        <button
+          onClick={() => setActiveTab("horses")}
+          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "horses" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          Caballos Vinculados
+        </button>
+        <button
+          onClick={() => setActiveTab("documents")}
+          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "documents" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          Documentos
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="py-12 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="min-h-[300px] max-h-[60vh] overflow-y-auto pr-2">
+          
+          {/* TAB: TIMELINE */}
+          {activeTab === "timeline" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" /> Actividad Reciente
+                </h3>
+              </div>
+
+              {/* Formulario Manual */}
+              <form onSubmit={handleManualLog} className="flex gap-2 bg-secondary/20 p-3 rounded-xl border border-border">
+                <select 
+                  className="lux-select text-xs py-1.5 w-[110px]"
+                  value={newLogType}
+                  onChange={e => setNewLogType(e.target.value)}
+                >
+                  <option value="Llamada">Llamada</option>
+                  <option value="Correo">Correo</option>
+                  <option value="Reunión">Reunión</option>
+                  <option value="Nota">Nota</option>
+                </select>
+                <input 
+                  className="lux-input text-xs py-1.5 flex-1" 
+                  placeholder="Detalles de la interacción..." 
+                  value={newLogDetails}
+                  onChange={e => setNewLogDetails(e.target.value)}
+                  required
+                />
+                <button 
+                  type="submit" 
+                  disabled={createActivityLog.isPending}
+                  className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium shrink-0"
+                >
+                  {createActivityLog.isPending ? "..." : "Guardar"}
+                </button>
+              </form>
+
+              {timeline.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
+                  No hay interacciones registradas aún. Las acciones (citas médicas, herrajes) se registrarán aquí automáticamente.
+                </div>
+              ) : (
+                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+                  {timeline.map((log) => (
+                    <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-card shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] lux-card p-4 rounded-xl border border-border">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold uppercase text-primary tracking-wider">{log.module_source}</span>
+                          <time className="text-xs text-muted-foreground font-medium">{format(new Date(log.date), "dd MMM yyyy, HH:mm", { locale: es })}</time>
+                        </div>
+                        <div className="text-sm font-medium text-foreground">{log.action_type}</div>
+                        {log.action_details && (
+                          <div className="text-sm text-muted-foreground mt-1">{log.action_details}</div>
+                        )}
+                        {log.horses && (
+                          <div className="mt-2 text-xs bg-secondary/50 inline-flex px-2 py-1 rounded text-foreground border border-border/50">
+                            🐴 {log.horses.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: HORSES */}
+          {activeTab === "horses" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4 text-primary" /> Relaciones Activas
+                </h3>
+              </div>
+
+              {linkedHorses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
+                  Este contacto no tiene caballos vinculados actualmente.
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {linkedHorses.map(rel => (
+                    <div key={rel.id} className="lux-card border border-border p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="font-medium text-foreground flex items-center gap-2">
+                          <span>🐴 {rel.horses?.name}</span>
+                        </div>
+                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium border bg-primary/10 text-primary border-primary/20">
+                          {rel.relationship_type}
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Desde: {format(new Date(rel.start_date), "MMM yyyy", { locale: es })}
+                        </span>
+                        {rel.is_active ? (
+                          <span className="text-emerald-500 font-medium">Activo</span>
+                        ) : (
+                          <span className="text-muted-foreground">Inactivo</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: DOCUMENTS */}
+          {activeTab === "documents" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" /> Documentos Compartidos
+                </h3>
+              </div>
+              <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
+                Los documentos asociados a este contacto aparecerán aquí. (Módulo de Bóveda)
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      <div className="pt-6 mt-6 flex justify-end border-t border-border">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80 rounded-xl transition-colors"
+        >
+          Cerrar Perfil
+        </button>
+      </div>
+    </Modal>
+  );
+}

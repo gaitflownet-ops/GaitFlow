@@ -3,7 +3,8 @@ import { Modal } from "./Modal";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useCreateHealthRecord, calculateNextDue } from "@/lib/hooks/useHealth";
 import { usePharmaceuticals } from "@/lib/hooks/usePharmaceuticals";
-import { Check, Loader2 } from "lucide-react";
+import { useContacts, useCreateActivityLog } from "@/lib/hooks/useCRM";
+import { Check, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {
@@ -68,7 +69,9 @@ const frequencyOptions = [
 export function AddHealthRecordModal({ open, onOpenChange, defaultHorseId }: Props) {
   const { data: horses = [] } = useHorses();
   const { data: pharmaceuticals = [] } = usePharmaceuticals();
+  const { data: contacts = [] } = useContacts();
   const createRecord = useCreateHealthRecord();
+  const createActivityLog = useCreateActivityLog();
 
   const [type, setType] = useState<RecordType>("vet_visit");
   const [horseId, setHorseId] = useState(defaultHorseId ?? "");
@@ -142,6 +145,22 @@ export function AddHealthRecordModal({ open, onOpenChange, defaultHorseId }: Pro
         next_due: nextDue,
         category: type,
       });
+
+      // Also create an activity log in CRM if a CRM professional was selected
+      const selectedContact = contacts.find(c => c.id === professional);
+      if (selectedContact) {
+        await createActivityLog.mutateAsync({
+          organization_id: horse?.organization_id || "00000000-0000-0000-0000-000000000000",
+          user_id: null, // we would ideally use auth.uid() if we had user in state here, but backend triggers might handle it
+          date: new Date().toISOString(),
+          module_source: "health",
+          action_type: "Registro sanitario",
+          action_details: `Se registró: ${title}`,
+          horse_id: targetHorseId,
+          contact_id: selectedContact.id,
+          reference_id: null
+        });
+      }
 
       setDone(true);
       setTimeout(() => handleClose(), 1400);
@@ -217,14 +236,18 @@ export function AddHealthRecordModal({ open, onOpenChange, defaultHorseId }: Pro
 
           {/* Professional */}
           <div>
-            <label className="eyebrow block mb-1.5">Veterinarian / Professional</label>
-            <input
-              className="lux-input"
-              placeholder="E.g. Dr. Anika Patel"
+            <label className="eyebrow block mb-1.5 flex items-center gap-1.5"><User className="h-3 w-3"/> Veterinarian / Professional (CRM)</label>
+            <select
+              className="lux-select"
               value={professional}
               onChange={(e) => setProfessional(e.target.value)}
               id="health-professional"
-            />
+            >
+              <option value="">Select a professional from CRM…</option>
+              {contacts.filter(c => c.type === 'vet' || c.type === 'farrier').map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+              ))}
+            </select>
           </div>
 
           {/* Date */}
