@@ -164,61 +164,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-medium">Configuración</span>
             </Link>
           </nav>
-
-          {/* User card */}
-          <div className="m-4 relative" ref={userMenuRef}>
-            <button
-              id="sidebar-user-menu"
-              onClick={() => setUserMenuOpen((v) => !v)}
-              className="w-full rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/40 p-4 text-left hover:bg-sidebar-accent/70 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.82_0.12_80)] to-[oklch(0.55_0.09_55)] text-[13px] font-semibold text-charcoal shrink-0">
-                  {user?.initials ?? "MV"}
-                </div>
-                <div className="leading-tight flex-1 min-w-0">
-                  <div className="text-sm font-medium text-sidebar-accent-foreground truncate">
-                    {user?.name ?? "Usuario"}
-                  </div>
-                  <div className="text-[11px] text-sidebar-foreground/60 flex items-center gap-1">
-                    <span>{roleDef.icon}</span> {roleDef.label.split(" / ")[0]}
-                  </div>
-                </div>
-                <ChevronRight
-                  className={`h-4 w-4 text-sidebar-foreground/40 transition-transform ${userMenuOpen ? "rotate-90" : ""}`}
-                />
-              </div>
-            </button>
-
-            {/* User dropdown */}
-            {userMenuOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 rounded-2xl border border-sidebar-border bg-[oklch(0.26_0.04_155)] shadow-[var(--shadow-modal)] overflow-hidden animate-slide-in-down">
-                <Link
-                  to="/profile"
-                  onClick={() => setUserMenuOpen(false)}
-                  id="user-menu-profile"
-                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-                >
-                  <User className="h-4 w-4" /> Mi perfil
-                </Link>
-                <Link
-                  to="/settings"
-                  onClick={() => setUserMenuOpen(false)}
-                  id="user-menu-settings"
-                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors border-t border-sidebar-border/40"
-                >
-                  <Settings className="h-4 w-4" /> Configuración
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  id="user-menu-logout"
-                  className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors border-t border-sidebar-border/60"
-                >
-                  <LogOut className="h-4 w-4" /> Cerrar sesión
-                </button>
-              </div>
-            )}
-          </div>
         </aside>
 
         {/* ── Main ── */}

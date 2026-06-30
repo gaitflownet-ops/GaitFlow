@@ -216,12 +216,12 @@ const DEFAULT_PERMISSIONS: Record<CccRole, Record<string, ModulePermission>> = {
  * Retorna la matriz de permisos predeterminada para un rol CCC.
  */
 export function getDefaultPermissions(role: CccRole): Record<string, ModulePermission> {
-  return DEFAULT_PERMISSIONS[role] || DEFAULT_PERMISSIONS.Palafrenero;
+  return DEFAULT_PERMISSIONS[role] || DEFAULT_PERMISSIONS.Propietario;
 }
 
 /**
  * Busca la definición visual de un rol por su valor.
  */
 export function getRoleDefinition(role: string): RoleDefinition {
-  return CCC_ROLES.find(r => r.value === role) || CCC_ROLES.find(r => r.value === "Palafrenero")!;
+  return CCC_ROLES.find(r => r.value === role) || CCC_ROLES.find(r => r.value === "Propietario")!;
 }
