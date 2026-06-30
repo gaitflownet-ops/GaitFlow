@@ -193,6 +193,9 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
                   onChange={e => setNewRelType(e.target.value)}
                 >
                   <option value="Propietario">Propietario</option>
+                  <option value="Copropietario">Copropietario</option>
+                  <option value="Cliente">Cliente</option>
+                  <option value="Posible Cliente">Posible Cliente</option>
                   <option value="Veterinario">Veterinario</option>
                   <option value="Herrero">Herrero</option>
                   <option value="Cuidador">Cuidador</option>
