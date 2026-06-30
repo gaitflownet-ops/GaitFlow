@@ -162,7 +162,6 @@ export function useActivityTimeline(contactId?: string, horseId?: string) {
         .from("activity_timeline_logs")
         .select(`
           *,
-          users:user_id ( raw_user_meta_data ),
           horses:horse_id ( name ),
           contacts:contact_id ( name )
         `)
