@@ -242,7 +242,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className="flex w-full items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground hover:border-primary/30 transition-colors"
                 >
                   <Search className="h-4 w-4" />
-                  <span>Search horses, people, events…</span>
+                  <span>Buscar caballos, personas, eventos…</span>
                   <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground/70 bg-secondary rounded px-1.5 py-0.5">
                     ⌘K
                   </span>
@@ -256,7 +256,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   onClick={() => dispatch({ type: "SET_QUICK_ACTION", open: true })}
                   className="hidden sm:inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-soft)] hover:opacity-95 transition-opacity"
                 >
-                  <Plus className="h-4 w-4" /> Quick action
+                  <Plus className="h-4 w-4" /> Acción rápida
                 </button>
 
                 {/* Bell */}

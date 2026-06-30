@@ -154,7 +154,7 @@ export function QuickActionModal({ open, onClose }: Props) {
     <Modal
       open={open}
       onClose={handleClose}
-      title={step === "select" ? "Quick action" : (cfg?.label ?? "New entry")}
+      title={step === "select" ? "Acción rápida" : (cfg?.label ?? "Nueva entrada")}
     >
       {done ? (
         <div className="p-10 flex flex-col items-center justify-center gap-4">

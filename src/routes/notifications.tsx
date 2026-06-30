@@ -68,19 +68,19 @@ function Notifications() {
   };
 
   const filterTabs: { value: FilterTab; label: string }[] = [
-    { value: "all", label: `All (${state.notifications.length})` },
-    { value: "wins", label: "Wins" },
-    { value: "health", label: "Health" },
-    { value: "media", label: "Media" },
-    { value: "reminders", label: "Reminders" },
+    { value: "all", label: `Todas (${state.notifications.length})` },
+    { value: "wins", label: "Logros" },
+    { value: "health", label: "Salud" },
+    { value: "media", label: "Archivos" },
+    { value: "reminders", label: "Recordatorios" },
   ];
 
   return (
     <AppShell>
       <div className="flex items-baseline justify-between">
         <div>
-          <div className="eyebrow">Activity</div>
-          <h1 className="font-display text-4xl lg:text-5xl mt-2">Notifications</h1>
+          <div className="eyebrow">Actividad</div>
+          <h1 className="font-display text-4xl lg:text-5xl mt-2">Notificaciones</h1>
         </div>
         {unread > 0 && (
           <button
@@ -93,7 +93,7 @@ function Notifications() {
             }}
             className="text-sm text-primary hover:underline"
           >
-            Mark all as read ({unread})
+            Marcar todas como leídas ({unread})
           </button>
         )}
       </div>
@@ -125,7 +125,7 @@ function Notifications() {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-20 text-muted-foreground">
             <BellOff className="h-12 w-12 opacity-30" />
-            <p className="font-display text-2xl">No notifications here</p>
+            <p className="font-display text-2xl">No hay notificaciones aquí</p>
           </div>
         ) : (
           <div className="lux-card overflow-hidden divide-y divide-border">

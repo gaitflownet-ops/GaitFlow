@@ -101,7 +101,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-muted-foreground" />
-          <span className="font-display text-lg">Notifications</span>
+          <span className="font-display text-lg">Notificaciones</span>
           {unreadCount > 0 && (
             <span className="inline-flex items-center justify-center h-5 min-w-5 rounded-full bg-[var(--gold)] text-[oklch(0.18_0.018_60)] text-[10px] font-semibold px-1">
               {unreadCount}
@@ -114,7 +114,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
             id="mark-all-read-btn"
             className="text-[12px] text-primary hover:underline"
           >
-            Mark all read
+            Marcar todas como leídas
           </button>
         )}
       </div>
@@ -124,7 +124,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         {combinedNotifications.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
             <BellOff className="h-8 w-8 opacity-40" />
-            <p className="text-sm">No notifications</p>
+            <p className="text-sm">No hay notificaciones</p>
           </div>
         ) : (
           combinedNotifications.slice(0, 10).map((n) => {
@@ -166,7 +166,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
           className="flex items-center justify-center gap-1.5 text-[13px] text-primary hover:underline"
           id="view-all-notifs-btn"
         >
-          View all notifications <ArrowRight className="h-3.5 w-3.5" />
+          Ver todas las notificaciones <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
