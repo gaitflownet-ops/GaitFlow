@@ -175,6 +175,7 @@ function CRMPage() {
                   {contact.email && (
                     <a
                       href={`mailto:${contact.email}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Mail className="h-3.5 w-3.5" />
@@ -184,6 +185,7 @@ function CRMPage() {
                   {contact.phone && (
                     <a
                       href={`tel:${contact.phone}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Phone className="h-3.5 w-3.5" />

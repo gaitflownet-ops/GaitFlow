@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppProvider, useApp } from "@/lib/store";
+import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -183,6 +184,7 @@ function RootComponent() {
       <AppProvider>
         <AuthGuard>
           <Outlet />
+          <Toaster />
         </AuthGuard>
       </AppProvider>
     </QueryClientProvider>
