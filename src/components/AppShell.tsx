@@ -26,6 +26,7 @@ import { useApp } from "@/lib/store";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { QuickActionModal } from "./modals/QuickActionModal";
 import { usePermissions } from "@/lib/hooks/usePermissions";
+import { useDynamicNotifications } from "@/lib/hooks/useDynamicNotifications";
 import { getRoleDefinition } from "@/lib/roles";
 import logoUrl from "@/assets/logo.png";
 
@@ -47,7 +48,8 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { state, dispatch, unreadCount, logout } = useApp();
+  const { state, dispatch, logout } = useApp();
+  const { unreadCount } = useDynamicNotifications();
   const navigate = useNavigate();
 
   const [notifOpen, setNotifOpen] = useState(false);

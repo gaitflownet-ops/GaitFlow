@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { Bell, Trophy, Video, HeartPulse, Wrench, BellOff, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useDynamicNotifications } from "@/lib/hooks/useDynamicNotifications";
 
 type Props = {
   open: boolean;
@@ -26,7 +27,8 @@ const kindColor = {
 };
 
 export function NotificationDropdown({ open, onClose }: Props) {
-  const { state, dispatch, unreadCount } = useApp();
+  const { dispatch } = useApp();
+  const { combinedNotifications, unreadCount } = useDynamicNotifications();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -46,19 +48,47 @@ export function NotificationDropdown({ open, onClose }: Props) {
   const handleNotifClick = async (id: string, horseId?: string | null) => {
     dispatch({ type: "MARK_NOTIFICATION_READ", id });
     onClose();
-    // Update Supabase in the background
-    await (supabase.from("notifications") as any).update({ read: true }).eq("id", id);
-    if (horseId) {
-      navigate({ to: "/horses/$horseId", params: { horseId } });
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      await (supabase.from("notifications") as any).update({ read: true }).eq("id", id);
+    } else {
+      const notif = combinedNotifications.find((n) => n.id === id);
+      if (notif) {
+        await (supabase.from("notifications") as any).insert([{
+          user_id: notif.user_id,
+          title: notif.title,
+          body: notif.body,
+          kind: notif.kind,
+          read: true,
+          at: notif.id,
+          organization_id: notif.organization_id || null
+        }]);
+      }
     }
+    if (horseId) navigate({ to: "/horses/$horseId", params: { horseId } });
   };
 
-  const markAll = async () => {
+  const handleMarkAll = async () => {
     dispatch({ type: "MARK_ALL_READ" });
-    if (state.user) {
+    const firstNotif = combinedNotifications[0];
+    if (firstNotif?.user_id) {
       await (supabase.from("notifications") as any)
         .update({ read: true })
-        .eq("user_id", state.user.id);
+        .eq("user_id", firstNotif.user_id);
+      
+      const unreadDynamic = combinedNotifications.filter((n) => !n.read && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(n.id));
+      if (unreadDynamic.length > 0) {
+        const inserts = unreadDynamic.map((notif) => ({
+          user_id: notif.user_id,
+          title: notif.title,
+          body: notif.body,
+          kind: notif.kind,
+          read: true,
+          at: notif.id,
+          organization_id: notif.organization_id || null
+        }));
+        await (supabase.from("notifications") as any).insert(inserts);
+      }
     }
   };
 
@@ -80,7 +110,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
         </div>
         {unreadCount > 0 && (
           <button
-            onClick={markAll}
+            onClick={handleMarkAll}
             id="mark-all-read-btn"
             className="text-[12px] text-primary hover:underline"
           >
@@ -91,13 +121,13 @@ export function NotificationDropdown({ open, onClose }: Props) {
 
       {/* List */}
       <div className="divide-y divide-border max-h-[380px] overflow-y-auto">
-        {state.notifications.length === 0 ? (
+        {combinedNotifications.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
             <BellOff className="h-8 w-8 opacity-40" />
             <p className="text-sm">No notifications</p>
           </div>
         ) : (
-          state.notifications.slice(0, 6).map((n) => {
+          combinedNotifications.slice(0, 10).map((n) => {
             const Icon = kindIcon[n.kind as keyof typeof kindIcon] ?? Bell;
             const dotClass = kindColor[n.kind as keyof typeof kindColor] ?? "bg-primary";
             return (
