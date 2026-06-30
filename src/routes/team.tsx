@@ -209,7 +209,7 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
 
       <WorkerProfileModal 
         open={!!selectedWorkerId} 
-        onOpenChange={(open) => !open && setSelectedWorkerId(null)}
+        onClose={() => setSelectedWorkerId(null)}
         userId={selectedWorkerId}
         userName={selectedWorkerName}
       />

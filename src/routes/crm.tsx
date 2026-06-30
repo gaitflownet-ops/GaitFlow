@@ -40,12 +40,35 @@ function CRMPage() {
   const { data: contacts = [], isLoading } = useContacts(typeFilter);
   const createContact = useCreateContact();
 
-  const filtered = contacts.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.notes && c.notes.toLowerCase().includes(search.toLowerCase())) ||
-      c.type.toLowerCase().includes(search.toLowerCase())
-  );
+  const TRANSLATIONS: Record<string, string> = {
+    all: "TODOS",
+    client: "CLIENTE",
+    buyer: "COMPRADOR",
+    breeder: "CRIADOR",
+    vet: "VETERINARIO",
+    farrier: "HERRERO",
+    supplier: "PROVEEDOR",
+    partner: "ALIADO",
+  };
+
+  const getContactTypeTranslation = (type: string) => {
+    const map: Record<string, string> = {
+      client: "Cliente",
+      buyer: "Comprador",
+      breeder: "Criador",
+      vet: "Veterinario",
+      farrier: "Herrero",
+      supplier: "Proveedor",
+      partner: "Aliado",
+    };
+    return map[type] || type;
+  };
+
+  const filtered = contacts.filter((c) => {
+    if (typeFilter !== "all" && c.type !== typeFilter) return false;
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,17 +117,25 @@ function CRMPage() {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-          {["all", "client", "buyer", "breeder", "vet", "farrier", "supplier", "partner"].map((t) => (
+          <button
+            onClick={() => setTypeFilter("all")}
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${
+              typeFilter === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {TRANSLATIONS.all}
+          </button>
+          {["client", "buyer", "breeder", "vet", "farrier", "supplier", "partner"].map((t) => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-colors shrink-0 ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${
                 typeFilter === t
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-foreground hover:bg-secondary/80"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t}
+              {TRANSLATIONS[t]}
             </button>
           ))}
         </div>
@@ -134,7 +165,7 @@ function CRMPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{contact.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{contact.type}</div>
+                    <div className="text-xs text-muted-foreground capitalize">{getContactTypeTranslation(contact.type)}</div>
                     <div className="text-xs text-muted-foreground mt-1 truncate">
                       {contact.notes || "Sin notas adicionales"}
                     </div>
@@ -165,7 +196,7 @@ function CRMPage() {
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${tagColors[contact.type] ?? "bg-secondary text-foreground"}`}
                 >
-                  {contact.type}
+                  {getContactTypeTranslation(contact.type)}
                 </span>
                 <button
                   onClick={(e) => {

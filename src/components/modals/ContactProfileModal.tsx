@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { useActivityTimeline, useHorseContacts, useCreateActivityLog, Contact } from "@/lib/hooks/useCRM";
-import { Loader2, Calendar, Activity, Link as LinkIcon, FileText, Plus } from "lucide-react";
+import { Loader2, Calendar, Activity, Link as LinkIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function ContactProfileModal({ open, onClose, contact }: Props) {
-  const [activeTab, setActiveTab] = useState<"timeline" | "horses" | "documents">("timeline");
+  const [activeTab, setActiveTab] = useState<"timeline" | "horses">("timeline");
 
   const { data: timeline = [], isLoading: loadingTimeline } = useActivityTimeline(contact?.id || undefined);
   const { data: linkedHorses = [], isLoading: loadingHorses } = useHorseContacts(contact?.id || undefined);
@@ -45,26 +45,20 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`}>
+    <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`} size="lg">
       
-      <div className="flex gap-4 border-b border-border mb-6">
+      <div className="flex gap-2 border-b border-border mb-6 overflow-x-auto pb-2">
         <button
           onClick={() => setActiveTab("timeline")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "timeline" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "timeline" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
         >
           Historial de Interacciones
         </button>
         <button
           onClick={() => setActiveTab("horses")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "horses" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "horses" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
         >
           Caballos Vinculados
-        </button>
-        <button
-          onClick={() => setActiveTab("documents")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "documents" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-        >
-          Documentos
         </button>
       </div>
 
@@ -185,20 +179,6 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
                   ))}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* TAB: DOCUMENTS */}
-          {activeTab === "documents" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" /> Documentos Compartidos
-                </h3>
-              </div>
-              <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
-                Los documentos asociados a este contacto aparecerán aquí. (Módulo de Bóveda)
-              </div>
             </div>
           )}
 
