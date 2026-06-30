@@ -5,6 +5,7 @@ import { useHorses } from "@/lib/hooks/useHorses";
 import { Loader2, Calendar, Activity, Link as LinkIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -35,37 +36,53 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
     e.preventDefault();
     if (!newLogDetails) return;
     
-    await createActivityLog.mutateAsync({
-      organization_id: contact.organization_id || "00000000-0000-0000-0000-000000000000",
-      user_id: null,
-      date: new Date().toISOString(),
-      module_source: "crm",
-      action_type: newLogType,
-      action_details: newLogDetails,
-      horse_id: null,
-      contact_id: contact.id,
-      reference_id: null,
-    });
-    
-    setNewLogDetails("");
+    try {
+      await createActivityLog.mutateAsync({
+        organization_id: (contact as any).organization_id || "00000000-0000-0000-0000-000000000000",
+        user_id: null,
+        date: new Date().toISOString(),
+        module_source: "crm",
+        action_type: newLogType,
+        action_details: newLogDetails,
+        horse_id: null,
+        contact_id: contact.id,
+        reference_id: null,
+      });
+      setNewLogDetails("");
+      toast.success("Actividad registrada correctamente");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Error al registrar actividad: " + error.message);
+    }
   };
 
   const handleLinkHorse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newHorseId) return;
 
-    await createHorseContact.mutateAsync({
-      organization_id: contact.organization_id || "00000000-0000-0000-0000-000000000000",
-      horse_id: newHorseId,
-      contact_id: contact.id,
-      relationship_type: newRelType,
-      start_date: new Date().toISOString(),
-      end_date: null,
-      is_active: true,
-      notes: null,
-    });
+    let category = "business";
+    if (['Propietario', 'Copropietario', 'Cliente', 'Posible Cliente'].includes(newRelType)) category = "ownership";
+    else if (['Veterinario'].includes(newRelType)) category = "medical";
+    else if (['Herrero', 'Cuidador', 'Entrenador', 'Jinete'].includes(newRelType)) category = "management";
 
-    setNewHorseId("");
+    try {
+      await createHorseContact.mutateAsync({
+        organization_id: (contact as any).organization_id || "00000000-0000-0000-0000-000000000000",
+        horse_id: newHorseId,
+        contact_id: contact.id,
+        relationship_category: category,
+        relationship_type: newRelType,
+        start_date: new Date().toISOString(),
+        end_date: null,
+        is_active: true,
+        notes: null,
+      });
+      setNewHorseId("");
+      toast.success("Caballo vinculado correctamente");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Error al vincular: " + error.message);
+    }
   };
 
   return (
