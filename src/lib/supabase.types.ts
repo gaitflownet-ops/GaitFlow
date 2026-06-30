@@ -9,7 +9,11 @@ export type UserRole =
   | 'TRAINER'
   | 'GROOM'
   | 'FARRIER'
-  | 'DENTIST';
+  | 'DENTIST'
+  | 'REPRODUCTION_TECH'
+  | 'NUTRITION_MANAGER'
+  | 'COMPETITION_STAFF'
+  | 'TRANSPORT_STAFF';
 
 export interface Database {
   public: {

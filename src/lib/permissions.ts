@@ -15,7 +15,11 @@ export type UserRole =
   | 'TRAINER'
   | 'GROOM'
   | 'FARRIER'
-  | 'DENTIST';
+  | 'DENTIST'
+  | 'REPRODUCTION_TECH'
+  | 'NUTRITION_MANAGER'
+  | 'COMPETITION_STAFF'
+  | 'TRANSPORT_STAFF';
 
 /** Módulos de la aplicación */
 export type Module =
@@ -41,9 +45,13 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   STABLE_ADMIN:  2,
   VETERINARIAN:  3,
   TRAINER:       4,
+  REPRODUCTION_TECH: 4,
+  NUTRITION_MANAGER: 4,
+  GROOM:         5,
   FARRIER:       5,
   DENTIST:       5,
-  GROOM:         6,
+  COMPETITION_STAFF: 6,
+  TRANSPORT_STAFF: 6,
 };
 
 /** Roles que requieren MFA obligatorio */
@@ -160,6 +168,58 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     locations:   { read: true,  create: false, update: false, delete: false },
     competitions:{ read: false, create: false, update: false, delete: false },
   },
+  REPRODUCTION_TECH: {
+    horses:      { read: true,  create: false, update: false, delete: false },
+    health:      { read: false, create: false, update: false, delete: false },
+    tasks:       { read: true,  create: false, update: true,  delete: false },
+    financial:   { read: false, create: false, update: false, delete: false },
+    documents:   { read: false, create: false, update: false, delete: false },
+    marketplace: { read: false, create: false, update: false, delete: false },
+    breeding:    { read: true,  create: true,  update: true,  delete: false },
+    users:       { read: false, create: false, update: false, delete: false },
+    nutrition:   { read: false, create: false, update: false, delete: false },
+    locations:   { read: true,  create: false, update: false, delete: false },
+    competitions:{ read: false, create: false, update: false, delete: false },
+  },
+  NUTRITION_MANAGER: {
+    horses:      { read: true,  create: false, update: false, delete: false },
+    health:      { read: false, create: false, update: false, delete: false },
+    tasks:       { read: true,  create: true,  update: true,  delete: false },
+    financial:   { read: false, create: false, update: false, delete: false },
+    documents:   { read: false, create: false, update: false, delete: false },
+    marketplace: { read: false, create: false, update: false, delete: false },
+    breeding:    { read: false, create: false, update: false, delete: false },
+    users:       { read: false, create: false, update: false, delete: false },
+    nutrition:   { read: true,  create: true,  update: true,  delete: false },
+    locations:   { read: true,  create: false, update: false, delete: false },
+    competitions:{ read: false, create: false, update: false, delete: false },
+  },
+  COMPETITION_STAFF: {
+    horses:      { read: true,  create: false, update: false, delete: false },
+    health:      { read: false, create: false, update: false, delete: false },
+    tasks:       { read: true,  create: false, update: true,  delete: false },
+    financial:   { read: false, create: false, update: false, delete: false },
+    documents:   { read: false, create: false, update: false, delete: false },
+    marketplace: { read: false, create: false, update: false, delete: false },
+    breeding:    { read: false, create: false, update: false, delete: false },
+    users:       { read: false, create: false, update: false, delete: false },
+    nutrition:   { read: false, create: false, update: false, delete: false },
+    locations:   { read: true,  create: false, update: false, delete: false },
+    competitions:{ read: true,  create: true,  update: true,  delete: false },
+  },
+  TRANSPORT_STAFF: {
+    horses:      { read: true,  create: false, update: false, delete: false },
+    health:      { read: false, create: false, update: false, delete: false },
+    tasks:       { read: true,  create: false, update: true,  delete: false },
+    financial:   { read: false, create: false, update: false, delete: false },
+    documents:   { read: false, create: false, update: false, delete: false },
+    marketplace: { read: false, create: false, update: false, delete: false },
+    breeding:    { read: false, create: false, update: false, delete: false },
+    users:       { read: false, create: false, update: false, delete: false },
+    nutrition:   { read: false, create: false, update: false, delete: false },
+    locations:   { read: true,  create: false, update: false, delete: false },
+    competitions:{ read: false, create: false, update: false, delete: false },
+  },
 };
 
 /**
@@ -199,26 +259,34 @@ export function requiresMFA(role: UserRole | null | undefined): boolean {
  * Etiquetas legibles para cada rol (para uso en la UI).
  */
 export const ROLE_LABELS: Record<UserRole, string> = {
-  SUPER_ADMIN:   'Super Admin',
-  OWNER:         'Owner',
-  STABLE_ADMIN:  'Stable Admin',
-  VETERINARIAN:  'Veterinarian',
-  TRAINER:       'Trainer',
-  GROOM:         'Groom',
-  FARRIER:       'Farrier',
-  DENTIST:       'Dentist',
+  SUPER_ADMIN:       'Super Admin',
+  OWNER:             'Propietario',
+  STABLE_ADMIN:      'Administrador de Criadero',
+  VETERINARIAN:      'Veterinario',
+  TRAINER:           'Montador / Entrenador',
+  GROOM:             'Palafrenero',
+  FARRIER:           'Herrero',
+  DENTIST:           'Odontólogo',
+  REPRODUCTION_TECH: 'Técnico en Reproducción',
+  NUTRITION_MANAGER: 'Nutricionista',
+  COMPETITION_STAFF: 'Personal de Ferias',
+  TRANSPORT_STAFF:   'Transportador'
 };
 
 /**
  * Colores de badge para cada rol (para uso en la UI).
  */
 export const ROLE_COLORS: Record<UserRole, string> = {
-  SUPER_ADMIN:   'oklch(0.55 0.18 30)',   // Rojo
-  OWNER:         'oklch(0.65 0.18 55)',   // Dorado
-  STABLE_ADMIN:  'oklch(0.55 0.15 240)',  // Azul
-  VETERINARIAN:  'oklch(0.55 0.15 160)',  // Verde
-  TRAINER:       'oklch(0.55 0.15 280)',  // Púrpura
-  GROOM:         'oklch(0.55 0.1 220)',   // Azul claro
-  FARRIER:       'oklch(0.55 0.12 35)',   // Naranja
-  DENTIST:       'oklch(0.55 0.12 195)',  // Cian
+  SUPER_ADMIN:       'oklch(0.55 0.18 30)',   // Rojo
+  OWNER:             'oklch(0.65 0.18 55)',   // Dorado
+  STABLE_ADMIN:      'oklch(0.55 0.15 240)',  // Azul
+  VETERINARIAN:      'oklch(0.55 0.15 160)',  // Verde
+  TRAINER:           'oklch(0.55 0.15 280)',  // Púrpura
+  GROOM:             'oklch(0.60 0.10 80)',   // Naranja/Marrón
+  FARRIER:           'oklch(0.50 0.10 200)',  // Teal oscuro
+  DENTIST:           'oklch(0.50 0.10 220)',  // Azul grisáceo
+  REPRODUCTION_TECH: 'oklch(0.55 0.18 340)',  // Rosa/Magenta
+  NUTRITION_MANAGER: 'oklch(0.60 0.18 120)',  // Verde claro/Oliva
+  COMPETITION_STAFF: 'oklch(0.55 0.18 15)',   // Naranja vibrante
+  TRANSPORT_STAFF:   'oklch(0.40 0.05 260)'   // Gris azulado
 };

@@ -24,6 +24,7 @@ import { useInvitations, useCreateInvitation, useRevokeInvitation, getInviteUrl 
 import { useRolePermissions, useUpdatePermission, useResetPermissions, useSeedAllPermissions } from "@/lib/hooks/usePermissions";
 import { useTeams, useDeleteTeam, type FullTeam } from "@/lib/hooks/useTeams";
 import { CCC_ROLES, PLATFORM_MODULES, getRoleDefinition, type CccRole } from "@/lib/roles";
+import { AddTeamModal } from "@/components/modals/AddTeamModal";
 
 export const Route = createFileRoute("/team")({
   head: () => ({
@@ -200,6 +201,7 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
 function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boolean }) {
   const { data: teams = [], isLoading } = useTeams(orgId);
   const deleteTeam = useDeleteTeam();
+  const [addTeamModalOpen, setAddTeamModalOpen] = useState(false);
 
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -214,10 +216,14 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
           Crea cuadrillas operativas para agrupar tu personal y asignar responsables a los ejemplares.
         </p>
         {isOwner && (
-          <button className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button 
+            onClick={() => setAddTeamModalOpen(true)}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+          >
             <Plus className="h-4 w-4" /> Crear Cuadrilla
           </button>
         )}
+        <AddTeamModal open={addTeamModalOpen} onOpenChange={setAddTeamModalOpen} />
       </div>
     );
   }
@@ -226,11 +232,16 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
     <div className="space-y-6">
       {isOwner && (
         <div className="flex justify-end">
-          <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button 
+            onClick={() => setAddTeamModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+          >
             <Plus className="h-4 w-4" /> Nueva Cuadrilla
           </button>
         </div>
       )}
+
+      <AddTeamModal open={addTeamModalOpen} onOpenChange={setAddTeamModalOpen} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {teams.map((team) => (

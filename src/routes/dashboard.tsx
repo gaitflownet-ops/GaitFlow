@@ -31,6 +31,7 @@ import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
 import { PremiumKPICards } from "@/components/dashboard/PremiumKPICards";
 import { DailyScheduleWidget } from "@/components/DailyScheduleWidget";
 import { StableOperationsWidget } from "@/components/dashboard/StableOperationsWidget";
+import { AddCoverageLogModal } from "@/components/modals/AddCoverageLogModal";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -79,6 +80,7 @@ function Dashboard() {
   const [addUpdateOpen, setAddUpdateOpen] = useState(false);
   const [addHealthOpen, setAddHealthOpen] = useState(false);
   const [addCompetitionOpen, setAddCompetitionOpen] = useState(false);
+  const [addCoverageLogOpen, setAddCoverageLogOpen] = useState(false);
   const [likedUpdates, setLikedUpdates] = useState<Set<string>>(new Set());
 
   const hour = new Date().getHours();
@@ -381,7 +383,15 @@ function Dashboard() {
             </Link>
           </div>
 
-          <StableOperationsWidget />
+          <div className="relative">
+            <StableOperationsWidget />
+            <button 
+              onClick={() => setAddCoverageLogOpen(true)}
+              className="absolute top-5 right-5 text-xs bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-full font-medium transition-colors border border-primary/20"
+            >
+              + Registrar Bitácora
+            </button>
+          </div>
 
           <DailyScheduleWidget />
         </div>
@@ -390,6 +400,7 @@ function Dashboard() {
       <AddUpdateModal open={addUpdateOpen} onOpenChange={setAddUpdateOpen} />
       <AddHealthRecordModal open={addHealthOpen} onOpenChange={setAddHealthOpen} />
       <AddCompetitionModal open={addCompetitionOpen} onOpenChange={setAddCompetitionOpen} />
+      <AddCoverageLogModal open={addCoverageLogOpen} onOpenChange={setAddCoverageLogOpen} />
     </AppShell>
   );
 }
