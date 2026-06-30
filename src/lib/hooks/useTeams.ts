@@ -165,6 +165,111 @@ export function useCreateTeam() {
   });
 }
 
+export function useUpdateTeam() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      organization_id,
+      name,
+      description,
+      team_type,
+      is_temporary,
+      start_date,
+      end_date,
+      destination,
+      event_notes,
+      leader_id,
+      member_ids,
+      horse_ids,
+      shifts
+    }: {
+      id: string;
+      organization_id: string;
+      name: string;
+      description?: string;
+      team_type?: string;
+      is_temporary?: boolean;
+      start_date?: string;
+      end_date?: string;
+      destination?: string;
+      event_notes?: string;
+      leader_id?: string;
+      member_ids: string[];
+      horse_ids: string[];
+      shifts?: { id?: string; name: string; start_time: string; end_time: string }[];
+    }) => {
+      // 1. Update team
+      const { data: team, error: teamError } = await (supabase.from("teams") as any)
+        .update({
+          name,
+          description,
+          team_type,
+          is_temporary,
+          start_date,
+          end_date,
+          destination,
+          event_notes
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (teamError) throw teamError;
+
+      // 2. Sync members
+      // Delete existing
+      await (supabase.from("team_members") as any).delete().eq("team_id", id);
+      
+      const membersToInsert = [];
+      if (leader_id) {
+        membersToInsert.push({ team_id: id, profile_id: leader_id, organization_id, role: "Líder" });
+      }
+      for (const mId of member_ids) {
+        if (mId !== leader_id) {
+          membersToInsert.push({ team_id: id, profile_id: mId, organization_id, role: "Miembro" });
+        }
+      }
+      if (membersToInsert.length > 0) {
+        const { error: membersError } = await (supabase.from("team_members") as any).insert(membersToInsert);
+        if (membersError) console.error("Error inserting members", membersError);
+      }
+
+      // 3. Sync horses
+      await (supabase.from("team_horse_assignments") as any).delete().eq("team_id", id);
+      if (horse_ids.length > 0) {
+        const horsesToInsert = horse_ids.map(hId => ({
+          team_id: id,
+          horse_id: hId,
+          organization_id
+        }));
+        const { error: horsesError } = await (supabase.from("team_horse_assignments") as any).insert(horsesToInsert);
+        if (horsesError) console.error("Error inserting horses", horsesError);
+      }
+
+      // 4. Sync shifts (simple replace)
+      await (supabase.from("ccc_work_shifts") as any).delete().eq("team_id", id);
+      if (shifts && shifts.length > 0) {
+        const shiftsToInsert = shifts.map(s => ({
+          team_id: id,
+          name: s.name,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          organization_id
+        }));
+        const { error: shiftsError } = await (supabase.from("ccc_work_shifts") as any).insert(shiftsToInsert);
+        if (shiftsError) console.error("Error inserting shifts", shiftsError);
+      }
+
+      return team;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["teams", variables.organization_id] });
+    },
+  });
+}
+
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
   return useMutation({

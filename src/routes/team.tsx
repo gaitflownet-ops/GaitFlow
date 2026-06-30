@@ -19,12 +19,13 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { useApp } from "@/lib/store";
 import { Modal } from "@/components/modals/Modal";
+import { AddTeamModal } from "@/components/modals/AddTeamModal";
+import { WorkerProfileModal } from "@/components/modals/WorkerProfileModal";
 import { useOrganizationMembers, useUpdateMemberRole, useRemoveMember } from "@/lib/hooks/useOrganization";
 import { useInvitations, useCreateInvitation, useRevokeInvitation, getInviteUrl } from "@/lib/hooks/useInvitations";
 import { useRolePermissions, useUpdatePermission, useResetPermissions, useSeedAllPermissions } from "@/lib/hooks/usePermissions";
 import { useTeams, useDeleteTeam, type FullTeam } from "@/lib/hooks/useTeams";
 import { CCC_ROLES, PLATFORM_MODULES, getRoleDefinition, type CccRole } from "@/lib/roles";
-import { AddTeamModal } from "@/components/modals/AddTeamModal";
 
 export const Route = createFileRoute("/team")({
   head: () => ({
@@ -129,13 +130,17 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
   const { data: members = [], isLoading } = useOrganizationMembers(orgId);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
+  
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [selectedWorkerName, setSelectedWorkerName] = useState<string>("");
 
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {members.map((member) => {
         const profile = member.profiles || {};
         const roleDef = getRoleDefinition(member.role || "Propietario");
@@ -146,7 +151,14 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
         const isBusy = availability === 'Busy';
 
         return (
-          <div key={member.user_id} className="lux-card p-5 border border-border relative overflow-hidden">
+          <div 
+            key={member.user_id} 
+            className="lux-card p-5 border border-border relative overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => {
+              setSelectedWorkerId(member.user_id);
+              setSelectedWorkerName(profile.name || "Usuario");
+            }}
+          >
             <div className={`absolute top-0 right-0 w-2 h-full ${isAvail ? 'bg-emerald-500' : isBusy ? 'bg-amber-500' : 'bg-red-500'}`}></div>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -177,7 +189,8 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
             {isOwner && member.role !== "Owner" && member.role !== "Propietario" && (
               <div className="mt-4 pt-4 border-t border-border flex justify-end">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (confirm("¿Estás seguro de que quieres eliminar a este miembro del equipo?")) {
                       removeMember.mutate({ organizationId: orgId!, userId: member.user_id });
                     }
@@ -192,7 +205,15 @@ function MiembrosTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boole
           </div>
         );
       })}
-    </div>
+      </div>
+
+      <WorkerProfileModal 
+        open={!!selectedWorkerId} 
+        onOpenChange={(open) => !open && setSelectedWorkerId(null)}
+        userId={selectedWorkerId}
+        userName={selectedWorkerName}
+      />
+    </>
   );
 }
 
@@ -202,6 +223,7 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
   const { data: teams = [], isLoading } = useTeams(orgId);
   const deleteTeam = useDeleteTeam();
   const [addTeamModalOpen, setAddTeamModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<any>(null);
 
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -223,7 +245,7 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
             <Plus className="h-4 w-4" /> Crear Cuadrilla
           </button>
         )}
-        <AddTeamModal open={addTeamModalOpen} onOpenChange={setAddTeamModalOpen} />
+        <AddTeamModal open={addTeamModalOpen} onOpenChange={setAddTeamModalOpen} team={editingTeam} />
       </div>
     );
   }
@@ -233,7 +255,10 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
       {isOwner && (
         <div className="flex justify-end">
           <button 
-            onClick={() => setAddTeamModalOpen(true)}
+            onClick={() => {
+              setEditingTeam(null);
+              setAddTeamModalOpen(true);
+            }}
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
           >
             <Plus className="h-4 w-4" /> Nueva Cuadrilla
@@ -241,7 +266,10 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
         </div>
       )}
 
-      <AddTeamModal open={addTeamModalOpen} onOpenChange={setAddTeamModalOpen} />
+      <AddTeamModal open={addTeamModalOpen} onOpenChange={(open) => {
+        setAddTeamModalOpen(open);
+        if (!open) setTimeout(() => setEditingTeam(null), 300);
+      }} team={editingTeam} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {teams.map((team) => (
@@ -261,16 +289,27 @@ function CuadrillasTab({ orgId, isOwner }: { orgId?: string | null; isOwner: boo
                 )}
               </div>
               {isOwner && (
-                <button
-                  onClick={() => {
-                    if (confirm("¿Estás seguro de que quieres eliminar esta cuadrilla?")) {
-                      deleteTeam.mutate({ id: team.id, orgId: orgId! });
-                    }
-                  }}
-                  className="text-muted-foreground hover:text-red-500 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingTeam(team);
+                      setAddTeamModalOpen(true);
+                    }}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("¿Estás seguro de que quieres eliminar esta cuadrilla?")) {
+                        deleteTeam.mutate({ id: team.id, orgId: orgId! });
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               )}
             </div>
 

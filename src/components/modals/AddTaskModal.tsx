@@ -5,6 +5,7 @@ import { useCreateTask } from "@/lib/hooks/useTasks";
 import { useApp } from "@/lib/store";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useProfiles } from "@/lib/hooks/useProfiles";
+import { useTeams } from "@/lib/hooks/useTeams";
 
 interface AddTaskModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
   const { state } = useApp();
   const { data: horses = [] } = useHorses();
   const { data: profiles = [] } = useProfiles();
+  const { data: teams = [] } = useTeams(state.user?.organization_id);
   const { mutateAsync: createTask, isPending } = useCreateTask();
 
   const [horseId, setHorseId] = useState("");
@@ -46,6 +48,7 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
   const [priority, setPriority] = useState("Media");
   const [dueDate, setDueDate] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [teamId, setTeamId] = useState("");
 
   const applyTemplate = (template: { title: string; desc: string }) => {
     setTitle(template.title);
@@ -66,6 +69,7 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
         due_date: dueDate ? new Date(`${dueDate}T12:00:00Z`).toISOString() : new Date().toISOString(),
         horse_id: horseId || null,
         assignee_id: assigneeId || null,
+        team_id: teamId || null,
         organization_id: (targetOrgId || "00000000-0000-0000-0000-000000000000") as string,
       });
       onOpenChange(false);
@@ -82,6 +86,7 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
     setDueDate("");
     setHorseId("");
     setAssigneeId("");
+    setTeamId("");
   };
 
   return (
@@ -202,16 +207,39 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
                     <User className="h-4 w-4 text-muted-foreground" /> Asignar a
                   </label>
                   <select
-                    value={assigneeId}
-                    onChange={(e) => setAssigneeId(e.target.value)}
+                    value={teamId ? `team:${teamId}` : assigneeId ? `user:${assigneeId}` : ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.startsWith("team:")) {
+                        setTeamId(val.split(":")[1]);
+                        setAssigneeId("");
+                      } else if (val.startsWith("user:")) {
+                        setAssigneeId(val.split(":")[1]);
+                        setTeamId("");
+                      } else {
+                        setTeamId("");
+                        setAssigneeId("");
+                      }
+                    }}
                     className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
                   >
-                    <option value="">Cualquier miembro</option>
-                    {uniqueProfiles.map((p: any) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} (Equipo)
-                      </option>
-                    ))}
+                    <option value="">Cualquier miembro / Sin asignar</option>
+                    
+                    <optgroup label="Cuadrillas">
+                      {teams.map(t => (
+                        <option key={`team-${t.id}`} value={`team:${t.id}`}>
+                          👥 {t.name}
+                        </option>
+                      ))}
+                    </optgroup>
+
+                    <optgroup label="Personas">
+                      {uniqueProfiles.map((p: any) => (
+                        <option key={`user-${p.id}`} value={`user:${p.id}`}>
+                          👤 {p.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
               </div>

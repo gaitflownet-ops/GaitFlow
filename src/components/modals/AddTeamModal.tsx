@@ -3,50 +3,96 @@ import { Check, Loader2, Plus, X, Trash2 } from "lucide-react";
 import { Modal } from "./Modal";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useOrganizationMembers } from "@/lib/hooks/useOrganization";
-import { useCreateTeam } from "@/lib/hooks/useTeams";
+import { useCreateTeam, useUpdateTeam, type FullTeam } from "@/lib/hooks/useTeams";
 import { useApp } from "@/lib/store";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  team?: FullTeam | null;
 };
 
-export function AddTeamModal({ open, onOpenChange }: Props) {
+export function AddTeamModal({ open, onOpenChange, team }: Props) {
   const { state } = useApp();
   const orgId = state.user?.organization_id;
 
   const { data: horses = [] } = useHorses(orgId);
   const { data: members = [] } = useOrganizationMembers(orgId);
   const createTeam = useCreateTeam();
+  const updateTeam = useUpdateTeam();
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isTemporary, setIsTemporary] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [destination, setDestination] = useState("");
-  const [eventNotes, setEventNotes] = useState("");
-  const [leaderId, setLeaderId] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [selectedHorses, setSelectedHorses] = useState<string[]>([]);
+  const [name, setName] = useState(team?.name || "");
+  const [description, setDescription] = useState(team?.description || "");
+  const [isTemporary, setIsTemporary] = useState(team?.is_temporary || false);
+  const [startDate, setStartDate] = useState(team?.start_date || "");
+  const [endDate, setEndDate] = useState(team?.end_date || "");
+  const [destination, setDestination] = useState(team?.destination || "");
+  const [eventNotes, setEventNotes] = useState(team?.event_notes || "");
   
-  const [shifts, setShifts] = useState<{name: string, start_time: string, end_time: string}[]>([]);
+  const initialLeaderId = team?.members?.find(m => m.role === "Líder" || m.role === "Leader")?.profile_id || "";
+  const [leaderId, setLeaderId] = useState(initialLeaderId);
+  
+  const initialMembers = team?.members?.filter(m => m.profile_id !== initialLeaderId).map(m => m.profile_id) || [];
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(initialMembers);
+  
+  const initialHorses = team?.horses?.map(h => h.horse_id) || [];
+  const [selectedHorses, setSelectedHorses] = useState<string[]>(initialHorses);
+  
+  const initialShifts = team?.shifts?.map(s => ({ name: s.name, start_time: s.start_time, end_time: s.end_time })) || [];
+  const [shifts, setShifts] = useState<{name: string, start_time: string, end_time: string}[]>(initialShifts);
 
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
+  // Re-initialize when team prop changes
+  useEffect(() => {
+    if (open) {
+      if (team) {
+        setName(team.name || "");
+        setDescription(team.description || "");
+        setIsTemporary(team.is_temporary || false);
+        setStartDate(team.start_date || "");
+        setEndDate(team.end_date || "");
+        setDestination(team.destination || "");
+        setEventNotes(team.event_notes || "");
+        
+        const leader = team.members?.find(m => m.role === "Líder" || m.role === "Leader")?.profile_id || "";
+        setLeaderId(leader);
+        setSelectedMembers(team.members?.filter(m => m.profile_id !== leader).map(m => m.profile_id) || []);
+        setSelectedHorses(team.horses?.map(h => h.horse_id) || []);
+        setShifts(team.shifts?.map(s => ({ name: s.name, start_time: s.start_time, end_time: s.end_time })) || []);
+      } else {
+        setName("");
+        setDescription("");
+        setIsTemporary(false);
+        setStartDate("");
+        setEndDate("");
+        setDestination("");
+        setEventNotes("");
+        setLeaderId("");
+        setSelectedMembers([]);
+        setSelectedHorses([]);
+        setShifts([]);
+      }
+      setDone(false);
+      setError("");
+    }
+  }, [open, team]);
+
   const reset = () => {
-    setName("");
-    setDescription("");
-    setIsTemporary(false);
-    setStartDate("");
-    setEndDate("");
-    setDestination("");
-    setEventNotes("");
-    setLeaderId("");
-    setSelectedMembers([]);
-    setSelectedHorses([]);
-    setShifts([]);
+    if (!team) {
+      setName("");
+      setDescription("");
+      setIsTemporary(false);
+      setStartDate("");
+      setEndDate("");
+      setDestination("");
+      setEventNotes("");
+      setLeaderId("");
+      setSelectedMembers([]);
+      setSelectedHorses([]);
+      setShifts([]);
+    }
     setDone(false);
     setError("");
   };
@@ -62,21 +108,40 @@ export function AddTeamModal({ open, onOpenChange }: Props) {
     if (!orgId) return;
 
     try {
-      await createTeam.mutateAsync({
-        organization_id: orgId,
-        name,
-        description,
-        is_temporary: isTemporary,
-        start_date: isTemporary && startDate ? startDate : undefined,
-        end_date: isTemporary && endDate ? endDate : undefined,
-        destination: isTemporary ? destination : undefined,
-        event_notes: isTemporary ? eventNotes : undefined,
-        leader_id: leaderId || undefined,
-        member_ids: selectedMembers,
-        horse_ids: selectedHorses,
-        shifts,
-        team_type: isTemporary ? "Temporary" : "Permanent"
-      });
+      if (team) {
+        await updateTeam.mutateAsync({
+          id: team.id,
+          organization_id: orgId,
+          name,
+          description,
+          is_temporary: isTemporary,
+          start_date: isTemporary && startDate ? startDate : undefined,
+          end_date: isTemporary && endDate ? endDate : undefined,
+          destination: isTemporary ? destination : undefined,
+          event_notes: isTemporary ? eventNotes : undefined,
+          leader_id: leaderId || undefined,
+          member_ids: selectedMembers,
+          horse_ids: selectedHorses,
+          shifts,
+          team_type: isTemporary ? "Temporary" : "Permanent"
+        });
+      } else {
+        await createTeam.mutateAsync({
+          organization_id: orgId,
+          name,
+          description,
+          is_temporary: isTemporary,
+          start_date: isTemporary && startDate ? startDate : undefined,
+          end_date: isTemporary && endDate ? endDate : undefined,
+          destination: isTemporary ? destination : undefined,
+          event_notes: isTemporary ? eventNotes : undefined,
+          leader_id: leaderId || undefined,
+          member_ids: selectedMembers,
+          horse_ids: selectedHorses,
+          shifts,
+          team_type: isTemporary ? "Temporary" : "Permanent"
+        });
+      }
       setDone(true);
       setTimeout(handleClose, 2000);
     } catch (err: any) {
@@ -107,14 +172,14 @@ export function AddTeamModal({ open, onOpenChange }: Props) {
   };
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Nueva Cuadrilla / Equipo">
+    <Modal open={open} onOpenChange={onOpenChange} title={team ? "Editar Cuadrilla" : "Nueva Cuadrilla / Equipo"}>
       {done ? (
         <div className="py-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-300">
           <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mb-6">
             <Check className="h-8 w-8" />
           </div>
-          <h3 className="text-xl font-medium text-foreground mb-2">¡Cuadrilla Creada!</h3>
-          <p className="text-muted-foreground">El equipo se ha configurado correctamente.</p>
+          <h3 className="text-xl font-medium text-foreground mb-2">{team ? "¡Cuadrilla Actualizada!" : "¡Cuadrilla Creada!"}</h3>
+          <p className="text-muted-foreground">{team ? "Los cambios se guardaron correctamente." : "El equipo se ha configurado correctamente."}</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -203,7 +268,7 @@ export function AddTeamModal({ open, onOpenChange }: Props) {
               >
                 <option value="">Selecciona un líder</option>
                 {members.map(m => (
-                  <option key={m.id} value={m.profile_id}>{m.profiles?.name || 'Desconocido'}</option>
+                  <option key={m.id} value={m.user_id}>{m.profiles?.name || 'Desconocido'}</option>
                 ))}
               </select>
             </div>
@@ -212,13 +277,13 @@ export function AddTeamModal({ open, onOpenChange }: Props) {
               <label className="block text-sm font-medium text-foreground mb-2">Miembros del Equipo</label>
               <div className="max-h-40 overflow-y-auto space-y-1 bg-secondary/30 p-2 rounded-xl border border-border">
                 {members.map(m => {
-                  if (m.profile_id === leaderId) return null; // Leader is already a member implicitly
+                  if (m.user_id === leaderId) return null; // Leader is already a member implicitly
                   return (
                     <label key={m.id} className="flex items-center gap-3 p-2 hover:bg-secondary rounded-lg cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedMembers.includes(m.profile_id)}
-                        onChange={() => toggleMember(m.profile_id)}
+                        checked={selectedMembers.includes(m.user_id)}
+                        onChange={() => toggleMember(m.user_id)}
                         className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary focus:ring-offset-background"
                       />
                       <span className="text-sm font-medium">{m.profiles?.name || 'Desconocido'}</span>
@@ -300,26 +365,25 @@ export function AddTeamModal({ open, onOpenChange }: Props) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <div className="pt-6 border-t border-border flex justify-end gap-3">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary rounded-xl transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={createTeam.isPending || !name}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+              disabled={createTeam.isPending || updateTeam.isPending}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {createTeam.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Creando...
-                </>
+              {(createTeam.isPending || updateTeam.isPending) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Guardar Cuadrilla"
+                <Check className="h-4 w-4" />
               )}
+              {team ? "Guardar Cambios" : "Crear Cuadrilla"}
             </button>
           </div>
         </form>

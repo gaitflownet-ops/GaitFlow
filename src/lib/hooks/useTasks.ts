@@ -4,7 +4,7 @@ import { supabase } from "../supabase";
 import type { Database } from "../supabase.types";
 import { useApp } from "../store";
 
-export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type Task = Database["public"]["Tables"]["tasks"]["Row"] & { team_id?: string | null; };
 
 export function useTasks(farmId?: string, orgId?: string | null) {
   const { state } = useApp();
@@ -17,7 +17,8 @@ export function useTasks(farmId?: string, orgId?: string | null) {
       let query = (supabase.from("tasks") as any).select(`
         *,
         horses ( name ),
-        profiles:assignee_id ( name )
+        profiles:assignee_id ( name ),
+        teams:team_id ( name )
       `).eq("organization_id", activeOrgId);
       if (farmId) {
         query = query.eq("farm_id", farmId);
@@ -27,6 +28,7 @@ export function useTasks(farmId?: string, orgId?: string | null) {
       return data as (Task & {
         horses: { name: string } | null;
         profiles: { name: string } | null;
+        teams?: { name: string } | null;
       })[];
     },
     enabled: true,
