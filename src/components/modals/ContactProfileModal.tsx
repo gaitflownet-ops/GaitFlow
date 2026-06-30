@@ -47,27 +47,29 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
   return (
     <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`} size="default">
       
-      <div className="flex gap-2 border-b border-border mb-4 overflow-x-auto pb-2">
-        <button
-          onClick={() => setActiveTab("timeline")}
+      <div className="px-6 pt-4 border-b border-border">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          <button
+            onClick={() => setActiveTab("timeline")}
           className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "timeline" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
         >
           Historial de Interacciones
         </button>
-        <button
-          onClick={() => setActiveTab("horses")}
-          className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "horses" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
-        >
-          Caballos Vinculados
-        </button>
+          <button
+            onClick={() => setActiveTab("horses")}
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "horses" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+          >
+            Caballos Vinculados
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="py-12 flex justify-center">
+        <div className="py-12 flex justify-center p-6">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="min-h-[300px] max-h-[60vh] overflow-y-auto pr-2">
+        <div className="max-h-[60vh] overflow-y-auto p-6">
           
           {/* TAB: TIMELINE */}
           {activeTab === "timeline" && (

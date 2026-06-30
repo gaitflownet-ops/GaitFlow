@@ -33,7 +33,7 @@ export function WorkerProfileModal({ open, onClose, userId, userName }: Props) {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto p-6">
           
           <div className="flex flex-col gap-6">
             <div className="lux-card border border-border p-5">
