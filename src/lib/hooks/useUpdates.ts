@@ -22,13 +22,13 @@ const seededUpdates: Update[] = mockUpdates.map((u) => ({
 }));
 
 function getLocalStorageUpdates(): Update[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return seededUpdates;
   const stored = localStorage.getItem("gaitflow_updates");
-  if (stored) {
-    return JSON.parse(stored);
+  if (!stored) {
+    localStorage.setItem("gaitflow_updates", JSON.stringify(seededUpdates));
+    return seededUpdates;
   }
-  localStorage.setItem("gaitflow_updates", JSON.stringify(seededUpdates));
-  return seededUpdates;
+  return JSON.parse(stored);
 }
 
 function saveLocalStorageUpdates(list: Update[]) {

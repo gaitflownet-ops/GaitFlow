@@ -8,6 +8,7 @@ import { horses as mockHorses } from "../data";
 export type Horse = Database["public"]["Tables"]["horses"]["Row"];
 
 function getLocalStorageHorses(): Horse[] {
+  if (typeof window === "undefined") return mockHorses as unknown as Horse[];
   const stored = localStorage.getItem("gaitflow_horses");
   if (!stored) return mockHorses as unknown as Horse[];
   try {
