@@ -45,9 +45,9 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`} size="lg">
+    <Modal open={open} onClose={onClose} title={`Perfil CRM: ${contact.name}`} size="default">
       
-      <div className="flex gap-2 border-b border-border mb-6 overflow-x-auto pb-2">
+      <div className="flex gap-2 border-b border-border mb-4 overflow-x-auto pb-2">
         <button
           onClick={() => setActiveTab("timeline")}
           className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "timeline" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
@@ -113,21 +113,21 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
               ) : (
                 <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
                   {timeline.map((log) => (
-                    <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-card shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                    <div key={log.id} className="relative flex items-center justify-normal group is-active">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card shadow shrink-0 z-10 mr-4">
+                        <Activity className="h-3 w-3 text-muted-foreground" />
                       </div>
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] lux-card p-4 rounded-xl border border-border">
+                      <div className="flex-1 lux-card p-3.5 rounded-xl border border-border">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold uppercase text-primary tracking-wider">{log.module_source}</span>
-                          <time className="text-xs text-muted-foreground font-medium">{format(new Date(log.date), "dd MMM yyyy, HH:mm", { locale: es })}</time>
+                          <span className="text-[10px] font-bold uppercase text-primary tracking-wider">{log.module_source}</span>
+                          <time className="text-xs text-muted-foreground">{format(new Date(log.date), "dd MMM yyyy, HH:mm", { locale: es })}</time>
                         </div>
                         <div className="text-sm font-medium text-foreground">{log.action_type}</div>
                         {log.action_details && (
-                          <div className="text-sm text-muted-foreground mt-1">{log.action_details}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{log.action_details}</div>
                         )}
                         {log.horses && (
-                          <div className="mt-2 text-xs bg-secondary/50 inline-flex px-2 py-1 rounded text-foreground border border-border/50">
+                          <div className="mt-2 text-[10px] uppercase font-bold tracking-wider bg-secondary/50 inline-flex px-2 py-0.5 rounded text-foreground border border-border/50">
                             🐴 {log.horses.name}
                           </div>
                         )}
@@ -184,15 +184,6 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
 
         </div>
       )}
-
-      <div className="pt-6 mt-6 flex justify-end border-t border-border">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80 rounded-xl transition-colors"
-        >
-          Cerrar Perfil
-        </button>
-      </div>
     </Modal>
   );
 }

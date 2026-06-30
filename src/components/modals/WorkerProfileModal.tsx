@@ -82,15 +82,6 @@ export function WorkerProfileModal({ open, onClose, userId, userName }: Props) {
               </div>
             </div>
           </div>
-
-          <div className="pt-4 flex justify-end border-t border-border mt-6">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium bg-secondary text-foreground hover:bg-secondary/80 rounded-xl transition-colors"
-            >
-              Cerrar Perfil
-            </button>
-          </div>
         </div>
       )}
     </Modal>
