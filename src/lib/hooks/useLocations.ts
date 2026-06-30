@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
+import { useApp } from "../store";
 
 export interface Location {
   id: string;
@@ -77,11 +78,15 @@ export interface TransportRecord {
   horse?: { name: string };
 }
 
-export function useLocations(farmId?: string) {
+export function useLocations(farmId?: string, orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery({
-    queryKey: ["locations", farmId],
+    queryKey: ["locations", farmId, activeOrgId],
     queryFn: async () => {
-      let query = (supabase as any).from("locations").select("*");
+      if (!activeOrgId) return [];
+      let query = (supabase as any).from("locations").select("*").eq("organization_id", activeOrgId);
       if (farmId) {
         query = query.eq("farm_id", farmId);
       }

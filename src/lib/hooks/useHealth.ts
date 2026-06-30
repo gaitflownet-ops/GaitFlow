@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "../supabase";
 import type { Database } from "../supabase.types";
+import { useApp } from "../store";
 import { healthRecords as mockHealth } from "../data";
 
 export type HealthRecord = Database["public"]["Tables"]["health_records"]["Row"];
@@ -67,11 +68,15 @@ export const eventTypeLabels: Record<string, string> = {
 // ────────────────────────────────────────────
 // useHealthRecords — all or filtered by horse
 // ────────────────────────────────────────────
-export function useHealthRecords(horseId?: string) {
+export function useHealthRecords(horseId?: string, orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<HealthRecord[]>({
-    queryKey: ["health_records", horseId],
+    queryKey: ["health_records", horseId, activeOrgId],
     queryFn: async () => {
-      let query = (supabase.from("health_records") as any).select("*").order("date", { ascending: false });
+      if (!activeOrgId) return [];
+      let query = (supabase.from("health_records") as any).select("*").eq("organization_id", activeOrgId).order("date", { ascending: false });
 
       if (horseId) {
         query = query.eq("horse_id", horseId);
@@ -87,7 +92,10 @@ export function useHealthRecords(horseId?: string) {
 // ────────────────────────────────────────────
 // useHealthCalendarEvents — records for a specific month
 // ────────────────────────────────────────────
-export function useHealthCalendarEvents(month: number, year: number) {
+export function useHealthCalendarEvents(month: number, year: number, orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const endDate =
     month === 11
@@ -95,10 +103,12 @@ export function useHealthCalendarEvents(month: number, year: number) {
       : `${year}-${String(month + 2).padStart(2, "0")}-01`;
 
   return useQuery<HealthRecord[]>({
-    queryKey: ["health_calendar", month, year],
+    queryKey: ["health_calendar", month, year, activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
       const { data, error } = await (supabase.from("health_records") as any)
         .select("*")
+        .eq("organization_id", activeOrgId)
         .gte("date", startDate)
         .lt("date", endDate)
         .order("date", { ascending: true });

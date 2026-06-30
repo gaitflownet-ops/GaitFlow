@@ -1,9 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "../supabase";
 import type { Database } from "../supabase.types";
+import { useApp } from "../store";
 import { horses as mockHorses } from "../data";
 
+
 export type Horse = Database["public"]["Tables"]["horses"]["Row"];
+
+function getLocalStorageHorses(): Horse[] {
+  const stored = localStorage.getItem("gaitflow_horses");
+  if (!stored) return mockHorses as unknown as Horse[];
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return mockHorses as unknown as Horse[];
+  }
+}
+
+function saveLocalStorageHorses(horses: Horse[]) {
+  localStorage.setItem("gaitflow_horses", JSON.stringify(horses));
+}
 
 export const mapHorseImageFallback = (h: Horse): Horse => {
   if (h.image_url?.startsWith('/src/assets/')) {
@@ -25,13 +41,19 @@ export const mapHorseImageFallback = (h: Horse): Horse => {
   return h;
 };
 
-export function useHorses() {
+export function useHorses(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<Horse[]>({
-    queryKey: ["horses"],
+    queryKey: ["horses", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
+      
       const { data, error } = await (supabase
         .from("horses") as any)
         .select("*")
+        .eq("organization_id", activeOrgId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -40,9 +62,12 @@ export function useHorses() {
   });
 }
 
-export function useHorse(slugOrId: string) {
+export function useHorse(slugOrId: string, orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<Horse>({
-    queryKey: ["horse", slugOrId],
+    queryKey: ["horse", slugOrId, activeOrgId],
     queryFn: async () => {
       if (!isSupabaseConfigured) {
         const list = getLocalStorageHorses();
@@ -55,6 +80,7 @@ export function useHorse(slugOrId: string) {
       const { data: horseBySlug, error } = await (supabase
         .from("horses") as any)
         .select("*")
+        .eq("organization_id", activeOrgId)
         .eq("slug", slugOrId)
         .single();
       let data = horseBySlug;
@@ -63,6 +89,7 @@ export function useHorse(slugOrId: string) {
         const { data: byIdData, error: byIdError } = await (supabase
           .from("horses") as any)
           .select("*")
+          .eq("organization_id", activeOrgId)
           .eq("id", slugOrId)
           .single();
         if (byIdError) throw byIdError;
@@ -73,7 +100,7 @@ export function useHorse(slugOrId: string) {
 
       return mapHorseImageFallback(data as unknown as Horse);
     },
-    enabled: !!slugOrId,
+    enabled: !!slugOrId && !!activeOrgId,
   });
 }
 

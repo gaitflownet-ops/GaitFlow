@@ -2,18 +2,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "../supabase";
 import type { Database } from "../supabase.types";
+import { useApp } from "../store";
 
 export type Task = Database["public"]["Tables"]["tasks"]["Row"];
 
-export function useTasks(farmId?: string) {
+export function useTasks(farmId?: string, orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery({
-    queryKey: ["tasks", farmId],
+    queryKey: ["tasks", farmId, activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
       let query = (supabase.from("tasks") as any).select(`
         *,
         horses ( name ),
         profiles:assignee_id ( name )
-      `);
+      `).eq("organization_id", activeOrgId);
       if (farmId) {
         query = query.eq("farm_id", farmId);
       }

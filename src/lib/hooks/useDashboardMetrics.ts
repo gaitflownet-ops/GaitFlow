@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Database } from "../supabase.types";
+import { useApp } from "../store";
 
 type CompetitionMetric = Pick<
   Database["public"]["Tables"]["competitions"]["Row"],
@@ -36,23 +37,41 @@ const isTopThreePlacement = (placement: string | null) => {
   );
 };
 
-export function useDashboardMetrics() {
+export function useDashboardMetrics(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery({
-    queryKey: ["dashboard-metrics"],
+    queryKey: ["dashboard-metrics", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) {
+        return {
+          horseCount: 0,
+          starts: 0,
+          wins: 0,
+          topThree: 0,
+          winRate: 0,
+          weeklyUpdates: 0,
+          healthAlerts: 0,
+          seasonEarnings: 0,
+        };
+      }
+      
       const weekStart = new Date();
       weekStart.setDate(weekStart.getDate() - 7);
 
       const [horsesResult, competitionsResult, updatesResult, healthResult] = await Promise.all([
-        supabase.from("horses").select("id", { count: "exact", head: true }),
-        supabase.from("competitions").select("placement, prize"),
+        supabase.from("horses").select("id", { count: "exact", head: true }).eq("organization_id", activeOrgId),
+        supabase.from("competitions").select("placement, prize").eq("organization_id", activeOrgId),
         supabase
           .from("updates")
           .select("id", { count: "exact", head: true })
+          .eq("organization_id", activeOrgId)
           .gte("created_at", weekStart.toISOString()),
         supabase
           .from("health_records")
           .select("id", { count: "exact", head: true })
+          .eq("organization_id", activeOrgId)
           .eq("status", "requires_followup"),
       ]);
 

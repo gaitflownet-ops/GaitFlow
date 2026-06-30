@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase";
+import { useApp } from "../store";
 
 export interface DashboardKPIs {
   inventory: {
@@ -40,10 +41,24 @@ export interface DashboardKPIs {
   };
 }
 
-export function useDashboardKPIs() {
+export function useDashboardKPIs(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<DashboardKPIs>({
-    queryKey: ["dashboard-kpis"],
+    queryKey: ["dashboard-kpis", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) {
+        return {
+          inventory: { total: 0, mares: 0, stallions: 0, foals: 0, competition: 0 },
+          tasks: { completed: 0, pending: 0, overdue: 0, compliance: 100 },
+          stalls: { total: 0, occupied: 0, available: 0, occupancyRate: 0 },
+          breeding: { activeMares: 0, pregnancies: 0, expectedFoals: 0, genetics: 0 },
+          competitions: { active: 0, upcoming: 0, results: 0 },
+          health: { alerts: 0, medications: 0, nutrition: 0, pending: 0 }
+        };
+      }
+      
       // Fetch minimum required columns to be fast
       const [
         { data: horses },
@@ -55,14 +70,14 @@ export function useDashboardKPIs() {
         { data: health },
         { data: pharmaceuticals }
       ] = await Promise.all([
-        supabase.from("horses").select("id, sex, status"),
-        supabase.from("tasks").select("id, status, due_date"),
-        supabase.from("stall_units").select("id, availability"),
-        supabase.from("pregnancies").select("id, status"),
-        supabase.from("genetics_inventory").select("id, status"),
-        supabase.from("competitions").select("id, date, status"),
-        supabase.from("health_records").select("id, status, severity"),
-        supabase.from("pharmaceuticals").select("id, current_stock, minimum_stock")
+        supabase.from("horses").select("id, sex, status").eq("organization_id", activeOrgId),
+        supabase.from("tasks").select("id, status, due_date").eq("organization_id", activeOrgId),
+        supabase.from("stall_units").select("id, availability").eq("organization_id", activeOrgId),
+        supabase.from("pregnancies").select("id, status").eq("organization_id", activeOrgId),
+        supabase.from("genetics_inventory").select("id, status").eq("organization_id", activeOrgId),
+        supabase.from("competitions").select("id, date, status").eq("organization_id", activeOrgId),
+        supabase.from("health_records").select("id, status, severity").eq("organization_id", activeOrgId),
+        supabase.from("pharmaceuticals").select("id, current_stock, minimum_stock").eq("organization_id", activeOrgId)
       ]);
 
       const safeHorses = horses || [];
