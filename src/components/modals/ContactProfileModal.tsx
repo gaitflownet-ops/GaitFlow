@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { useActivityTimeline, useHorseContacts, useCreateActivityLog, Contact } from "@/lib/hooks/useCRM";
+import { useActivityTimeline, useHorseContacts, useCreateActivityLog, useCreateHorseContact, Contact } from "@/lib/hooks/useCRM";
+import { useHorses } from "@/lib/hooks/useHorses";
 import { Loader2, Calendar, Activity, Link as LinkIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,14 +17,19 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
 
   const { data: timeline = [], isLoading: loadingTimeline } = useActivityTimeline(contact?.id || undefined);
   const { data: linkedHorses = [], isLoading: loadingHorses } = useHorseContacts(contact?.id || undefined);
+  const { data: allHorses = [], isLoading: loadingAllHorses } = useHorses(contact?.organization_id || undefined);
   const createActivityLog = useCreateActivityLog();
+  const createHorseContact = useCreateHorseContact();
 
   const [newLogType, setNewLogType] = useState("Llamada");
   const [newLogDetails, setNewLogDetails] = useState("");
 
+  const [newHorseId, setNewHorseId] = useState("");
+  const [newRelType, setNewRelType] = useState("Propietario");
+
   if (!contact) return null;
 
-  const isLoading = loadingTimeline || loadingHorses;
+  const isLoading = loadingTimeline || loadingHorses || loadingAllHorses;
 
   const handleManualLog = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +48,24 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
     });
     
     setNewLogDetails("");
+  };
+
+  const handleLinkHorse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHorseId) return;
+
+    await createHorseContact.mutateAsync({
+      organization_id: contact.organization_id || "00000000-0000-0000-0000-000000000000",
+      horse_id: newHorseId,
+      contact_id: contact.id,
+      relationship_type: newRelType,
+      start_date: new Date().toISOString(),
+      end_date: null,
+      is_active: true,
+      notes: null,
+    });
+
+    setNewHorseId("");
   };
 
   return (
@@ -144,11 +168,45 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
           {/* TAB: HORSES */}
           {activeTab === "horses" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <LinkIcon className="h-4 w-4 text-primary" /> Relaciones Activas
                 </h3>
               </div>
+
+              {/* Formulario para Vincular Caballo */}
+              <form onSubmit={handleLinkHorse} className="flex gap-2 bg-secondary/20 p-3 rounded-xl border border-border">
+                <select
+                  className="lux-select text-xs py-1.5 flex-1"
+                  value={newHorseId}
+                  onChange={e => setNewHorseId(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>Selecciona un Caballo...</option>
+                  {allHorses.map((h: any) => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="lux-select text-xs py-1.5 w-[140px]"
+                  value={newRelType}
+                  onChange={e => setNewRelType(e.target.value)}
+                >
+                  <option value="Propietario">Propietario</option>
+                  <option value="Veterinario">Veterinario</option>
+                  <option value="Herrero">Herrero</option>
+                  <option value="Cuidador">Cuidador</option>
+                  <option value="Entrenador">Entrenador</option>
+                  <option value="Jinete">Jinete</option>
+                </select>
+                <button 
+                  type="submit" 
+                  disabled={createHorseContact.isPending || !newHorseId}
+                  className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium shrink-0"
+                >
+                  {createHorseContact.isPending ? "..." : "Vincular"}
+                </button>
+              </form>
 
               {linkedHorses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
