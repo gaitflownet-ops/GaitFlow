@@ -27,62 +27,62 @@ export function DocumentVaultWidget() {
   const completionRate = total > 0 ? Math.round(((total - pendingVerification.length) / total) * 100) : 0;
 
   return (
-    <div className="lux-card flex flex-col h-full relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-6 opacity-[0.03] text-primary transition-opacity group-hover:opacity-[0.05] pointer-events-none">
-        <FileText className="h-32 w-32" />
+    <div className="lux-card flex flex-col relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-4 opacity-[0.03] text-primary transition-opacity group-hover:opacity-[0.05] pointer-events-none">
+        <FileText className="h-24 w-24" />
       </div>
       
-      <div className="p-5 border-b border-border/50 flex justify-between items-center relative z-10">
+      <div className="p-4 border-b border-border/50 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-2 text-[var(--gold)]">
-          <FileText className="h-5 w-5" />
-          <h3 className="font-display font-medium text-lg text-foreground">Estado Documental</h3>
+          <FileText className="h-4 w-4" />
+          <h3 className="font-display font-medium text-[15px] text-foreground">Estado Documental</h3>
         </div>
-        <Link to="/vault" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors">
+        <Link to="/vault" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors">
           Ir a Bóveda →
         </Link>
       </div>
 
-      <div className="p-5 flex-1 flex flex-col gap-5 relative z-10">
+      <div className="p-4 flex-1 flex flex-col gap-3 relative z-10">
         {/* Metric 1 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary">
-              <CheckCircle2 className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-primary">
+              <CheckCircle2 className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Documentos Validados</p>
-              <p className="text-xs text-muted-foreground">{completionRate}% completado</p>
+              <p className="text-[13px] font-medium text-foreground leading-none">Documentos Validados</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{completionRate}% completado</p>
             </div>
           </div>
-          <span className="font-display text-2xl">{total - pendingVerification.length}</span>
+          <span className="font-display text-xl">{total - pendingVerification.length}</span>
         </div>
 
         {/* Metric 2 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
-              <AlertCircle className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <AlertCircle className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Pendientes Revisión</p>
-              <p className="text-xs text-muted-foreground">Requieren validación</p>
+              <p className="text-[13px] font-medium text-foreground leading-none">Pendientes Revisión</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Requieren validación</p>
             </div>
           </div>
-          <span className="font-display text-2xl text-amber-500">{pendingVerification.length}</span>
+          <span className="font-display text-xl text-amber-500">{pendingVerification.length}</span>
         </div>
 
         {/* Metric 3 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
-              <ShieldAlert className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
+              <ShieldAlert className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Alertas de Vencimiento</p>
-              <p className="text-xs text-muted-foreground">Próximos 15 días o vencidos</p>
+              <p className="text-[13px] font-medium text-foreground leading-none">Alertas de Vencimiento</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Próximos 15 días o vencidos</p>
             </div>
           </div>
-          <span className="font-display text-2xl text-destructive">{expiring.length}</span>
+          <span className="font-display text-xl text-destructive">{expiring.length}</span>
         </div>
       </div>
     </div>
