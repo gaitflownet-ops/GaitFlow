@@ -87,7 +87,7 @@ export function useUploadDocument() {
       const filePath = `${state.user.organization_id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("documents")
+        .from("horse-documents")
         .upload(filePath, params.file, { upsert: false });
 
       if (uploadError) throw uploadError;
@@ -95,7 +95,7 @@ export function useUploadDocument() {
       // 3. Get Public URL
       const {
         data: { publicUrl },
-      } = supabase.storage.from("documents").getPublicUrl(filePath);
+      } = supabase.storage.from("horse-documents").getPublicUrl(filePath);
 
       // 4. Calculate new version if it's an update
       let newVersion = 1;
@@ -137,7 +137,7 @@ export function useUploadDocument() {
 
       if (insertError) {
         // Rollback storage if DB fails
-        await supabase.storage.from("documents").remove([filePath]);
+        await supabase.storage.from("horse-documents").remove([filePath]);
         throw insertError;
       }
 
@@ -194,7 +194,7 @@ export function useDeleteDocument() {
       const fileName = urlParts.pop();
       const orgFolder = urlParts.pop();
       if (fileName && orgFolder) {
-        await supabase.storage.from("documents").remove([`${orgFolder}/${fileName}`]);
+        await supabase.storage.from("horse-documents").remove([`${orgFolder}/${fileName}`]);
       }
       const { error } = await supabase.from("documents").delete().eq("id", doc.id);
       if (error) throw error;
