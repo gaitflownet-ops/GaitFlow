@@ -110,7 +110,12 @@ export function useUploadDocument() {
         }
       }
 
-      // 5. Insert record in Database
+      // 5. Auto-verify if uploader is OWNER or SUPER_ADMIN
+      const userRole = state.user.role?.toUpperCase() || "";
+      const isOwnerOrAdmin = ["OWNER", "SUPER_ADMIN", "STABLE_ADMIN"].includes(userRole);
+      const autoVerified = isOwnerOrAdmin ? "Revisado" : "Pendiente";
+
+      // 6. Insert record in Database
       const { data, error: insertError } = await (supabase as any)
         .from("documents")
         .insert({
@@ -130,7 +135,9 @@ export function useUploadDocument() {
           reference_module: params.reference_module || null,
           reference_id: params.reference_id || null,
           previous_version_id: params.previous_version_id || null,
-          verified: "Pendiente",
+          verified: autoVerified,
+          verified_by: isOwnerOrAdmin ? state.user.id : null,
+          verification_date: isOwnerOrAdmin ? new Date().toISOString() : null,
         })
         .select()
         .single();
