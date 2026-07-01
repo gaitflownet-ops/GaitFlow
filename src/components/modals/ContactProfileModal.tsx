@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Modal } from "./Modal";
 import { useActivityTimeline, useHorseContacts, useCreateActivityLog, useCreateHorseContact, Contact } from "@/lib/hooks/useCRM";
 import { useHorses } from "@/lib/hooks/useHorses";
-import { Loader2, Calendar, Activity, Link as LinkIcon, Plus } from "lucide-react";
+import { useDocuments } from "@/lib/hooks/useVault";
+import { UploadDocumentModal } from "./UploadDocumentModal";
+import { DocumentDetailsModal } from "./DocumentDetailsModal";
+import { Loader2, Calendar, Activity, Link as LinkIcon, Plus, FileText, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -14,13 +17,17 @@ type Props = {
 };
 
 export function ContactProfileModal({ open, onClose, contact }: Props) {
-  const [activeTab, setActiveTab] = useState<"timeline" | "horses">("timeline");
+  const [activeTab, setActiveTab] = useState<"timeline" | "horses" | "docs">("timeline");
 
   const { data: timeline = [], isLoading: loadingTimeline } = useActivityTimeline(contact?.id || undefined);
   const { data: linkedHorses = [], isLoading: loadingHorses } = useHorseContacts(contact?.id || undefined);
   const { data: allHorses = [], isLoading: loadingAllHorses } = useHorses(contact?.organization_id || undefined);
+  const { data: dbDocuments = [], isLoading: loadingDocs } = useDocuments({ owner_type: "contact", owner_id: contact?.id });
   const createActivityLog = useCreateActivityLog();
   const createHorseContact = useCreateHorseContact();
+
+  const [uploadDocOpen, setUploadDocOpen] = useState(false);
+  const [selectedVaultDoc, setSelectedVaultDoc] = useState<any>(null);
 
   const [newLogType, setNewLogType] = useState("Llamada");
   const [newLogDetails, setNewLogDetails] = useState("");
@@ -30,7 +37,7 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
 
   if (!contact) return null;
 
-  const isLoading = loadingTimeline || loadingHorses || loadingAllHorses;
+  const isLoading = loadingTimeline || loadingHorses || loadingAllHorses || loadingDocs;
 
   const handleManualLog = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +108,12 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
             className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "horses" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
           >
             Caballos Vinculados
+          </button>
+          <button
+            onClick={() => setActiveTab("docs")}
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors shrink-0 ${activeTab === "docs" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+          >
+            Documentos
           </button>
         </div>
       </div>
@@ -264,6 +277,59 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
 
         </div>
       )}
+
+      {activeTab === "docs" && !isLoading && (
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" /> Bóveda de Documentos
+            </h3>
+            <button
+              onClick={() => setUploadDocOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:opacity-95"
+            >
+              <Upload className="h-3 w-3" /> Subir
+            </button>
+          </div>
+          
+          {dbDocuments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/20 rounded-xl border border-border border-dashed">
+              No hay documentos asociados a este contacto.
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {dbDocuments.map((doc: any) => (
+                <div 
+                  key={doc.id} 
+                  onClick={() => setSelectedVaultDoc(doc)}
+                  className="lux-card p-4 flex flex-col hover:border-primary/30 transition-colors cursor-pointer border border-border"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <span className="grid place-items-center h-8 w-8 rounded-lg bg-primary/10 text-primary shrink-0">
+                      <FileText className="h-4 w-4" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm truncate">{doc.name}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{doc.type}</div>
+                    </div>
+                  </div>
+                  <div className="mt-auto pt-2 border-t border-border flex justify-between items-center text-[10px] font-medium">
+                    <span className={doc.verified === "Revisado" ? "text-green-600" : "text-amber-600"}>{doc.verified}</span>
+                    {doc.expiration_date && (
+                      <span className={new Date(doc.expiration_date) < new Date() ? 'text-destructive' : 'text-muted-foreground'}>
+                        Vence: {new Date(doc.expiration_date).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <UploadDocumentModal open={uploadDocOpen} onClose={() => setUploadDocOpen(false)} defaultContactId={contact.id} />
+      <DocumentDetailsModal open={!!selectedVaultDoc} onClose={() => setSelectedVaultDoc(null)} document={selectedVaultDoc} onUploadNewVersion={(doc) => setUploadDocOpen(true)} />
     </Modal>
   );
 }

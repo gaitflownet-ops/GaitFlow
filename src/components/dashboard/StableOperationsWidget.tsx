@@ -19,7 +19,7 @@ export function StableOperationsWidget() {
     return <div className="lux-card p-6 h-64 animate-pulse bg-secondary/50" />;
   }
 
-  const activeStaff = activeTeams.reduce((acc, t) => acc + t.members.filter(m => m.availability_status === 'Available').length, 0);
+  const activeStaff = activeTeams.reduce((acc, t) => acc + t.members.filter((m: any) => m.availability_status === 'Available').length, 0);
   const totalStaff = activeTeams.reduce((acc, t) => acc + t.members.length, 0);
   
   const totalHorses = horses.length;

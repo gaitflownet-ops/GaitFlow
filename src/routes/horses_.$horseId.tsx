@@ -6,7 +6,9 @@ import { useHorse, useHorses, useDeleteHorse, useUpdateHorse } from "@/lib/hooks
 import { useUpdates } from "@/lib/hooks/useUpdates";
 import { useCompetitions } from "@/lib/hooks/useCompetitions";
 import { useHealthRecords } from "@/lib/hooks/useHealth";
-import { useDocuments, useCreateDocument, useDeleteDocument, type Document } from "@/lib/hooks/useDocuments";
+import { useDocuments } from "@/lib/hooks/useVault";
+import { UploadDocumentModal } from "@/components/modals/UploadDocumentModal";
+import { DocumentDetailsModal } from "@/components/modals/DocumentDetailsModal";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "@/lib/hooks/useTasks";
 import { useLocations, useLocationHistory, useAssignHorseToStall } from "@/lib/hooks/useLocations";
 import {
@@ -28,7 +30,6 @@ import {
   Loader2,
   Edit2,
   Trash2,
-  FileText,
   Download,
   Dna,
   Coins,
@@ -37,6 +38,9 @@ import {
   Droplet,
   Save,
   CheckCircle2,
+  FolderOpen,
+  Upload,
+  FileText,
 } from "lucide-react";
 import { AddUpdateModal } from "@/components/modals/AddUpdateModal";
 import { LightboxModal } from "@/components/modals/LightboxModal";
@@ -117,7 +121,9 @@ function HorseProfile() {
   const { data: horseUpdates = [] } = useUpdates(horse?.id);
   const { data: horseComps = [] } = useCompetitions(horse?.id);
   const { data: healthRecords = [] } = useHealthRecords(horse?.id);
-  const { data: dbDocuments = [] } = useDocuments(horse?.id);
+  const { data: dbDocuments = [] } = useDocuments({ owner_type: "horse", owner_id: horse?.id });
+  const [uploadDocOpen, setUploadDocOpen] = useState(false);
+  const [selectedVaultDoc, setSelectedVaultDoc] = useState<any>(null);
   
   const { data: locations = [] } = useLocations();
   const { data: moveHistory = [], isLoading: isLoadingHistory, refetch: refetchHistory } = useLocationHistory(horse?.id);
@@ -141,8 +147,6 @@ function HorseProfile() {
   
   const deleteHorse = useDeleteHorse();
   const updateHorse = useUpdateHorse();
-  const createDocument = useCreateDocument();
-  const deleteDocument = useDeleteDocument();
 
   // DB-backed Hooks for Tasks & Nutrition
   const { data: allTasks = [] } = useTasks();
@@ -274,97 +278,7 @@ function HorseProfile() {
     setDocUrl(URL.createObjectURL(file));
   };
 
-  // Save document to vault (Database-driven)
-  const handleAddDocumentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!horse || !docName.trim()) {
-      toast.error("Please upload a file and enter a document name");
-      return;
-    }
 
-    const fileUrl = docUrl || `https://gaitflow.s3.amazonaws.com/vault/documents/${docName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}.pdf`;
-    const fileSizeStr = docSize || "1.2 MB";
-
-    try {
-      await createDocument.mutateAsync({
-        name: docName,
-        type: docCategory,
-        file_url: fileUrl,
-        file_size: fileSizeStr,
-        horse_id: horse.id,
-        organization_id: state.user?.organization_id || "",
-      });
-
-      setDocName("");
-      setDocUrl("");
-      setDocSize("");
-      setSelectedFileName("");
-      toast.success("Document added to vault");
-    } catch (err) {
-      toast.error("Failed to add document");
-    }
-  };
-
-  // Gallery media selection dropzone helper
-  const handleMediaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setSelectedMediaName(file.name);
-    const isVideo = file.type.startsWith("video");
-    setSelectedMediaType(isVideo ? "Video" : "Photo");
-    setMediaCategory(isVideo ? "Videos" : "Photos");
-    setMediaCaption(file.name.replace(/\.[^/.]+$/, ""));
-    setNewMediaUrl(URL.createObjectURL(file));
-  };
-
-  // Save media to gallery (Database-driven)
-  const handleSaveMedia = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!horse || !newMediaUrl) {
-      toast.error("Please drag or click to browse a media file first");
-      return;
-    }
-
-    let typeStr = "media_photo";
-    if (selectedMediaType === "Video") {
-      typeStr = "media_video";
-    } else if (mediaCategory === "Medical") {
-      typeStr = "media_medical";
-    }
-
-    try {
-      await createDocument.mutateAsync({
-        name: mediaCaption || selectedMediaName || "Uploaded Media",
-        type: typeStr,
-        file_url: newMediaUrl,
-        file_size: selectedMediaType,
-        horse_id: horse.id,
-        organization_id: state.user?.organization_id || "",
-      });
-
-      setSelectedMediaName("");
-      setSelectedMediaType("");
-      setNewMediaUrl("");
-      setMediaCaption("");
-      toast.success("Media added to gallery");
-    } catch (err) {
-      toast.error("Failed to add media to gallery");
-    }
-  };
-
-  // Handle Document Delete
-  const handleDeleteDocument = async (id: string) => {
-    if (!horse) return;
-    if (!confirm("Are you sure you want to remove this document?")) return;
-
-    try {
-      await deleteDocument.mutateAsync({ id, horseId: horse.id });
-      toast.success("Document deleted");
-    } catch (err) {
-      toast.error("Failed to delete document");
-    }
-  };
 
   // Handle Delete Horse
   const handleDeleteHorse = async () => {
@@ -1111,130 +1025,58 @@ function HorseProfile() {
             </div>
           )}
 
-          {/* ───────────────── TABS: DOCUMENTS (INTUITIVE FILE SELECTOR) ───────────────── */}
+          {/* ───────────────── TABS: DOCUMENTS ───────────────── */}
           {tab === "Documentos" && (
             <div className="space-y-6">
-              <div>
-                <h3 className="font-display text-2xl">Bóveda de Documentos</h3>
-                <p className="text-xs text-muted-foreground">Contratos del criadero, pasaportes, registros de Coggins y exámenes de laboratorio.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-display text-2xl">Bóveda de Documentos</h3>
+                  <p className="text-xs text-muted-foreground">Documentos oficiales, sanitarios y registros asociados al caballo.</p>
+                </div>
+                <button
+                  onClick={() => setUploadDocOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:opacity-95"
+                >
+                  <Upload className="h-4 w-4" /> Subir Documento
+                </button>
               </div>
- 
-               {/* Upload Document Form */}
-              <div className="lux-card p-5 space-y-4">
-                <h4 className="font-display text-base border-b border-border/40 pb-2">Adjuntar Documento Oficial</h4>
-                
-                <form onSubmit={handleAddDocumentSubmit} className="space-y-4">
-                  {/* Intuitive drag-and-drop simulated file box */}
-                  <div className="relative border-2 border-dashed border-border/80 hover:border-primary/60 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-secondary/10 flex flex-col items-center justify-center gap-2 group">
-                    <input
-                      type="file"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      onChange={handleDocFileChange}
-                      accept=".pdf,.doc,.docx,.jpg,.png"
-                    />
-                    <FileText className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                    {selectedFileName ? (
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{selectedFileName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{docSize}</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                          Arrastra y suelta el archivo del documento aquí, o haz clic para buscar
-                        </p>
-                        <p className="text-xs text-muted-foreground/60 mt-0.5">
-                          Soporta PDF, DOC, JPG, PNG hasta 10MB
-                        </p>
-                      </div>
-                    )}
-                  </div>
- 
-                   {selectedFileName && (
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="eyebrow block mb-1.5">Título del Documento</label>
-                        <input
-                          className="lux-input"
-                          value={docName}
-                          onChange={(e) => setDocName(e.target.value)}
-                          placeholder="Ej. Certificado de Coggins 2026"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="eyebrow block mb-1.5">Categoría</label>
-                        <select
-                          className="lux-select"
-                          value={docCategory}
-                          onChange={(e) => setDocCategory(e.target.value as any)}
-                        >
-                          <option value="Passport">Pasaporte / Registro</option>
-                          <option value="Contract">Contrato de Compra/Reproducción</option>
-                          <option value="Health Certificate">Certificado de Sanidad</option>
-                          <option value="Coggins">Registro de Coggins</option>
-                          <option value="Pedigree">Tabla de Genealogía</option>
-                          <option value="Other">Otro Documento</option>
-                        </select>
-                      </div>
-                      <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedFileName("");
-                            setDocName("");
-                            setDocUrl("");
-                          }}
-                          className="rounded-full bg-secondary text-foreground border border-border px-4 py-2 text-xs font-semibold hover:bg-muted"
-                        >
-                          Limpiar Archivo
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={createDocument.isPending}
-                          className="rounded-full bg-primary text-primary-foreground px-5 py-2 text-xs font-semibold hover:opacity-95 disabled:opacity-75 inline-flex items-center gap-1.5 animate-pulse"
-                        >
-                          {createDocument.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Plus className="h-3.5 w-3.5" /> Guardar Documento</>}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </form>
-              </div>
- 
-               {/* Document Vault List */}
-              {docFiles.length === 0 ? (
-                <div className="lux-card p-10 text-center text-muted-foreground italic">
-                  Aún no hay documentos en la bóveda. Sube certificados, exámenes o contratos usando el formulario de arriba.
+              
+              {dbDocuments.length === 0 ? (
+                <div className="lux-card p-10 text-center text-muted-foreground">
+                  <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p>Aún no hay documentos en la bóveda de {horse?.name}.</p>
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {docFiles.map((doc: Document) => (
-                    <div key={doc.id} className="lux-card p-4 flex items-center justify-between hover:border-primary/20 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <span className="grid place-items-center h-10 w-10 rounded-xl bg-secondary text-primary border border-border/40 shrink-0">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {dbDocuments.map((doc: any) => (
+                    <div 
+                      key={doc.id} 
+                      onClick={() => setSelectedVaultDoc(doc)}
+                      className="lux-card p-4 flex flex-col hover:border-primary/30 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <span className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
                           <FileText className="h-5 w-5" />
                         </span>
-                        <div>
-                          <div className="font-semibold text-sm truncate max-w-[180px]">{doc.name}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{doc.type} · {doc.file_size || "1.5 MB"}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm truncate">{doc.name}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">{doc.type} · {(doc.file_size ? parseInt(doc.file_size)/1024/1024 : 0).toFixed(2)} MB</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
-                        <button
-                          onClick={() => handleDeleteDocument(doc.id)}
-                          className="grid h-8 w-8 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/15 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                      
+                      <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                          doc.verified === "Revisado" ? "bg-green-500/10 text-green-600" :
+                          doc.verified === "No válido" ? "bg-destructive/10 text-destructive" :
+                          "bg-amber-500/10 text-amber-600"
+                        }`}>
+                          {doc.verified}
+                        </div>
+                        {doc.expiration_date && (
+                          <div className={`text-[10px] font-medium ${new Date(doc.expiration_date) < new Date() ? 'text-destructive' : 'text-muted-foreground'}`}>
+                            Vence: {new Date(doc.expiration_date).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1463,17 +1305,10 @@ function HorseProfile() {
 
       <div className="h-24 lg:h-12" />
 
-      {/* MODAL SYSTEM */}
-      <EditHorseModal
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        horse={horse}
-      />
-      <AddHealthRecordModal
-        open={addHealthOpen}
-        onOpenChange={setAddHealthOpen}
-        defaultHorseId={horse.id}
-      />
+      <EditHorseModal open={editOpen} onOpenChange={setEditOpen} horse={horse} />
+      <AddHealthRecordModal open={addHealthOpen} onOpenChange={setAddHealthOpen} defaultHorseId={horse.id} />
+      <UploadDocumentModal open={uploadDocOpen} onClose={() => setUploadDocOpen(false)} defaultHorseId={horse.id} />
+      <DocumentDetailsModal open={!!selectedVaultDoc} onClose={() => setSelectedVaultDoc(null)} document={selectedVaultDoc} onUploadNewVersion={(doc) => setUploadDocOpen(true)} />
       <AddUpdateModal
         open={addUpdateOpen}
         onOpenChange={setAddUpdateOpen}

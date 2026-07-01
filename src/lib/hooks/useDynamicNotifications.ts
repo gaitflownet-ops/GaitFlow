@@ -3,13 +3,14 @@ import { useApp } from "../store";
 import { useTasks } from "./useTasks";
 import { usePharmaceuticals } from "./usePharmaceuticals";
 import { useHealthRecords } from "./useHealth";
-import type { AppNotification } from "../supabase.types";
+import { useDocuments } from "./useVault";
 
 export function useDynamicNotifications() {
   const { state } = useApp();
   const { data: tasks = [] } = useTasks();
   const { data: pharmaceuticals = [] } = usePharmaceuticals();
   const { data: healthRecords = [] } = useHealthRecords();
+  const { data: documents = [] } = useDocuments();
 
   const combinedNotifications = useMemo(() => {
     const stateNotifs = state.notifications;
@@ -18,7 +19,7 @@ export function useDynamicNotifications() {
     const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    const dynamic: AppNotification[] = [];
+    const dynamic: any[] = [];
 
     // 1. Low Stock alerts
     pharmaceuticals.forEach((p) => {
@@ -140,6 +141,40 @@ export function useDynamicNotifications() {
       }
     });
 
+    // 5. Document Expiration alerts
+    documents.forEach((d: any) => {
+      if (d.expiration_date) {
+        const expDate = new Date(d.expiration_date);
+        if (expDate < now) {
+          dynamic.push({
+            id: `doc-expired-${d.id}`,
+            user_id: state.user?.id || "local",
+            title: "Documento Vencido",
+            body: `El documento "${d.name}" ha vencido.`,
+            kind: "reminder",
+            read: false,
+            horse_id: d.owner_type === "horse" ? d.owner_id : null,
+            at: "Vencido",
+            organization_id: state.user?.organization_id || null,
+            created_at: new Date().toISOString(),
+          });
+        } else if (expDate < thirtyDaysFromNow) {
+          dynamic.push({
+            id: `doc-expiring-${d.id}`,
+            user_id: state.user?.id || "local",
+            title: "Documento Próximo a Vencer",
+            body: `El documento "${d.name}" vencerá el ${d.expiration_date}.`,
+            kind: "reminder",
+            read: false,
+            horse_id: d.owner_type === "horse" ? d.owner_id : null,
+            at: "Por vencer",
+            organization_id: state.user?.organization_id || null,
+            created_at: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
     const processedDynamic = dynamic.map((d) => {
       const dbNotif = stateNotifs.find((sn) => sn.id === d.id || sn.at === d.id);
       return {
@@ -154,7 +189,7 @@ export function useDynamicNotifications() {
     return [...processedDynamic, ...uniqueStateNotifs].sort((a, b) => {
       return (b.created_at || "") > (a.created_at || "") ? 1 : -1;
     });
-  }, [state.notifications, state.user, tasks, pharmaceuticals, healthRecords]);
+  }, [state.notifications, state.user, tasks, pharmaceuticals, healthRecords, documents]);
 
   const unreadCount = combinedNotifications.filter((n) => !n.read).length;
 

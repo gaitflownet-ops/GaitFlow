@@ -31,6 +31,7 @@ import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
 import { PremiumKPICards } from "@/components/dashboard/PremiumKPICards";
 import { DailyScheduleWidget } from "@/components/DailyScheduleWidget";
 import { StableOperationsWidget } from "@/components/dashboard/StableOperationsWidget";
+import { DocumentVaultWidget } from "@/components/dashboard/DocumentVaultWidget";
 import { AddCoverageLogModal } from "@/components/modals/AddCoverageLogModal";
 
 export const Route = createFileRoute("/dashboard")({
@@ -392,6 +393,8 @@ function Dashboard() {
               + Registrar Bitácora
             </button>
           </div>
+
+          <DocumentVaultWidget />
 
           <DailyScheduleWidget />
         </div>
