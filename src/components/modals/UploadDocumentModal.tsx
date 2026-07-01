@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Modal } from "./Modal";
-import { UploadCloud, FileText, Loader2, X, AlertCircle } from "lucide-react";
+import { UploadCloud, FileText, Loader2, X, AlertCircle, ShieldCheck, Clock, Search } from "lucide-react";
 import { useUploadDocument } from "@/lib/hooks/useVault";
-import { DOCUMENT_CATEGORIES, DocumentMainCategory, ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/documentTypes";
+import { DOCUMENT_CATEGORIES, DocumentMainCategory, ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES, DOCUMENT_TYPE_REGISTRY, getSmartVerificationStatus } from "@/lib/documentTypes";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useContacts } from "@/lib/hooks/useCRM";
+import { useApp } from "@/lib/store";
 
 type Props = {
   open: boolean;
@@ -15,6 +16,7 @@ type Props = {
 
 export function UploadDocumentModal({ open, onClose, defaultHorseId, defaultContactId }: Props) {
   const uploadDoc = useUploadDocument();
+  const { state } = useApp();
   const { data: horses = [] } = useHorses();
   const { data: contacts = [] } = useContacts();
 
@@ -170,7 +172,16 @@ export function UploadDocumentModal({ open, onClose, defaultHorseId, defaultCont
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de Documento</label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                // Auto-suggest expiration date
+                const config = DOCUMENT_TYPE_REGISTRY[e.target.value];
+                if (config?.policy === "expires" && config.suggestedExpirationDays && !expirationDate) {
+                  const suggested = new Date();
+                  suggested.setDate(suggested.getDate() + config.suggestedExpirationDays);
+                  setExpirationDate(suggested.toISOString().split("T")[0]);
+                }
+              }}
               className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none"
             >
               {DOCUMENT_CATEGORIES[mainCat].map((sub) => (
@@ -178,6 +189,30 @@ export function UploadDocumentModal({ open, onClose, defaultHorseId, defaultCont
               ))}
             </select>
           </div>
+
+          {/* Smart Policy Badge */}
+          {(() => {
+            const config = DOCUMENT_TYPE_REGISTRY[category];
+            if (!config) return null;
+            const smartStatus = getSmartVerificationStatus(category, state.user?.role || "");
+            return (
+              <div className="md:col-span-2 flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-medium" style={{
+                borderColor: config.policy === "auto_verified" ? "rgba(16,185,129,0.3)" : config.policy === "expires" ? "rgba(245,158,11,0.3)" : "rgba(99,102,241,0.3)",
+                backgroundColor: config.policy === "auto_verified" ? "rgba(16,185,129,0.08)" : config.policy === "expires" ? "rgba(245,158,11,0.08)" : "rgba(99,102,241,0.08)",
+                color: config.policy === "auto_verified" ? "rgb(16,185,129)" : config.policy === "expires" ? "rgb(245,158,11)" : "rgb(99,102,241)",
+              }}>
+                {config.policy === "auto_verified" ? (
+                  <ShieldCheck className="h-4 w-4 shrink-0" />
+                ) : config.policy === "expires" ? (
+                  <Clock className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Search className="h-4 w-4 shrink-0" />
+                )}
+                <span>{config.icon} {config.policyHint}</span>
+                <span className="ml-auto opacity-70">→ {smartStatus.verified}</span>
+              </div>
+            );
+          })()}
 
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Asociar a</label>
