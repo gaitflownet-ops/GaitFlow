@@ -384,15 +384,7 @@ function Dashboard() {
             </Link>
           </div>
 
-          <div className="relative">
-            <StableOperationsWidget />
-            <button 
-              onClick={() => setAddCoverageLogOpen(true)}
-              className="absolute top-5 right-5 text-xs bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-full font-medium transition-colors border border-primary/20"
-            >
-              + Registrar Bitácora
-            </button>
-          </div>
+          <StableOperationsWidget onAddLog={() => setAddCoverageLogOpen(true)} />
 
           <DocumentVaultWidget />
 

@@ -3,7 +3,7 @@ import { useHorses } from "@/lib/hooks/useHorses";
 import { Users, CheckCircle2, AlertCircle } from "lucide-react";
 import { useApp } from "@/lib/store";
 
-export function StableOperationsWidget() {
+export function StableOperationsWidget({ onAddLog }: { onAddLog?: () => void }) {
   const { state } = useApp();
   const orgId = state.user?.organization_id;
 
@@ -44,6 +44,14 @@ export function StableOperationsWidget() {
         <h3 className="font-display text-lg flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" /> Operación del Criadero Hoy
         </h3>
+        {onAddLog && (
+          <button 
+            onClick={onAddLog}
+            className="text-xs bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-full font-medium transition-colors border border-primary/20 shrink-0 ml-2"
+          >
+            + Registrar Bitácora
+          </button>
+        )}
       </div>
 
       <div className="space-y-4">
