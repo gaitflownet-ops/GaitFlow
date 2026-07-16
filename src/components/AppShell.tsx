@@ -40,7 +40,7 @@ const nav = [
   { to: "/locations", label: "Fincas", icon: MapPin, module: "locations" },
   { to: "/competitions", label: "Ferias / Pistas", icon: Trophy, module: "competitions" },
   { to: "/marketplace", label: "Remates", icon: ShoppingBag, module: "marketplace" },
-  { to: "/financials", label: "Finanzas", icon: DollarSign, module: "financials" },
+  { to: "/financials", label: "Centro Financiero", icon: DollarSign, module: "financials" },
   { to: "/crm", label: "CRM", icon: Contact, module: "crm" },
   { to: "/vault", label: "Documentos", icon: FolderOpen, module: "vault" },
   { to: "/team", label: "Equipo", icon: Users, module: "team" },
