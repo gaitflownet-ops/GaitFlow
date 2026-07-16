@@ -38,10 +38,10 @@ export function calculateHoltWinters(series: number[], options: HWOptions): numb
   const n = series.length;
 
   if (n < seasonLength * 2) {
-    throw new Error(
-      "Holt-Winters requires at least two full seasons of data for accurate baseline calculation.",
-    );
+    // Not enough data — return zeros instead of crashing
+    return new Array(m ?? 1).fill(0);
   }
+
 
   // Initialize arrays
   const level: number[] = new Array(n).fill(0);
