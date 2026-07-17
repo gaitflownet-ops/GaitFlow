@@ -12,9 +12,10 @@ interface CategoryBreakdownProps {
   data: CategoryItem[];
   type: 'income' | 'expense';
   isLoading?: boolean;
+  onTypeChange?: (type: 'income' | 'expense') => void;
 }
 
-export function CategoryBreakdown({ data, type, isLoading }: CategoryBreakdownProps) {
+export function CategoryBreakdown({ data, type, isLoading, onTypeChange }: CategoryBreakdownProps) {
   if (isLoading) {
     return (
       <div className="lux-card p-6 h-full animate-pulse">
