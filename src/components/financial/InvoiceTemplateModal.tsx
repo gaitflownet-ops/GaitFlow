@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Image as ImageIcon, Save, CheckCircle2 } from "lucide-react";
-import { useOrganization } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { useInvoiceTemplate, useSaveInvoiceTemplate } from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
 export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { currentOrganization } = useOrganization();
-  const { data: template, isLoading } = useInvoiceTemplate(currentOrganization?.id);
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+  const { data: template, isLoading } = useInvoiceTemplate(orgId);
   const saveMutation = useSaveInvoiceTemplate();
 
   const [formData, setFormData] = useState({
@@ -42,13 +43,13 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
     }
   }, [template]);
 
-  if (!currentOrganization) return null;
+  if (!orgId) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await saveMutation.mutateAsync({
-        organization_id: currentOrganization.id,
+        organization_id: orgId,
         ...formData
       });
       toast.success("Plantilla guardada correctamente");

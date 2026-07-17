@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOrganization } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { useInvoices } from "@/lib/hooks/useInvoicing";
 import { Plus, FileText, CheckCircle2, Clock, AlertTriangle, FileEdit } from "lucide-react";
 import { InvoiceEditorModal } from "./InvoiceEditorModal";
@@ -7,8 +7,9 @@ import { InvoiceTemplateModal } from "./InvoiceTemplateModal";
 import { InvoiceViewerModal } from "./InvoiceViewerModal";
 
 export function InvoicingPanel() {
-  const { currentOrganization } = useOrganization();
-  const { data: invoices, isLoading } = useInvoices(currentOrganization?.id);
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+  const { data: invoices, isLoading } = useInvoices(orgId);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);

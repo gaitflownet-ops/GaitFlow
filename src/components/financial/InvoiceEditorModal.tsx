@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Plus, Trash2, Save, Send } from "lucide-react";
-import { useOrganization } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { useCreateInvoice } from "@/lib/hooks/useInvoicing";
 import { useContacts } from "@/lib/hooks/useCRM";
 import { useHorses } from "@/lib/hooks/useHorses";
@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import type { InvoiceItemInsert } from "@/lib/hooks/useInvoicing";
 
 export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { currentOrganization } = useOrganization();
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
   const createMutation = useCreateInvoice();
   
   // Data for selectors
@@ -66,7 +67,7 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
 
   const handleSubmit = async (e: React.FormEvent, status: "draft" | "sent" = "draft") => {
     e.preventDefault();
-    if (!currentOrganization) return;
+    if (!orgId) return;
     if (!contactId) return toast.error("Selecciona un cliente");
     if (items.length === 0 || !items[0].product_name) return toast.error("Añade al menos un ítem a la factura");
 
@@ -75,7 +76,7 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
 
       await createMutation.mutateAsync({
         invoice: {
-          organization_id: currentOrganization.id,
+          organization_id: orgId,
           contact_id: contactId,
           invoice_number: invNumber,
           issue_date: issueDate,

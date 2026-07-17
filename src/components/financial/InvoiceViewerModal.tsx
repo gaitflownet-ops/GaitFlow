@@ -1,14 +1,15 @@
 import { useState, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Printer, DollarSign, Download, ArrowRight } from "lucide-react";
-import { useOrganization } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { useInvoiceDetails, useInvoiceTemplate, useAddInvoicePayment, useUpdateInvoiceStatus } from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
 export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: string | null; open: boolean; onClose: () => void }) {
-  const { currentOrganization } = useOrganization();
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
   const { data: invoice, isLoading } = useInvoiceDetails(invoiceId || undefined);
-  const { data: template } = useInvoiceTemplate(currentOrganization?.id);
+  const { data: template } = useInvoiceTemplate(orgId);
   const paymentMutation = useAddInvoicePayment();
   const updateStatusMutation = useUpdateInvoiceStatus();
   
@@ -127,7 +128,7 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
                       <img src={template.logo_url} alt="Logo" className="max-h-20 max-w-[200px] object-contain mb-4" />
                     ) : (
                       <div className="text-3xl font-bold tracking-tighter mb-4" style={{ color: primaryColor }}>
-                        {template?.company_name || currentOrganization?.name}
+                        {template?.company_name || state.user?.first_name || "Nuestra Empresa"}
                       </div>
                     )}
                     <div className="text-sm text-slate-500 space-y-1">
