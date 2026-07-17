@@ -24,8 +24,8 @@ import { CategoryBreakdown } from "@/components/financial/CategoryBreakdown";
 import { TransactionList } from "@/components/financial/TransactionList";
 import { TransactionModal } from "@/components/financial/TransactionModal";
 import { AccountsPanel } from "@/components/financial/AccountsPanel";
-import { RulesPanel } from "@/components/financial/RulesPanel";
 import { CostCentersPanel } from "@/components/financial/CostCentersPanel";
+import { InvoicingPanel } from "@/components/financial/InvoicingPanel";
 import { FinancialSettingsPanel } from "@/components/financial/FinancialSettingsPanel";
 import {
   useFinancialKPIs,
@@ -47,17 +47,17 @@ export const Route = createFileRoute("/financials")({
   component: FinancialCenterPage,
 });
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-type Tab = "dashboard" | "accounts" | "movements" | "cost-centers" | "automations" | "settings";
+type Tab = "dashboard" | "invoicing" | "accounts" | "movements" | "cost-centers" | "automations" | "settings";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "dashboard",    label: "Dashboard",        icon: LayoutDashboard },
-  { id: "accounts",     label: "Cuentas",          icon: Wallet },
+  { id: "invoicing",    label: "Facturación",      icon: Target },
   { id: "movements",    label: "Movimientos",      icon: ArrowLeftRight },
+  { id: "accounts",     label: "Cuentas",          icon: Wallet },
   { id: "cost-centers", label: "Centros de Costo", icon: Target },
-  { id: "automations",  label: "Automatizaciones", icon: Zap },
-  { id: "settings",     label: "Configuración",    icon: Settings },
+  // Las pestañas de Automatización y Configuración Financiera han sido 
+  // intencionalmente ocultadas al cliente para evitar fricción. 
+  // Funcionan "behind the scenes" mediante triggers de la aplicación.
 ];
 
 // ─── Fecha helpers ────────────────────────────────────────────────────────────
@@ -316,11 +316,10 @@ function FinancialCenterPage() {
       {/* ── Tab Content ───────────────────────────────────────────────────────── */}
       <div className="financial-tab-content">
         {activeTab === "dashboard"    && <DashboardTab onOpenModal={openModal} />}
+        {activeTab === "invoicing"    && <InvoicingPanel />}
         {activeTab === "accounts"     && <AccountsPanel />}
         {activeTab === "movements"    && <MovementsTab onOpenModal={openModal} />}
         {activeTab === "cost-centers" && <CostCentersPanel />}
-        {activeTab === "automations"  && <RulesPanel />}
-        {activeTab === "settings"     && <FinancialSettingsPanel />}
       </div>
 
       {/* ── Modal de transacción ──────────────────────────────────────────────── */}
