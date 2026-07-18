@@ -76,7 +76,7 @@ export function KPICard({
   }
 
   return (
-    <div className={`lux-card group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}>
+    <div className={`lux-card h-full group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}>
       <div className="flex items-start justify-between mb-3">
         <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>
           <Icon className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${iconColor}`} />

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
+import { useApp } from "../store";
 import type { Database } from "../supabase.types";
+
 
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type ContactInteraction = Database["public"]["Tables"]["contact_interactions"]["Row"];
@@ -38,10 +40,19 @@ export type HorseContact = {
 };
 
 export function useContacts(typeFilter?: string) {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
   return useQuery<Contact[]>({
-    queryKey: ["contacts", typeFilter],
+    queryKey: ["contacts", orgId, typeFilter],
+    enabled: !!orgId,
     queryFn: async () => {
-      let query = supabase.from("contacts").select("*").order("name", { ascending: true });
+      if (!orgId) return [];
+      let query = supabase
+        .from("contacts")
+        .select("*")
+        .eq("organization_id", orgId)
+        .order("name", { ascending: true });
 
       if (typeFilter && typeFilter !== "all") {
         query = query.eq("type", typeFilter.toLowerCase());

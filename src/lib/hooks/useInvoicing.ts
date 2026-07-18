@@ -93,11 +93,11 @@ export function useCreateInvoice() {
       invoice,
       items,
     }: {
-      invoice: InvoiceInsert;
-      items: Omit<InvoiceItemInsert, "invoice_id">[];
+      invoice: Record<string, any>;
+      items: Record<string, any>[];
     }) => {
-      // 1. Crear Factura
-      const { data: createdInvoice, error: invoiceError } = await supabase
+      // 1. Crear Factura (cast as any para soportar columnas nuevas document_type, payment_condition)
+      const { data: createdInvoice, error: invoiceError } = await (supabase as any)
         .from("invoices")
         .insert(invoice)
         .select()
@@ -105,26 +105,27 @@ export function useCreateInvoice() {
 
       if (invoiceError) throw invoiceError;
 
-      // 2. Crear Items
-      if (items && items.length > 0) {
-        const itemsToInsert = items.map((item) => ({
+      // 2. Crear Items (solo los que tienen product_name)
+      const validItems = items.filter((item) => item.product_name?.trim());
+      if (validItems.length > 0) {
+        const itemsToInsert = validItems.map((item) => ({
           ...item,
           invoice_id: createdInvoice.id,
         }));
-        
-        const { error: itemsError } = await supabase
+
+        const { error: itemsError } = await (supabase as any)
           .from("invoice_items")
           .insert(itemsToInsert);
-          
+
         if (itemsError) {
           console.error("Error inserting items:", itemsError);
-          // Opcionalmente se podría borrar la factura aquí (rollback) o intentar de nuevo
+          throw itemsError;
         }
       }
 
       return createdInvoice;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
     },
   });
@@ -200,8 +201,9 @@ export function useSaveInvoiceTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (template: Database["public"]["Tables"]["invoice_templates"]["Insert"]) => {
-      const { data, error } = await supabase
+    mutationFn: async (template: Record<string, any>) => {
+      // Cast as any para soportar columnas nuevas: city, website, tax_regime, invoice_prefix, legal_text
+      const { data, error } = await (supabase as any)
         .from("invoice_templates")
         .upsert(template, { onConflict: "organization_id" })
         .select()

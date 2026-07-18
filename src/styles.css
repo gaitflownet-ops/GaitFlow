@@ -583,6 +583,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1.35fr;
   gap: 1rem;
+  align-items: stretch;
 }
 @media (max-width: 768px) { .kpi-row-primary { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .kpi-row-primary { grid-template-columns: 1fr; } }
@@ -592,16 +593,21 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.875rem;
+  align-items: stretch;
 }
 @media (max-width: 640px) { .kpi-row-secondary { grid-template-columns: 1fr 1fr; } }
 
-/* KPI Hero (Balance Neto) */
+/* KPI Hero (Balance Neto) — same height as siblings via grid stretch */
 .kpi-hero {
   padding: 1.5rem;
   background: linear-gradient(135deg, var(--card) 0%, oklch(0.2 0.018 80 / 0.06) 100%);
   border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
-.kpi-hero-skeleton { height: 130px; }
+.kpi-hero-skeleton { min-height: 110px; }
 
 /* Chart Grid */
 .chart-grid {
