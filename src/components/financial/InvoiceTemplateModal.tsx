@@ -200,8 +200,8 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
       await saveMutation.mutateAsync({ organization_id: orgId, ...form } as any);
       toast.success("Plantilla guardada");
       onClose();
-    } catch {
-      toast.error("Error al guardar");
+    } catch (err: any) {
+      toast.error(err.message || "Error al guardar");
     }
   };
 

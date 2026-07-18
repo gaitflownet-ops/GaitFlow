@@ -103,7 +103,7 @@ export function useCreateInvoice() {
         .select()
         .single();
 
-      if (invoiceError) throw invoiceError;
+      if (invoiceError) throw new Error("Error factura: " + invoiceError.message);
 
       // 2. Crear Items (solo los que tienen product_name)
       const validItems = items.filter((item) => item.product_name?.trim());
@@ -119,7 +119,7 @@ export function useCreateInvoice() {
 
         if (itemsError) {
           console.error("Error inserting items:", itemsError);
-          throw itemsError;
+          throw new Error("Error items: " + itemsError.message);
         }
       }
 
@@ -209,7 +209,7 @@ export function useSaveInvoiceTemplate() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error("Error: " + error.message);
       return data;
     },
     onSuccess: (_, variables) => {

@@ -141,11 +141,11 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
         items: calculations.validItems as any,
       });
 
-      toast.success(status === "sent" ? "Factura emitida" : "Borrador guardado");
+      toast.success("Factura creada");
       onClose();
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al guardar la factura");
+    } catch (err: any) {
+      console.error("Error saving invoice:", err);
+      toast.error(err.message || "Error al guardar la factura");
     }
   };
 

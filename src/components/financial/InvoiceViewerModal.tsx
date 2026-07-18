@@ -30,7 +30,7 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
     toast.info("Generando PDF...", { id: "pdf-gen" });
     
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const { default: html2pdf } = await import('html2pdf.js');
       const opt = {
         margin:       [0, 0, 0, 0],
         filename:     `Factura_${invoice.invoice_number}.pdf`,
