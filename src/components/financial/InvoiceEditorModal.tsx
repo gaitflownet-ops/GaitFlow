@@ -10,17 +10,24 @@ import type { InvoiceItemInsert } from "@/lib/hooks/useInvoicing";
 
 // ─── Tipos de Documento ───────────────────────────────────────────────────────
 const DOCUMENT_TYPES = [
-  { value: "invoice",      label: "Factura de Venta",   color: "text-blue-600"    },
-  { value: "quote",        label: "Cotización / Presupuesto", color: "text-amber-600" },
-  { value: "debit_note",   label: "Nota Débito",        color: "text-orange-600"  },
-  { value: "credit_note",  label: "Nota Crédito",       color: "text-emerald-600" },
+  { value: "invoice",      label: "Factura de Venta" },
+  { value: "quote",        label: "Cotización / Presupuesto" },
+  { value: "debit_note",   label: "Nota Débito" },
+  { value: "credit_note",  label: "Nota Crédito" },
 ];
 
 const PAYMENT_CONDITIONS = [
-  { value: "immediate", label: "Pago de Contado" },
-  { value: "15_days",   label: "A 15 días" },
-  { value: "30_days",   label: "A 30 días" },
-  { value: "60_days",   label: "A 60 días" },
+  { value: "immediate", label: "Contado" },
+  { value: "15_days",   label: "Crédito a 15 días" },
+  { value: "30_days",   label: "Crédito a 30 días" },
+  { value: "60_days",   label: "Crédito a 60 días" },
+];
+
+const PAYMENT_METHODS = [
+  { value: "bank_transfer", label: "Consignación bancaria" },
+  { value: "cash",          label: "Efectivo" },
+  { value: "credit_card",   label: "Tarjeta de Crédito" },
+  { value: "other",         label: "Otro" },
 ];
 
 const fmtCurrency = (v: number, currency: string) =>
@@ -41,13 +48,13 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
   const [contactId,         setContactId]         = useState("");
   const [currency,          setCurrency]          = useState("COP");
   const [paymentCondition,  setPaymentCondition]  = useState("immediate");
+  const [paymentMethod,     setPaymentMethod]     = useState("bank_transfer");
   const [issueDate,         setIssueDate]         = useState(() => new Date().toISOString().split("T")[0]);
   const [dueDate,           setDueDate]           = useState(() => {
     const d = new Date(); d.setDate(d.getDate() + 15); return d.toISOString().split("T")[0];
   });
   const [notes,  setNotes]  = useState("");
   const [terms,  setTerms]  = useState("");
-  const [globalDiscount, setGlobalDiscount] = useState(0);
 
   const [items, setItems] = useState<Partial<InvoiceItemInsert & { discount_pct: number }>[]>([
     { product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0 }
@@ -65,9 +72,9 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
   // Reset al abrir
   useEffect(() => {
     if (open) {
-      setContactId(""); setDocumentType("invoice"); setGlobalDiscount(0);
+      setContactId(""); setDocumentType("invoice");
       setItems([{ product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0 }]);
-      setNotes(""); setTerms(""); setPaymentCondition("immediate");
+      setNotes(""); setTerms(""); setPaymentCondition("immediate"); setPaymentMethod("bank_transfer");
     }
   }, [open]);
 
@@ -89,19 +96,18 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
       const lineTax      = lineNet * (t / 100);
       const lineTotal    = lineNet + lineTax;
 
-      subtotal        += lineNet;
+      subtotal        += lineBase; // Subtotal BRUTO de la línea
       tax_amount      += lineTax;
       total_discounts += lineDiscount;
 
       return { ...item, total: lineTotal };
     });
 
-    const discountGlobal = subtotal * (globalDiscount / 100);
-    const finalSubtotal  = subtotal - discountGlobal;
-    const total          = finalSubtotal + tax_amount;
+    const netSubtotal = subtotal - total_discounts;
+    const total = netSubtotal + tax_amount;
 
-    return { subtotal, tax_amount, total_discounts: total_discounts + discountGlobal, total, validItems };
-  }, [items, globalDiscount]);
+    return { subtotal, tax_amount, total_discounts, total, validItems };
+  }, [items]);
 
   // ── Submit ──
   const handleSubmit = async (status: "draft" | "sent") => {
@@ -149,333 +155,252 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
     setItems(p => { const n = [...p]; n[i] = { ...n[i], [field]: val }; return n; });
   };
 
-  const selectedDocType = DOCUMENT_TYPES.find(d => d.value === documentType);
-
   return (
     <Dialog.Root open={open} onOpenChange={v => !v && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed left-1/2 top-3 -translate-x-1/2 w-full max-w-5xl max-h-[97vh] overflow-hidden flex flex-col bg-card rounded-2xl shadow-2xl z-50 border border-border/50">
+        <Dialog.Content className="fixed left-1/2 top-4 -translate-x-1/2 w-full max-w-6xl max-h-[94vh] overflow-hidden flex flex-col bg-card rounded-xl shadow-2xl z-50">
 
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
-            <div className="flex items-center gap-3">
-              <div>
-                <Dialog.Title className="text-lg font-display leading-none">
-                  Nuevo Documento
-                </Dialog.Title>
-                <p className={`text-xs mt-0.5 font-medium ${selectedDocType?.color}`}>
-                  {selectedDocType?.label}
-                </p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between px-6 py-4 border-b shrink-0 bg-card">
+            <Dialog.Title className="text-xl font-display font-semibold">Nueva Factura</Dialog.Title>
             <Dialog.Close className="p-2 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground">
-              <X size={18} />
+              <X size={20} />
             </Dialog.Close>
           </div>
 
           {/* ── Body ── */}
-          <div className="flex-1 overflow-hidden flex">
-
-            {/* Formulario principal */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
-              {/* ── BLOQUE 1: Información General ── */}
-              <section className="inv-section">
-                <h3 className="inv-section-title">
-                  <span className="inv-section-num">1</span>
-                  Información General
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Tipo de Documento */}
-                  <div className="col-span-2 form-group">
-                    <label>Tipo de Documento *</label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
-                      {DOCUMENT_TYPES.map(dt => (
-                        <button
-                          key={dt.value}
-                          type="button"
-                          onClick={() => setDocumentType(dt.value)}
-                          className={`inv-type-btn ${documentType === dt.value ? "active" : ""}`}
-                        >
-                          {dt.label}
-                        </button>
-                      ))}
-                    </div>
+          <div className="flex-1 overflow-y-auto bg-card">
+            <div className="p-8 max-w-5xl mx-auto space-y-8">
+              
+              {/* Row 1: Tipo y Moneda */}
+              <div className="flex flex-wrap gap-8">
+                <div className="w-72">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo de Factura</label>
+                  <select 
+                    className="form-input text-sm w-full bg-transparent border-b border-0 border-border rounded-none px-0 focus:ring-0 focus:border-primary"
+                    value={documentType}
+                    onChange={e => setDocumentType(e.target.value)}
+                  >
+                    {DOCUMENT_TYPES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Moneda</label>
+                  <div className="flex gap-2">
+                    {["COP", "USD"].map(cur => (
+                      <button
+                        key={cur}
+                        type="button"
+                        onClick={() => setCurrency(cur)}
+                        className={`text-sm px-3 py-1 rounded-md transition-colors ${
+                          currency === cur ? "bg-secondary text-foreground font-semibold" : "text-muted-foreground hover:bg-secondary/50"
+                        }`}
+                      >
+                        {cur}
+                      </button>
+                    ))}
                   </div>
+                </div>
+              </div>
 
-                  {/* Cliente */}
-                  <div className="col-span-2 form-group">
-                    <label>Cliente *</label>
+              {/* Row 2: Cliente y Fechas */}
+              <div className="flex flex-wrap lg:flex-nowrap gap-8">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Cliente</label>
+                    <button type="button" className="text-[11px] font-semibold text-primary hover:underline bg-primary/10 px-2 py-0.5 rounded">Consumidor final</button>
+                  </div>
+                  <div className="flex gap-2">
                     <select
-                      className="form-input"
+                      className="form-input text-sm w-full"
                       value={contactId}
                       onChange={e => setContactId(e.target.value)}
                     >
-                      <option value="">Selecciona un cliente...</option>
+                      <option value="">Seleccione Cliente</option>
                       {contacts?.map(c => (
                         <option key={c.id} value={c.id}>
-                          {c.first_name} {c.last_name}{c.company_name ? ` — ${c.company_name}` : ""}
+                          {c.name || "Sin nombre"} {c.tax_id ? `- NIT: ${c.tax_id}` : ""}
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  {/* Moneda */}
-                  <div className="form-group">
-                    <label>Moneda</label>
-                    <div className="flex mt-1 rounded-lg border border-border overflow-hidden">
-                      {["COP", "USD"].map(cur => (
-                        <button
-                          key={cur}
-                          type="button"
-                          onClick={() => setCurrency(cur)}
-                          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                            currency === cur
-                              ? "bg-card text-foreground shadow-sm"
-                              : "bg-secondary/50 text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          {cur}
-                        </button>
-                      ))}
-                    </div>
+                    <button type="button" className="shrink-0 w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover:bg-secondary/80 border border-border">
+                      <Plus size={18} />
+                    </button>
                   </div>
                 </div>
-              </section>
 
-              {/* ── BLOQUE 2: Información Comercial ── */}
-              <section className="inv-section">
-                <h3 className="inv-section-title">
-                  <span className="inv-section-num">2</span>
-                  Información Comercial
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="form-group">
-                    <label>Fecha de Emisión</label>
-                    <input type="date" className="form-input" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label>Condición de Pago</label>
-                    <select className="form-input" value={paymentCondition} onChange={e => setPaymentCondition(e.target.value)}>
-                      {PAYMENT_CONDITIONS.map(pc => (
-                        <option key={pc.value} value={pc.value}>{pc.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Fecha de Vencimiento</label>
-                    <input type="date" className="form-input" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-                  </div>
-                  <div className="col-span-2 md:col-span-4 form-group">
-                    <label>Observaciones / Notas para el cliente</label>
-                    <textarea className="form-input text-sm" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ej: Pago de pensión mes de julio 2026" />
-                  </div>
-                </div>
-              </section>
-
-              {/* ── BLOQUE 3: Conceptos ── */}
-              <section className="inv-section">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="inv-section-title mb-0">
-                    <span className="inv-section-num">3</span>
-                    Conceptos a Facturar
-                  </h3>
-                  <button type="button" onClick={addItem} className="btn-secondary text-sm py-1.5 px-3">
-                    <Plus size={14} /> Añadir línea
-                  </button>
+                <div className="w-56 shrink-0">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Fecha Emisión</label>
+                  <input type="date" className="form-input text-sm w-full" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
                 </div>
 
-                {/* Cabecera tabla */}
-                <div className="inv-table-header">
-                  <div className="flex-1 min-w-[180px]">Servicio / Producto</div>
-                  <div className="w-28 text-center">Caballo</div>
-                  <div className="w-14 text-center">Cant.</div>
-                  <div className="w-28 text-right">Precio Unit.</div>
-                  <div className="w-16 text-center">Desc. %</div>
-                  <div className="w-16 text-center">IVA %</div>
-                  <div className="w-28 text-right">Subtotal</div>
-                  <div className="w-8"></div>
+                <div className="w-56 shrink-0">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Fecha Vencimiento</label>
+                  <input type="date" className="form-input text-sm w-full bg-secondary/30" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                  <div className="flex items-center gap-2 mt-2 text-[10px] font-semibold text-muted-foreground">
+                    PLAZO 
+                    <button type="button" className="hover:text-foreground" onClick={() => setPaymentCondition("30_days")}>30</button>
+                    <button type="button" className="hover:text-foreground" onClick={() => setPaymentCondition("60_days")}>60</button>
+                    <button type="button" className="hover:text-foreground">90</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Métodos de pago y Orden */}
+              <div className="flex flex-wrap lg:flex-nowrap gap-8">
+                <div className="w-72 shrink-0">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Método de Pago</label>
+                  <select className="form-input text-sm w-full" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                    {PAYMENT_METHODS.map(pm => <option key={pm.value} value={pm.value}>{pm.label}</option>)}
+                  </select>
+                </div>
+                <div className="w-72 shrink-0">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo de Pago</label>
+                  <select className="form-input text-sm w-full" value={paymentCondition} onChange={e => setPaymentCondition(e.target.value)}>
+                    {PAYMENT_CONDITIONS.map(pc => <option key={pc.value} value={pc.value}>{pc.label}</option>)}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Orden de Compra</label>
+                  <input type="text" className="form-input text-sm w-full bg-secondary/20" placeholder="Opcional" />
+                </div>
+              </div>
+
+              {/* ── TABLA DE ÍTEMS ── */}
+              <div className="mt-10">
+                <div className="flex text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+                  <div className="w-6 text-center">#</div>
+                  <div className="w-32 px-2">Caballo</div>
+                  <div className="flex-1 px-2">Descripción</div>
+                  <div className="w-24 px-2">Cantidad</div>
+                  <div className="w-32 px-2">Precio</div>
+                  <div className="w-24 px-2">Desc %</div>
+                  <div className="w-28 px-2">Impuesto</div>
+                  <div className="w-32 text-right px-2">Subtotal</div>
+                  <div className="w-32 text-right px-2">Total</div>
+                  <div className="w-10"></div>
                 </div>
 
-                {/* Filas de ítems */}
-                <div className="space-y-2 mt-1">
+                <div className="space-y-2">
                   {items.map((item, idx) => {
                     const q = Number(item.quantity) || 0;
                     const p = Number(item.unit_price) || 0;
                     const d = Number((item as any).discount_pct) || 0;
                     const t = Number(item.tax_rate) || 0;
-                    const lineTotal = (q * p * (1 - d/100)) * (1 + t/100);
+                    
+                    const subtotalBruto = q * p;
+                    const subtotalNeto = subtotalBruto * (1 - d/100);
+                    const totalLinea = subtotalNeto * (1 + t/100);
 
                     return (
-                      <div key={idx} className="inv-item-row">
-                        <div className="flex-1 min-w-[180px]">
-                          <input
-                            type="text"
-                            className="form-input text-sm"
-                            placeholder="Descripción del servicio..."
-                            value={item.product_name}
-                            onChange={e => updateItem(idx, "product_name", e.target.value)}
-                          />
-                        </div>
-                        <div className="w-28">
-                          <select
-                            className="form-input text-xs text-muted-foreground"
-                            value={item.horse_id || ""}
-                            onChange={e => updateItem(idx, "horse_id", e.target.value || null)}
-                          >
-                            <option value="">— Ninguno —</option>
+                      <div key={idx} className="flex items-center text-sm gap-1 group">
+                        <div className="w-6 text-center text-xs font-medium text-muted-foreground">{idx + 1}</div>
+                        <div className="w-32">
+                          <select className="form-input text-xs w-full py-1.5 px-2 bg-secondary/10" value={item.horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value || null)}>
+                            <option value="">Ninguno</option>
                             {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
                         </div>
-                        <div className="w-14">
-                          <input
-                            type="number" min="1"
-                            className="form-input text-sm text-center px-1"
-                            value={item.quantity}
-                            onChange={e => updateItem(idx, "quantity", e.target.value)}
-                          />
+                        <div className="flex-1">
+                          <input type="text" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
+                        </div>
+                        <div className="w-24">
+                          <input type="number" min="1" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)} />
+                        </div>
+                        <div className="w-32">
+                          <input type="number" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)} />
+                        </div>
+                        <div className="w-24">
+                          <div className="relative">
+                            <input type="number" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent pr-6" value={(item as any).discount_pct || ""} onChange={e => updateItem(idx, "discount_pct", e.target.value)} />
+                            <span className="absolute right-2 top-1.5 text-xs text-muted-foreground">%</span>
+                          </div>
                         </div>
                         <div className="w-28">
-                          <input
-                            type="number"
-                            className="form-input text-sm text-right"
-                            placeholder="0"
-                            value={item.unit_price}
-                            onChange={e => updateItem(idx, "unit_price", e.target.value)}
-                          />
+                          <select className="form-input text-sm w-full py-1.5 px-2 bg-secondary/10" value={item.tax_rate || ""} onChange={e => updateItem(idx, "tax_rate", e.target.value)}>
+                            <option value="0">Excluido</option>
+                            <option value="5">IVA 5%</option>
+                            <option value="19">IVA 19%</option>
+                          </select>
                         </div>
-                        <div className="w-16">
-                          <input
-                            type="number" min="0" max="100"
-                            className="form-input text-sm text-center px-1"
-                            placeholder="0"
-                            value={(item as any).discount_pct || ""}
-                            onChange={e => updateItem(idx, "discount_pct", e.target.value)}
-                          />
+                        <div className="w-32 text-right text-muted-foreground py-1.5 px-2">
+                          {fmtCurrency(subtotalNeto, currency)}
                         </div>
-                        <div className="w-16">
-                          <input
-                            type="number" min="0" max="100"
-                            className="form-input text-sm text-center px-1"
-                            placeholder="0"
-                            value={item.tax_rate || ""}
-                            onChange={e => updateItem(idx, "tax_rate", e.target.value)}
-                          />
+                        <div className="w-32 text-right font-medium py-1.5 px-2">
+                          {fmtCurrency(totalLinea, currency)}
                         </div>
-                        <div className="w-28 text-right text-sm font-medium self-center pr-1">
-                          {fmtCurrency(lineTotal, currency)}
-                        </div>
-                        <div className="w-8 self-center">
-                          {items.length > 1 && (
-                            <button type="button" onClick={() => removeItem(idx)} className="p-1 text-muted-foreground hover:text-red-500 transition-colors rounded-md hover:bg-red-500/10">
-                              <Trash2 size={14} />
-                            </button>
-                          )}
+                        <div className="w-10 flex justify-center">
+                          <button type="button" onClick={() => removeItem(idx)} className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </section>
-
-              {/* ── BLOQUE 4: Términos ── */}
-              <section className="inv-section">
-                <h3 className="inv-section-title">
-                  <span className="inv-section-num">4</span>
-                  Términos y Condiciones
-                </h3>
-                <textarea
-                  className="form-input text-sm w-full"
-                  rows={2}
-                  value={terms}
-                  onChange={e => setTerms(e.target.value)}
-                  placeholder="Ej: El pago debe realizarse por transferencia bancaria a Bancolombia #001-23456-78..."
-                />
-              </section>
-
-            </div>
-
-            {/* ── Sidebar Resumen (sticky) ── */}
-            <div className="inv-summary-sidebar">
-              <h4 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wider">Resumen</h4>
-
-              <div className="space-y-2.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal bruto</span>
-                  <span>{fmtCurrency(calculations.subtotal + calculations.total_discounts - (calculations.subtotal * (globalDiscount/100) > 0 ? calculations.total_discounts - calculations.subtotal * (globalDiscount/100) : 0), currency)}</span>
+                
+                <div className="flex justify-end mt-2 pr-10">
+                  <button type="button" onClick={addItem} className="bg-secondary/50 hover:bg-secondary text-foreground text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                    <Plus size={14} /> Línea
+                  </button>
                 </div>
-                {calculations.total_discounts > 0 && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>Descuentos</span>
-                    <span>−{fmtCurrency(calculations.total_discounts, currency)}</span>
+              </div>
+
+              {/* ── TOTALES Y BOTONES INFERIORES ── */}
+              <div className="flex justify-between items-start mt-8 pt-8 border-t border-border">
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <button type="button" className="bg-secondary/50 text-muted-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                      Agregar Retención
+                    </button>
+                    <button type="button" className="bg-secondary/50 text-muted-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                      Agregar Términos
+                    </button>
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal neto</span>
-                  <span className="font-medium">{fmtCurrency(calculations.subtotal, currency)}</span>
+                  <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground mt-4">
+                    Notas <Plus size={14} className="bg-foreground text-background rounded-full p-0.5" />
+                  </button>
                 </div>
-                {calculations.tax_amount > 0 && (
-                  <div className="flex justify-between text-amber-600">
-                    <span>Impuestos</span>
-                    <span>+{fmtCurrency(calculations.tax_amount, currency)}</span>
+
+                <div className="w-72 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-medium">{fmtCurrency(calculations.subtotal, currency)}</span>
                   </div>
-                )}
-              </div>
-
-              {/* Descuento global */}
-              <div className="mt-4 pt-4 border-t border-border">
-                <label className="text-xs text-muted-foreground font-medium block mb-1.5">Descuento global (%)</label>
-                <input
-                  type="number" min="0" max="100"
-                  className="form-input text-sm w-full"
-                  placeholder="0"
-                  value={globalDiscount || ""}
-                  onChange={e => setGlobalDiscount(Number(e.target.value))}
-                />
-              </div>
-
-              {/* Total */}
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-muted-foreground">Total {currency}</span>
-                  <span className="text-2xl font-display font-bold text-foreground">{fmtCurrency(calculations.total, currency)}</span>
+                  {calculations.total_discounts > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span>Descuentos</span>
+                      <span>−{fmtCurrency(calculations.total_discounts, currency)}</span>
+                    </div>
+                  )}
+                  {calculations.tax_amount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Impuestos</span>
+                      <span>{fmtCurrency(calculations.tax_amount, currency)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-2xl font-display font-semibold pt-3 border-t border-border mt-3">
+                    <span>Total</span>
+                    <span>{fmtCurrency(calculations.total, currency)}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Info de tipo */}
-              {documentType === "quote" && (
-                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 flex gap-2">
-                  <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                  <span>Las cotizaciones no tienen validez fiscal. Son documentos de oferta comercial.</span>
-                </div>
-              )}
-
-              {/* Acciones */}
-              <div className="mt-6 space-y-2">
-                <button
-                  type="button"
-                  className="btn-primary w-full justify-center"
-                  onClick={() => handleSubmit("sent")}
-                  disabled={createMutation.isPending}
-                >
-                  <Send size={15} />
-                  {documentType === "quote" ? "Emitir Cotización" : "Emitir Documento"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary w-full justify-center"
-                  onClick={() => handleSubmit("draft")}
-                  disabled={createMutation.isPending}
-                >
-                  <Save size={15} /> Guardar Borrador
-                </button>
-                <button type="button" className="btn-ghost w-full justify-center text-sm" onClick={onClose}>
-                  Cancelar
-                </button>
-              </div>
             </div>
           </div>
+
+          {/* ── Footer Actions ── */}
+          <div className="flex justify-end gap-3 p-4 border-t border-border bg-secondary/10 shrink-0">
+            <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+            <button type="button" className="btn-secondary" onClick={() => handleSubmit("draft")} disabled={createMutation.isPending}>
+              <Save size={16} /> Guardar Borrador
+            </button>
+            <button type="button" className="btn-primary" onClick={() => handleSubmit("sent")} disabled={createMutation.isPending}>
+              <Send size={16} /> Emitir Factura
+            </button>
+          </div>
+
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
