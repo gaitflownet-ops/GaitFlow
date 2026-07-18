@@ -26,20 +26,31 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
   const handleDownloadPDF = async () => {
     if (!invoiceRef.current || !invoice) return;
     
-    // Notify user that PDF generation is starting
-    toast.info("Generando PDF...", { id: "pdf-gen" });
+    toast.info("Generando PDF de alta calidad...", { id: "pdf-gen" });
     
     try {
-      const { default: html2pdf } = await import('html2pdf.js');
-      const opt = {
-        margin:       [0, 0, 0, 0],
-        filename:     `Factura_${invoice.invoice_number}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
+      const { toPng } = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
       
-      await html2pdf().set(opt).from(invoiceRef.current).save();
+      const dataUrl = await toPng(invoiceRef.current, { 
+        quality: 1, 
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Factura_${invoice.invoice_number || 'borrador'}.pdf`);
+      
       toast.success("PDF descargado correctamente", { id: "pdf-gen" });
     } catch (err: any) {
       console.error("PDF generation failed", err);
@@ -99,6 +110,9 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
                   <DollarSign size={16} /> Registrar Abono
                 </button>
               )}
+              <button className="btn-secondary" onClick={handleDownloadPDF}>
+                <Download size={16} /> Descargar PDF
+              </button>
               <button className="btn-primary" onClick={handlePrint}>
                 <Printer size={16} /> Imprimir / Guardar PDF
               </button>
