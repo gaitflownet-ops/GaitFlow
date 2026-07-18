@@ -99,11 +99,8 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
                   <DollarSign size={16} /> Registrar Abono
                 </button>
               )}
-              <button className="btn-secondary" onClick={handleDownloadPDF}>
-                <Download size={16} /> Descargar PDF
-              </button>
               <button className="btn-primary" onClick={handlePrint}>
-                <Printer size={16} /> Imprimir
+                <Printer size={16} /> Imprimir / Guardar PDF
               </button>
               {invoice?.status === "draft" && (
                 <button className="btn-danger-ghost" onClick={handleMarkAsVoid}>
