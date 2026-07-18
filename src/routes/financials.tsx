@@ -35,6 +35,7 @@ import {
   type TransactionFilters,
 } from "@/lib/hooks/useFinancialCenter";
 import type { TransactionType } from "@/lib/financial/types";
+import { formatCOPCompact } from "@/lib/financial/types";
 
 export const Route = createFileRoute("/financials")({
   head: () => ({
