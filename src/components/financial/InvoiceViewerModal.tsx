@@ -188,8 +188,8 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Facturar A:</p>
                     <div className="text-base text-slate-800">
-                      <p className="font-bold">{invoice.contact?.first_name} {invoice.contact?.last_name}</p>
-                      {invoice.contact?.company_name && <p>{invoice.contact.company_name}</p>}
+                      <p className="font-bold">{invoice.contact?.name}</p>
+                      {invoice.contact?.tax_id && <p className="text-slate-500 text-sm mt-1">NIT/CC: {invoice.contact.tax_id}</p>}
                       {invoice.contact?.email && <p className="text-slate-500 text-sm mt-1">{invoice.contact.email}</p>}
                       {invoice.contact?.phone && <p className="text-slate-500 text-sm">{invoice.contact.phone}</p>}
                     </div>

@@ -4,10 +4,10 @@ import type { Database } from "../supabase.types";
 
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"] & {
   contact?: {
-    first_name: string;
-    last_name: string;
-    company_name: string | null;
+    name: string;
     email: string | null;
+    phone?: string | null;
+    tax_id?: string | null;
   };
   items?: InvoiceItem[];
 };
@@ -32,7 +32,7 @@ export function useInvoices(organizationId?: string) {
         .from("invoices")
         .select(`
           *,
-          contact:contact_id (first_name, last_name, company_name, email)
+          contact:contact_id (name, email, phone, tax_id)
         `)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false });
@@ -54,7 +54,7 @@ export function useInvoiceDetails(invoiceId?: string) {
         .from("invoices")
         .select(`
           *,
-          contact:contact_id (first_name, last_name, company_name, email, phone),
+          contact:contact_id (name, email, phone, tax_id),
           items:invoice_items (*)
         `)
         .eq("id", invoiceId)

@@ -52,8 +52,11 @@ export function KPICard({
 
   if (hero) {
     return (
-      <div className="lux-card kpi-hero group hover:shadow-[var(--shadow-lift)] transition-all duration-300">
-        <div className="flex items-center justify-between mb-4">
+      <div 
+        className="lux-card kpi-hero group hover:shadow-[var(--shadow-lift)] transition-all duration-300 flex flex-col justify-between"
+        style={{ minHeight: '140px', height: '100%' }}
+      >
+        <div className="flex items-center justify-between mb-2">
           <div className={`grid h-10 w-10 place-items-center rounded-xl ${iconBg}`}>
             <Icon className={`h-5 w-5 ${iconColor}`} />
           </div>
@@ -76,7 +79,10 @@ export function KPICard({
   }
 
   return (
-    <div className={`lux-card flex flex-col justify-between group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}>
+    <div 
+      className={`lux-card flex flex-col justify-between group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}
+      style={!compact ? { minHeight: '140px', height: '100%' } : { height: '100%' }}
+    >
       <div>
         <div className="flex items-start justify-between mb-3">
           <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>

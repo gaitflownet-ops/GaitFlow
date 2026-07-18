@@ -83,7 +83,7 @@ export function InvoicingPanel() {
                   >
                     <td className="px-4 py-3 font-medium text-primary">{inv.invoice_number}</td>
                     <td className="px-4 py-3">
-                      {inv.contact ? `${inv.contact.first_name} ${inv.contact.last_name}` : "Cliente Desconocido"}
+                      {inv.contact ? inv.contact.name : "Cliente Desconocido"}
                     </td>
                     <td className="px-4 py-3">{new Date(inv.issue_date).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
