@@ -1,6 +1,7 @@
 /**
  * GaitFlow — Centro Financiero
  * Hook principal: todas las queries y mutaciones del módulo financiero
+ * Performance: staleTime + gcTime en todas las queries para evitar re-fetches al cambiar tabs
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
@@ -20,6 +21,12 @@ import {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+// Cache config: 2 min stale, 10 min in memory — evita re-fetches al cambiar de pestaña
+const CACHE_CONFIG = {
+  staleTime: 2 * 60 * 1000,
+  gcTime: 10 * 60 * 1000,
+};
 
 function getMonthRange(monthsBack: number = 0) {
   const now = new Date();
@@ -67,6 +74,7 @@ export function useFinancialCategories() {
   return useQuery<FinancialCategory[]>({
     queryKey: ['financial-categories', orgId],
     enabled: !!orgId,
+    ...CACHE_CONFIG,
     queryFn: async () => {
       if (!orgId) return [];
       await ensureCategories(orgId);
@@ -102,6 +110,8 @@ export function useFinancialTransactions(filters: TransactionFilters = {}) {
   return useQuery<FinancialTransaction[]>({
     queryKey: ['financial-transactions', orgId, filters],
     enabled: !!orgId,
+    staleTime: 60 * 1000, // 1 min para transacciones (cambian más seguido)
+    gcTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!orgId) return [];
       let query = (supabase as any)
@@ -148,7 +158,8 @@ export function useFinancialTransactions(filters: TransactionFilters = {}) {
   });
 }
 
-// ─── Hook: KPIs financieros del mes actual ────────────────────────────────────
+// ─── Hook: KPIs financieros — CONSOLIDADO en 1 sola query ────────────────────
+// Antes hacía 2 queries separadas. Ahora trae todos los datos en una y calcula en cliente.
 
 export function useFinancialKPIs() {
   const { state } = useApp();
@@ -157,6 +168,7 @@ export function useFinancialKPIs() {
   return useQuery<FinancialKPIs>({
     queryKey: ['financial-kpis', orgId],
     enabled: !!orgId,
+    ...CACHE_CONFIG,
     queryFn: async () => {
       if (!orgId) return {
         incomeMonth: 0, expenseMonth: 0, balance: 0,
@@ -168,11 +180,14 @@ export function useFinancialKPIs() {
       const { start: startLastMonth, end: endLastMonth } = getMonthRange(1);
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: all } = await (supabase as any)
+      // Una sola query — calculamos todo en cliente
+      const { data: all, error } = await (supabase as any)
         .from('financial_transactions')
         .select('type, amount, status, date')
         .eq('organization_id', orgId)
         .eq('is_deleted', false);
+
+      if (error) throw error;
 
       const rows = (all ?? []) as Array<{
         type: TransactionType;
@@ -198,17 +213,9 @@ export function useFinancialKPIs() {
         .filter(r => r.status === 'pending' && r.type === 'income')
         .reduce((acc, r) => acc + Number(r.amount), 0);
 
-      // Overdue = pending income older than today
-      const { data: overdueData } = await (supabase as any)
-        .from('financial_transactions')
-        .select('amount')
-        .eq('organization_id', orgId)
-        .eq('is_deleted', false)
-        .eq('status', 'pending')
-        .eq('type', 'income')
-        .lt('date', today);
-
-      const overdue = ((overdueData ?? []) as { amount: number }[])
+      // Overdue calculado en cliente también — ya tenemos los datos
+      const overdue = rows
+        .filter(r => r.status === 'pending' && r.type === 'income' && r.date < today)
         .reduce((acc, r) => acc + Number(r.amount), 0);
 
       return {
@@ -234,6 +241,7 @@ export function useFinancialChart(months: number = 6) {
   return useQuery<MonthlyChartPoint[]>({
     queryKey: ['financial-chart', orgId, months],
     enabled: !!orgId,
+    ...CACHE_CONFIG,
     queryFn: async () => {
       if (!orgId) return [];
 
@@ -282,6 +290,7 @@ export function useFinancialCategoryBreakdown(type: TransactionType = 'expense')
   return useQuery<{ name: string; icon: string; color: string; amount: number; pct: number }[]>({
     queryKey: ['financial-breakdown', orgId, type],
     enabled: !!orgId,
+    ...CACHE_CONFIG,
     queryFn: async () => {
       if (!orgId) return [];
 

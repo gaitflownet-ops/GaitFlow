@@ -15,8 +15,7 @@ import {
   Wallet,
   ArrowLeftRight,
   Target,
-  Zap,
-  Settings,
+  Receipt,
 } from "lucide-react";
 import { KPICard } from "@/components/financial/KPICard";
 import { BalanceChart } from "@/components/financial/BalanceChart";
@@ -47,17 +46,16 @@ export const Route = createFileRoute("/financials")({
   component: FinancialCenterPage,
 });
 
-type Tab = "dashboard" | "invoicing" | "accounts" | "movements" | "cost-centers" | "automations" | "settings";
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+type Tab = "dashboard" | "invoicing" | "accounts" | "movements" | "cost-centers";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "dashboard",    label: "Dashboard",        icon: LayoutDashboard },
-  { id: "invoicing",    label: "Facturación",      icon: Target },
+  { id: "invoicing",    label: "Facturación",      icon: Receipt },
   { id: "movements",    label: "Movimientos",      icon: ArrowLeftRight },
   { id: "accounts",     label: "Cuentas",          icon: Wallet },
   { id: "cost-centers", label: "Centros de Costo", icon: Target },
-  // Las pestañas de Automatización y Configuración Financiera han sido 
-  // intencionalmente ocultadas al cliente para evitar fricción. 
-  // Funcionan "behind the scenes" mediante triggers de la aplicación.
 ];
 
 // ─── Fecha helpers ────────────────────────────────────────────────────────────
@@ -94,10 +92,12 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
   const { data: chartData, isLoading: chartLoading }  = useFinancialChart(6);
   const { data: breakdown, isLoading: breakdownLoad } = useFinancialCategoryBreakdown(breakdownTab);
 
+  const netBalance = (kpis?.incomeMonth ?? 0) - (kpis?.expenseMonth ?? 0);
+
   return (
-    <>
-      {/* KPIs */}
-      <div className="kpi-grid">
+    <div className="fin-dashboard">
+      {/* KPI Row 1 — Métricas principales */}
+      <div className="kpi-row-primary">
         <KPICard
           label="Ingresos del Mes"
           value={kpis?.incomeMonth ?? 0}
@@ -119,35 +119,44 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
         />
         <KPICard
           label="Balance Neto"
-          value={(kpis?.incomeMonth ?? 0) - (kpis?.expenseMonth ?? 0)}
+          value={netBalance}
           icon={Scale}
-          iconColor="text-indigo-600"
-          iconBg="bg-indigo-500/10"
+          iconColor={netBalance >= 0 ? "text-indigo-600" : "text-red-500"}
+          iconBg={netBalance >= 0 ? "bg-indigo-500/10" : "bg-red-500/10"}
           isLoading={kpisLoading}
+          hero
         />
+      </div>
+
+      {/* KPI Row 2 — Estado de cartera */}
+      <div className="kpi-row-secondary">
         <KPICard
-          label="Pendientes"
+          label="Por Cobrar"
           value={kpis?.pending ?? 0}
           icon={Clock}
           iconColor="text-amber-500"
           iconBg="bg-amber-500/10"
           isLoading={kpisLoading}
+          compact
         />
         <KPICard
-          label="Vencidos"
+          label="Cartera Vencida"
           value={kpis?.overdue ?? 0}
           icon={AlertTriangle}
           iconColor="text-red-500"
           iconBg="bg-red-500/10"
           isLoading={kpisLoading}
+          compact
         />
         <KPICard
-          label="Total Movimientos"
+          label="Movimientos"
           value={kpis?.totalTransactions ?? 0}
           icon={BarChart3}
           iconColor="text-violet-500"
           iconBg="bg-violet-500/10"
           isLoading={kpisLoading}
+          compact
+          isCurrency={false}
         />
       </div>
 
@@ -161,7 +170,7 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           onTypeChange={setBreakdownTab}
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -276,15 +285,15 @@ function FinancialCenterPage() {
   return (
     <AppShell>
       {/* ── Header ────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-        <div>
+      <div className="fin-header">
+        <div className="fin-header-text">
           <div className="eyebrow">ERP Financiero · GaitFlow</div>
-          <h1 className="font-display text-4xl lg:text-5xl mt-2">Centro Financiero</h1>
-          <p className="text-muted-foreground mt-2 max-w-xl text-sm">
+          <h1 className="font-display text-4xl lg:text-5xl mt-1">Centro Financiero</h1>
+          <p className="text-muted-foreground mt-2 max-w-xl text-sm leading-relaxed">
             El corazón económico del criadero. Todos los movimientos financieros, en un solo lugar.
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="fin-header-actions">
           <button className="btn-primary" onClick={() => openModal("income")}>
             <Plus size={16} /> Ingreso
           </button>
@@ -313,13 +322,14 @@ function FinancialCenterPage() {
         })}
       </div>
 
-      {/* ── Tab Content ───────────────────────────────────────────────────────── */}
+      {/* ── Tab Content — Keep-Alive: visible/hidden instead of mount/unmount ── */}
+      {/* This is the #1 performance fix: components stay mounted, React Query cache stays warm */}
       <div className="financial-tab-content">
-        {activeTab === "dashboard"    && <DashboardTab onOpenModal={openModal} />}
-        {activeTab === "invoicing"    && <InvoicingPanel />}
-        {activeTab === "accounts"     && <AccountsPanel />}
-        {activeTab === "movements"    && <MovementsTab onOpenModal={openModal} />}
-        {activeTab === "cost-centers" && <CostCentersPanel />}
+        <div style={{ display: activeTab === "dashboard"    ? "block" : "none" }}><DashboardTab onOpenModal={openModal} /></div>
+        <div style={{ display: activeTab === "invoicing"    ? "block" : "none" }}><InvoicingPanel /></div>
+        <div style={{ display: activeTab === "accounts"     ? "block" : "none" }}><AccountsPanel /></div>
+        <div style={{ display: activeTab === "movements"    ? "block" : "none" }}><MovementsTab onOpenModal={openModal} /></div>
+        <div style={{ display: activeTab === "cost-centers" ? "block" : "none" }}><CostCentersPanel /></div>
       </div>
 
       {/* ── Modal de transacción ──────────────────────────────────────────────── */}
@@ -327,7 +337,7 @@ function FinancialCenterPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         defaultType={defaultType}
-        categories={[]} // Las carga internamente o se las pasamos vacías temporalmente para types
+        categories={[]}
       />
     </AppShell>
   );
