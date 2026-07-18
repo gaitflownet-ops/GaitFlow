@@ -1,4 +1,4 @@
-import { type LucideIcon } from 'lucide-react';
+import { type LucideIcon, ChevronRight } from 'lucide-react';
 import { formatCOPCompact } from '@/lib/financial/types';
 
 interface KPICardProps {
@@ -13,8 +13,9 @@ interface KPICardProps {
   isLoading?: boolean;
   invertTrend?: boolean;
   compact?: boolean;
-  hero?: boolean;       // variante grande para Balance Neto
-  isCurrency?: boolean; // false para mostrar número entero sin formato moneda
+  hero?: boolean;
+  isCurrency?: boolean;
+  metrics?: { label: string; value: string | number; highlight?: string }[];
 }
 
 export function KPICard({
@@ -26,9 +27,8 @@ export function KPICard({
   iconBg,
   isLoading,
   invertTrend = false,
-  compact = false,
-  hero = false,
   isCurrency = true,
+  metrics = []
 }: KPICardProps) {
   const trend =
     previousValue !== undefined && previousValue > 0
@@ -43,67 +43,66 @@ export function KPICard({
 
   if (isLoading) {
     return (
-      <div className={`lux-card animate-pulse ${hero ? 'kpi-hero-skeleton' : compact ? 'p-4' : 'p-5'}`}>
-        <div className="h-3 w-16 bg-secondary rounded mb-3" />
-        <div className={`bg-secondary rounded ${hero ? 'h-10 w-36' : 'h-7 w-24'}`} />
-      </div>
+      <div className="h-48 bg-secondary/50 rounded-2xl border border-border animate-pulse" />
     );
   }
 
-  if (hero) {
-    return (
-      <div 
-        className="lux-card kpi-hero group hover:shadow-[var(--shadow-lift)] transition-all duration-300 flex flex-col justify-between"
-        style={{ height: '140px' }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div className={`grid h-10 w-10 place-items-center rounded-xl ${iconBg}`}>
-            <Icon className={`h-5 w-5 ${iconColor}`} />
-          </div>
-          {trend !== null && (
-            <div className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-              trendPositive
-                ? 'bg-emerald-500/10 text-emerald-600'
-                : 'bg-red-500/10 text-red-500'
-            }`}>
-              {trend > 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
-            </div>
-          )}
-        </div>
-        <div className="font-display text-3xl font-bold truncate leading-none mb-2">
-          {displayValue}
-        </div>
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</div>
-      </div>
-    );
-  }
+  // Determine an implicit background color class based on iconBg
+  let glowColor = iconBg;
+  if (iconBg.includes('emerald')) glowColor = 'bg-emerald-500/10';
+  else if (iconBg.includes('red')) glowColor = 'bg-red-500/10';
+  else if (iconBg.includes('indigo')) glowColor = 'bg-indigo-500/10';
+  else if (iconBg.includes('amber')) glowColor = 'bg-amber-500/10';
+  else if (iconBg.includes('violet')) glowColor = 'bg-violet-500/10';
 
   return (
-    <div 
-      className={`lux-card flex flex-col justify-between group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}
-      style={{ height: '140px' }}
-    >
-      <div>
-        <div className="flex items-start justify-between mb-3">
-          <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>
-            <Icon className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${iconColor}`} />
+    <div className="group lux-card p-4 lg:p-5 flex flex-col justify-between hover:border-primary/40 hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden h-[180px]">
+      {/* Background Glow */}
+      <div className={`absolute top-0 right-0 w-32 h-32 ${glowColor} rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform duration-700`} />
+      
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-3">
+          <div className={`grid h-8 w-8 place-items-center rounded-lg bg-background border border-border shadow-sm ${iconColor}`}>
+            <Icon className="h-4 w-4" />
           </div>
-          {trend !== null && (
-            <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-              trendPositive
-                ? 'bg-emerald-500/10 text-emerald-600'
-                : 'bg-red-500/10 text-red-500'
-            }`}>
-              {trend > 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
-            </div>
-          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors group-hover:translate-x-1" />
         </div>
-      </div>
-      <div>
-        <div className={`font-display font-semibold truncate ${compact ? 'text-lg' : 'text-2xl'}`}>
-          {displayValue}
+        
+        <div className="mb-4">
+          <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">
+            {label}
+          </h3>
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-3xl leading-none text-foreground">
+              {displayValue}
+            </span>
+            {trend !== null && (
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-sm ${
+                trendPositive
+                  ? 'bg-emerald-500/10 text-emerald-600'
+                  : 'bg-red-500/10 text-red-500'
+              }`}>
+                {trend > 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
+              </span>
+            )}
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground mt-1 leading-tight">{label}</div>
+
+        {/* Mini Metrics Grid */}
+        {metrics && metrics.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/50">
+            {metrics.map((metric, idx) => (
+              <div key={idx}>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-widest mb-0.5 truncate" title={metric.label}>
+                  {metric.label}
+                </div>
+                <div className={`font-medium text-[13px] ${metric.highlight || "text-foreground"}`}>
+                  {metric.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

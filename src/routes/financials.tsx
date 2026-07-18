@@ -97,7 +97,8 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
   return (
     <div className="fin-dashboard">
       {/* KPI Row 1 — Métricas principales */}
-      <div className="kpi-row-primary">
+      {/* Financial KPIs Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-up-delay-1 mb-8">
         <KPICard
           label="Ingresos del Mes"
           value={kpis?.incomeMonth ?? 0}
@@ -106,6 +107,10 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconColor="text-emerald-600"
           iconBg="bg-emerald-500/10"
           isLoading={kpisLoading}
+          metrics={[
+            { label: "Mes Anterior", value: formatCOPCompact(kpis?.incomeLastMonth ?? 0) },
+            { label: "Total", value: "Real" }
+          ]}
         />
         <KPICard
           label="Gastos del Mes"
@@ -116,6 +121,10 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconBg="bg-red-500/10"
           isLoading={kpisLoading}
           invertTrend
+          metrics={[
+            { label: "Mes Anterior", value: formatCOPCompact(kpis?.expenseLastMonth ?? 0) },
+            { label: "Total", value: "Real" }
+          ]}
         />
         <KPICard
           label="Balance Neto"
@@ -124,12 +133,10 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconColor={netBalance >= 0 ? "text-indigo-600" : "text-red-500"}
           iconBg={netBalance >= 0 ? "bg-indigo-500/10" : "bg-red-500/10"}
           isLoading={kpisLoading}
-          hero
+          metrics={[
+            { label: "Estado", value: netBalance >= 0 ? "Positivo" : "Negativo", highlight: netBalance >= 0 ? "text-emerald-500" : "text-red-500" }
+          ]}
         />
-      </div>
-
-      {/* KPI Row 2 — Estado de cartera */}
-      <div className="kpi-row-secondary">
         <KPICard
           label="Por Cobrar"
           value={kpis?.pending ?? 0}
@@ -137,7 +144,6 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconColor="text-amber-500"
           iconBg="bg-amber-500/10"
           isLoading={kpisLoading}
-          compact
         />
         <KPICard
           label="Cartera Vencida"
@@ -146,7 +152,6 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconColor="text-red-500"
           iconBg="bg-red-500/10"
           isLoading={kpisLoading}
-          compact
         />
         <KPICard
           label="Movimientos"
@@ -155,10 +160,12 @@ function DashboardTab({ onOpenModal }: { onOpenModal: (type: TransactionType) =>
           iconColor="text-violet-500"
           iconBg="bg-violet-500/10"
           isLoading={kpisLoading}
-          compact
           isCurrency={false}
+          metrics={[
+            { label: "Volumen", value: kpis?.totalTransactions ?? 0 }
+          ]}
         />
-      </div>
+      </section>
 
       {/* Gráfico + Distribución */}
       <div className="chart-grid">
