@@ -82,15 +82,16 @@ export function KPICard({
           <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>
             <Icon className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${iconColor}`} />
           </div>
-        {trend !== null && (
-          <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-            trendPositive
-              ? 'bg-emerald-500/10 text-emerald-600'
-              : 'bg-red-500/10 text-red-500'
-          }`}>
-            {trend > 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
-          </div>
-        )}
+          {trend !== null && (
+            <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              trendPositive
+                ? 'bg-emerald-500/10 text-emerald-600'
+                : 'bg-red-500/10 text-red-500'
+            }`}>
+              {trend > 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
+            </div>
+          )}
+        </div>
       </div>
       <div>
         <div className={`font-display font-semibold truncate ${compact ? 'text-lg' : 'text-2xl'}`}>
