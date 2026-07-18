@@ -22,36 +22,77 @@ const TAX_REGIMES = [
 // ─── Mini Preview ─────────────────────────────────────────────────────────────
 function InvoicePreview({ form }: { form: any }) {
   const color = form.primary_color || "#111827";
+  const style = form.layout_style || "modern";
+
+  const renderHeader = () => {
+    if (style === "minimal") {
+      return (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: "10px", marginBottom: "10px" }}>
+          <div>
+            {form.logo_url ? (
+              <img src={form.logo_url} alt="Logo" style={{ maxHeight: "28px", maxWidth: "100px", objectFit: "contain", marginBottom: "6px" }} />
+            ) : (
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>{form.company_name || "Tu Empresa"}</div>
+            )}
+            <div style={{ color: "#64748b", fontSize: "8px" }}>{form.tax_id ? `NIT: ${form.tax_id}` : "NIT: 000.000.000-0"}</div>
+            {form.city && <div style={{ color: "#64748b", fontSize: "8px" }}>{form.city}</div>}
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#111827" }}>FACTURA {form.invoice_prefix || "GF"}-2026-0001</div>
+          </div>
+        </div>
+      );
+    }
+    if (style === "classic") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", marginBottom: "10px", textAlign: "center" }}>
+          {form.logo_url ? (
+            <img src={form.logo_url} alt="Logo" style={{ maxHeight: "40px", maxWidth: "120px", objectFit: "contain", marginBottom: "6px" }} />
+          ) : (
+            <div style={{ fontSize: "16px", fontWeight: 700, color, marginBottom: "4px" }}>{form.company_name || "Tu Empresa"}</div>
+          )}
+          <div style={{ color: "#64748b", fontSize: "8px" }}>{form.tax_id ? `NIT: ${form.tax_id}` : "NIT: 000.000.000-0"} {form.city ? ` · ${form.city}` : ""}</div>
+          <div style={{ color: "#64748b", fontSize: "8px" }}>{form.address} {form.phone ? ` · Tel: ${form.phone}` : ""}</div>
+          <div style={{ fontSize: "14px", fontWeight: 700, color, marginTop: "8px" }}>FACTURA N° {form.invoice_prefix || "GF"}-2026-0001</div>
+        </div>
+      );
+    }
+    // modern (default)
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: `2px solid ${color}`, paddingBottom: "10px", marginBottom: "10px" }}>
+        <div>
+          {form.logo_url ? (
+            <img src={form.logo_url} alt="Logo" style={{ maxHeight: "36px", maxWidth: "120px", objectFit: "contain", marginBottom: "4px" }} />
+          ) : (
+            <div style={{ fontSize: "14px", fontWeight: 800, color, marginBottom: "4px" }}>{form.company_name || "Tu Empresa"}</div>
+          )}
+          <div style={{ color: "#64748b", fontSize: "8px" }}>{form.tax_id ? `NIT: ${form.tax_id}` : "NIT: 000.000.000-0"} {form.city ? ` · ${form.city}` : ""}</div>
+          {form.email && <div style={{ color: "#64748b", fontSize: "8px" }}>{form.email}</div>}
+        </div>
+        <div style={{ textAlign: "right", backgroundColor: color, color: "#fff", padding: "6px 12px", borderRadius: "4px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 300, opacity: 0.9 }}>FACTURA</div>
+          <div style={{ fontSize: "12px", fontWeight: 700 }}>{form.invoice_prefix || "GF"}-2026-0001</div>
+        </div>
+      </div>
+    );
+  };
+
+  const tableHeaderStyle = style === "minimal" 
+    ? { borderBottom: "1px solid #111827" } 
+    : style === "classic" 
+      ? { borderBottom: "1px solid #94a3b8", borderTop: "1px solid #94a3b8", backgroundColor: "#f8fafc" }
+      : { borderBottom: `2px solid ${color}`, backgroundColor: `${color}10` };
+
   return (
     <div className="invoice-preview-shell">
       <div
         className="invoice-preview-doc"
-        style={{ fontFamily: "sans-serif", fontSize: "10px", lineHeight: 1.4, color: "#1e293b" }}
+        style={{ fontFamily: style === "classic" ? "serif" : "sans-serif", fontSize: "10px", lineHeight: 1.4, color: "#1e293b" }}
       >
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: `2px solid ${color}`, paddingBottom: "10px", marginBottom: "10px" }}>
-          <div>
-            {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" style={{ maxHeight: "36px", maxWidth: "120px", objectFit: "contain", marginBottom: "4px" }} />
-            ) : (
-              <div style={{ fontSize: "14px", fontWeight: 800, color, marginBottom: "4px" }}>
-                {form.company_name || "Tu Empresa"}
-              </div>
-            )}
-            <div style={{ color: "#64748b", fontSize: "8px" }}>
-              {form.tax_id ? `NIT: ${form.tax_id}` : "NIT: 000.000.000-0"}
-              {form.city ? ` · ${form.city}` : ""}
-            </div>
-            {form.email && <div style={{ color: "#64748b", fontSize: "8px" }}>{form.email}</div>}
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "16px", fontWeight: 300, color: "#374151" }}>FACTURA</div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color }}>{form.invoice_prefix || "GF"}-2026-0001</div>
-          </div>
-        </div>
+        {renderHeader()}
 
         {/* Cliente */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
           <div>
             <div style={{ fontSize: "7px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: "2px" }}>Facturar a:</div>
             <div style={{ fontWeight: 700 }}>Cliente Ejemplo S.A.S</div>
@@ -59,51 +100,52 @@ function InvoicePreview({ form }: { form: any }) {
           </div>
           <div style={{ textAlign: "right", fontSize: "8px", color: "#64748b" }}>
             <div>Emisión: {new Date().toLocaleDateString()}</div>
-            <div>Vence: —</div>
+            <div>Vence: {new Date(Date.now() + 15*86400000).toLocaleDateString()}</div>
           </div>
         </div>
 
         {/* Tabla */}
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "8px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "8px", marginBottom: "10px" }}>
           <thead>
-            <tr style={{ borderBottom: `2px solid ${color}` }}>
+            <tr style={tableHeaderStyle}>
               {["Descripción","Cant.","Precio","Total"].map(h => (
-                <th key={h} style={{ padding: "3px 4px", fontWeight: 700, color: "#374151", textAlign: h === "Descripción" ? "left" : "right" }}>{h}</th>
+                <th key={h} style={{ padding: "4px", fontWeight: 700, color: style === "minimal" ? "#111827" : "#374151", textAlign: h === "Descripción" ? "left" : "right" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {[
-              { desc: "Pensión mensual — Caballo La Paloma", qty: 1, price: 1200000 },
-              { desc: "Herraje y veterinario", qty: 1, price: 350000 },
+              { desc: "Mensualidad pensión", qty: 1, price: 1200000 },
+              { desc: "Servicio veterinario", qty: 1, price: 350000 },
             ].map((row, i) => (
               <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                <td style={{ padding: "3px 4px" }}>{row.desc}</td>
-                <td style={{ padding: "3px 4px", textAlign: "right" }}>{row.qty}</td>
-                <td style={{ padding: "3px 4px", textAlign: "right" }}>${row.price.toLocaleString("es-CO")}</td>
-                <td style={{ padding: "3px 4px", textAlign: "right", fontWeight: 600 }}>${row.price.toLocaleString("es-CO")}</td>
+                <td style={{ padding: "4px" }}>{row.desc}</td>
+                <td style={{ padding: "4px", textAlign: "right" }}>{row.qty}</td>
+                <td style={{ padding: "4px", textAlign: "right" }}>${row.price.toLocaleString("es-CO")}</td>
+                <td style={{ padding: "4px", textAlign: "right", fontWeight: 600 }}>${row.price.toLocaleString("es-CO")}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Totales */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
-          <div style={{ width: "120px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
+          <div style={{ width: "130px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "8px", color: "#64748b", padding: "2px 0" }}>
               <span>Subtotal</span><span>$1.550.000</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontWeight: 800, borderTop: `1px solid ${color}`, paddingTop: "3px", marginTop: "3px", color }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", fontWeight: 800, borderTop: style === "minimal" ? "1px solid #111827" : `1px solid ${color}`, paddingTop: "4px", marginTop: "3px", color: style === "minimal" ? "#111827" : color }}>
               <span>TOTAL</span><span>$1.550.000</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        {(form.default_notes || form.footer_text) && (
-          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: "10px", paddingTop: "6px", fontSize: "7px", color: "#94a3b8" }}>
-            {form.default_notes && <div>{form.default_notes}</div>}
-            {form.footer_text && <div style={{ marginTop: "2px" }}>{form.footer_text}</div>}
+        {(form.default_notes || form.footer_text || form.legal_text) && (
+          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: "auto", paddingTop: "8px", fontSize: "7px", color: "#94a3b8" }}>
+            {form.default_notes && <div style={{ marginBottom: "2px" }}><strong>Notas:</strong> {form.default_notes}</div>}
+            {form.footer_text && <div>{form.footer_text}</div>}
+            {form.legal_text && <div style={{ marginTop: "4px", fontSize: "6px", opacity: 0.7 }}>{form.legal_text}</div>}
           </div>
         )}
       </div>

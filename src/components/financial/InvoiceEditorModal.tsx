@@ -271,8 +271,7 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
               <div className="mt-10">
                 <div className="flex text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                   <div className="w-6 text-center">#</div>
-                  <div className="w-32 px-2">Caballo</div>
-                  <div className="flex-1 px-2">Descripción</div>
+                  <div className="flex-1 px-2">Descripción del concepto</div>
                   <div className="w-24 px-2">Cantidad</div>
                   <div className="w-32 px-2">Precio</div>
                   <div className="w-24 px-2">Desc %</div>
@@ -296,14 +295,8 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
                     return (
                       <div key={idx} className="flex items-center text-sm gap-1 group">
                         <div className="w-6 text-center text-xs font-medium text-muted-foreground">{idx + 1}</div>
-                        <div className="w-32">
-                          <select className="form-input text-xs w-full py-1.5 px-2 bg-secondary/10" value={item.horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value || null)}>
-                            <option value="">Ninguno</option>
-                            {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                          </select>
-                        </div>
                         <div className="flex-1">
-                          <input type="text" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
+                          <input type="text" className="form-input text-sm w-full py-1.5 px-3 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto (ej. Mensualidad, Herraje, etc.)" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
                         </div>
                         <div className="w-24">
                           <input type="number" min="1" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)} />

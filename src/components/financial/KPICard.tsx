@@ -76,11 +76,12 @@ export function KPICard({
   }
 
   return (
-    <div className={`lux-card h-full group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>
-          <Icon className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${iconColor}`} />
-        </div>
+    <div className={`lux-card h-full flex flex-col justify-between group hover:shadow-[var(--shadow-lift)] transition-all duration-300 ${compact ? 'p-4' : 'p-5'}`}>
+      <div>
+        <div className="flex items-start justify-between mb-3">
+          <div className={`grid ${compact ? 'h-8 w-8' : 'h-9 w-9'} place-items-center rounded-xl ${iconBg}`}>
+            <Icon className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${iconColor}`} />
+          </div>
         {trend !== null && (
           <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
             trendPositive
@@ -91,10 +92,12 @@ export function KPICard({
           </div>
         )}
       </div>
-      <div className={`font-display font-semibold truncate ${compact ? 'text-lg' : 'text-2xl'}`}>
-        {displayValue}
+      <div>
+        <div className={`font-display font-semibold truncate ${compact ? 'text-lg' : 'text-2xl'}`}>
+          {displayValue}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1 leading-tight">{label}</div>
       </div>
-      <div className="text-xs text-muted-foreground mt-1 leading-tight">{label}</div>
     </div>
   );
 }
