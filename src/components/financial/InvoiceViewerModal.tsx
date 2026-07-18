@@ -15,11 +15,36 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
   
   const [showPayment, setShowPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
+  const invoiceRef = useRef<HTMLDivElement>(null);
 
   if (!invoiceId) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!invoiceRef.current || !invoice) return;
+    
+    // Notify user that PDF generation is starting
+    toast.info("Generando PDF...", { id: "pdf-gen" });
+    
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const opt = {
+        margin:       [0, 0, 0, 0],
+        filename:     `Factura_${invoice.invoice_number}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      
+      await html2pdf().set(opt).from(invoiceRef.current).save();
+      toast.success("PDF descargado correctamente", { id: "pdf-gen" });
+    } catch (error) {
+      console.error("PDF generation failed", error);
+      toast.error("Error al generar el PDF", { id: "pdf-gen" });
+    }
   };
 
   const handleAddPayment = async (e: React.FormEvent) => {
@@ -74,8 +99,11 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
                   <DollarSign size={16} /> Registrar Abono
                 </button>
               )}
+              <button className="btn-secondary" onClick={handleDownloadPDF}>
+                <Download size={16} /> Descargar PDF
+              </button>
               <button className="btn-primary" onClick={handlePrint}>
-                <Printer size={16} /> Imprimir / PDF
+                <Printer size={16} /> Imprimir
               </button>
               {invoice?.status === "draft" && (
                 <button className="btn-danger-ghost" onClick={handleMarkAsVoid}>
@@ -115,7 +143,7 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
           )}
 
           {/* Invoice A4 Container */}
-          <div className="bg-white text-slate-900 w-full max-w-4xl mx-auto min-h-[1056px] shadow-2xl print:shadow-none print:w-full print:m-0 print:p-0">
+          <div ref={invoiceRef} className="bg-white text-slate-900 w-full max-w-4xl mx-auto min-h-[1056px] shadow-2xl print:shadow-none print:w-full print:m-0 print:p-0">
             {isLoading ? (
               <div className="p-12 text-center text-slate-400">Cargando documento...</div>
             ) : invoice ? (
