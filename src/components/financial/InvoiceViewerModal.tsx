@@ -41,9 +41,9 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
       
       await html2pdf().set(opt).from(invoiceRef.current).save();
       toast.success("PDF descargado correctamente", { id: "pdf-gen" });
-    } catch (error) {
-      console.error("PDF generation failed", error);
-      toast.error("Error al generar el PDF", { id: "pdf-gen" });
+    } catch (err: any) {
+      console.error("PDF generation failed", err);
+      toast.error(err.message || "Error al generar el PDF", { id: "pdf-gen" });
     }
   };
 
