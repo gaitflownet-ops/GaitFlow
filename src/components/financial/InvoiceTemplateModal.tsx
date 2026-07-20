@@ -329,7 +329,6 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
                             accept="image/*" 
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             onChange={handleLogoUpload}
-                            disabled={isUploading}
                           />
                           {form.logo_url ? (
                             <div className="space-y-3 w-full">
