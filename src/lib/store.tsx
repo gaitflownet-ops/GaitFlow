@@ -116,7 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           dispatch({
             type: "AUTH_STATE_CHANGE",
-            payload: { isAuthenticated: true, user: profile || null },
+            payload: { isAuthenticated: !!profile, user: profile || null },
           });
 
           // Fetch notifications
@@ -163,7 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         dispatch({
           type: "AUTH_STATE_CHANGE",
-          payload: { isAuthenticated: true, user: profile || null },
+          payload: { isAuthenticated: !!profile, user: profile || null },
         });
       } else if (event === "SIGNED_OUT") {
         dispatch({
