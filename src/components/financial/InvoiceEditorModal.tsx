@@ -413,11 +413,11 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
                         </div>
                         <div className="w-36 space-y-1">
                           <select className="form-input text-xs w-full py-1 px-2" value={(item as any).horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value)}>
-                            <option value="">Caballo...</option>
+                            <option value="">Ningún caballo (Opcional)</option>
                             {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
                           <select className="form-input text-xs w-full py-1 px-2" value={(item as any).category || ""} onChange={e => updateItem(idx, "category", e.target.value)}>
-                            <option value="">Categoría...</option>
+                            <option value="">Sin categoría (Opcional)</option>
                             {ITEM_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                         </div>
