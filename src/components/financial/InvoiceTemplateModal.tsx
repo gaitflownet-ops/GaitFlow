@@ -332,10 +332,22 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
                           />
                           {form.logo_url ? (
                             <div className="space-y-3 w-full">
-                              <div className="h-20 bg-white rounded-lg border flex items-center justify-center overflow-hidden">
+                              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Logo de la empresa</label>
+                              <div className="h-20 bg-white rounded-lg border flex items-center justify-center overflow-hidden relative group">
                                 <img src={form.logo_url} alt="Logo" className="max-h-full max-w-full object-contain p-2" />
+                                
+                                <div 
+                                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer"
+                                  onClick={() => setForm(p => ({ ...p, logo_url: "" }))}
+                                >
+                                  <span className="text-xs text-white font-medium flex items-center gap-1">
+                                    <X size={14} /> Eliminar logo
+                                  </span>
+                                </div>
                               </div>
-                              <p className="text-xs text-muted-foreground">Click o arrastra para cambiar</p>
+                              <div className="text-[9px] text-muted-foreground bg-secondary/30 p-2 rounded break-all select-all">
+                                {form.logo_url}
+                              </div>
                             </div>
                           ) : (
                             <div className="space-y-2 py-2 pointer-events-none">
