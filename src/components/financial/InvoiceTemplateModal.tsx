@@ -228,17 +228,23 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
           contentType: file.type
         });
 
-      if (error) throw error;
+      if (error) {
+        toast.error(`Error Supabase: ${error.message}`);
+        throw error;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('invoicing-assets')
         .getPublicUrl(fileName);
 
-      set("logo_url", publicUrl);
+      setForm(p => ({ ...p, logo_url: publicUrl }));
       toast.success("Logo subido correctamente");
     } catch (err: any) {
       console.error(err);
-      toast.error("Error al subir el logo");
+      // Solo mostramos el error si no fue ya mostrado por Supabase (para capturar errores de red, etc)
+      if (!err.message?.includes("Supabase")) {
+        toast.error(err.message || "Error al subir el logo");
+      }
     } finally {
       setIsUploading(false);
     }
