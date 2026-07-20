@@ -384,7 +384,7 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
                 <div className="flex text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                   <div className="w-6 text-center">#</div>
                   <div className="flex-1 px-2">Descripción del concepto</div>
-                  <div className="w-36 px-2">Caballo / Cat</div>
+                  <div className="w-48 px-2">Caballo / Cat</div>
                   <div className="w-20 px-2">Cant.</div>
                   <div className="w-28 px-2">Precio</div>
                   <div className="w-20 px-2">Desc %</div>
@@ -411,13 +411,13 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
                         <div className="flex-1">
                           <input type="text" className="form-input text-sm w-full py-1.5 px-3 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto (ej. Mensualidad)" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
                         </div>
-                        <div className="w-36 space-y-1">
-                          <select className="form-input text-xs w-full py-1 px-2" value={(item as any).horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value)}>
-                            <option value="">Ningún caballo (Opcional)</option>
+                        <div className="w-48 space-y-1">
+                          <select className="form-input text-xs w-full py-1 px-2 pr-6 truncate" value={(item as any).horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value)}>
+                            <option value="">Caballo (Opcional)</option>
                             {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
-                          <select className="form-input text-xs w-full py-1 px-2" value={(item as any).category || ""} onChange={e => updateItem(idx, "category", e.target.value)}>
-                            <option value="">Sin categoría (Opcional)</option>
+                          <select className="form-input text-xs w-full py-1 px-2 pr-6 truncate" value={(item as any).category || ""} onChange={e => updateItem(idx, "category", e.target.value)}>
+                            <option value="">Categoría (Opcional)</option>
                             {ITEM_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                         </div>
