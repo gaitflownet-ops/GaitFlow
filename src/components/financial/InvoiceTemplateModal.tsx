@@ -218,17 +218,26 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !orgId) return;
+    if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      return toast.error("El logo no debe superar los 2MB");
+      toast.error("La imagen es demasiado pesada. El tamaño máximo es 2MB.");
+      e.target.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("El archivo seleccionado no es una imagen válida.");
+      e.target.value = '';
+      return;
     }
 
     try {
       setIsUploading(true);
+      toast.info("Subiendo imagen, por favor espera...", { duration: 3000 });
       const fileExt = file.name.split('.').pop();
       const fileName = `${orgId}_logo_${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
+
       const { data, error } = await supabase.storage
         .from('invoicing-assets')
         .upload(fileName, file, {
