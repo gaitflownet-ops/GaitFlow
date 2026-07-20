@@ -5,7 +5,7 @@ import { useApp } from "@/lib/store";
 import { useInvoiceDetails, useInvoiceTemplate, useAddInvoicePayment, useUpdateInvoiceStatus } from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
-export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: string | null; open: boolean; onClose: () => void }) {
+export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoiceId: string | null; open: boolean; onClose: () => void; onEdit?: (id: string) => void }) {
   const { state } = useApp();
   const orgId = state.user?.organization_id;
   const { data: invoice, isLoading } = useInvoiceDetails(invoiceId || undefined);
@@ -86,6 +86,16 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
     }
   };
 
+  const handleMarkAsSent = async () => {
+    if (!invoice) return;
+    try {
+      await updateStatusMutation.mutateAsync({ id: invoice.id, status: "sent" });
+      toast.success("Factura marcada como emitida");
+    } catch (err) {
+      toast.error("Error al emitir factura");
+    }
+  };
+
   const primaryColor = template?.primary_color || "#111827";
 
   return (
@@ -105,16 +115,26 @@ export function InvoiceViewerModal({ invoiceId, open, onClose }: { invoiceId: st
               ) : null}
             </div>
             <div className="flex gap-2">
+              {invoice?.status === "draft" && onEdit && (
+                <button className="btn-secondary text-blue-600 hover:bg-blue-50" onClick={() => onEdit(invoice.id)}>
+                  Editar
+                </button>
+              )}
+              {invoice?.status === "draft" && (
+                <button className="btn-secondary text-emerald-600 hover:bg-emerald-50" onClick={handleMarkAsSent}>
+                  Emitir Factura
+                </button>
+              )}
               {invoice?.status !== "void" && invoice?.status !== "paid" && (
                 <button className="btn-secondary text-emerald-600 hover:bg-emerald-50" onClick={() => setShowPayment(!showPayment)}>
-                  <DollarSign size={16} /> Registrar Abono
+                  <DollarSign size={16} /> Regist. Abono
                 </button>
               )}
               <button className="btn-secondary" onClick={handleDownloadPDF}>
-                <Download size={16} /> Descargar PDF
+                <Download size={16} /> PDF
               </button>
               <button className="btn-primary" onClick={handlePrint}>
-                <Printer size={16} /> Imprimir / Guardar PDF
+                <Printer size={16} /> Imprimir
               </button>
               {invoice?.status === "draft" && (
                 <button className="btn-danger-ghost" onClick={handleMarkAsVoid}>

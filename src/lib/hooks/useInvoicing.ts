@@ -38,7 +38,12 @@ export function useInvoices(organizationId?: string) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Invoice[];
+      
+      const now = new Date().toISOString().split("T")[0];
+      return (data as Invoice[]).map(inv => ({
+        ...inv,
+        status: (inv.status === "pending" && inv.due_date < now) ? "overdue" : inv.status
+      }));
     },
     enabled: !!organizationId,
   });
@@ -61,7 +66,12 @@ export function useInvoiceDetails(invoiceId?: string) {
         .single();
 
       if (error) throw error;
-      return data as Invoice;
+      const inv = data as Invoice;
+      const now = new Date().toISOString().split("T")[0];
+      if (inv.status === "pending" && inv.due_date < now) {
+        inv.status = "overdue";
+      }
+      return inv;
     },
     enabled: !!invoiceId,
   });
@@ -85,7 +95,7 @@ export function useInvoicePayments(invoiceId?: string) {
   });
 }
 
-export function useCreateInvoice() {
+export function useSaveInvoice() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -96,34 +106,49 @@ export function useCreateInvoice() {
       invoice: Record<string, any>;
       items: Record<string, any>[];
     }) => {
-      // 1. Crear Factura (cast as any para soportar columnas nuevas document_type, payment_condition)
-      const { data: createdInvoice, error: invoiceError } = await (supabase as any)
-        .from("invoices")
-        .insert(invoice)
-        .select()
-        .single();
+      const isUpdate = !!invoice.id;
+      let savedInvoice;
 
-      if (invoiceError) throw new Error("Error factura: " + invoiceError.message);
+      if (isUpdate) {
+        // Update
+        const { data, error } = await (supabase as any)
+          .from("invoices")
+          .update(invoice)
+          .eq("id", invoice.id)
+          .select()
+          .single();
+        if (error) throw new Error("Error al actualizar factura: " + error.message);
+        savedInvoice = data;
 
-      // 2. Crear Items (solo los que tienen product_name)
+        // Delete old items
+        await (supabase as any).from("invoice_items").delete().eq("invoice_id", invoice.id);
+      } else {
+        // Insert
+        const { data, error } = await (supabase as any)
+          .from("invoices")
+          .insert(invoice)
+          .select()
+          .single();
+        if (error) throw new Error("Error al crear factura: " + error.message);
+        savedInvoice = data;
+      }
+
+      // 2. Insert Items
       const validItems = items.filter((item) => item.product_name?.trim());
       if (validItems.length > 0) {
-        const itemsToInsert = validItems.map((item) => ({
-          ...item,
-          invoice_id: createdInvoice.id,
-        }));
+        const itemsToInsert = validItems.map((item) => {
+          const { id, ...rest } = item; // Quitar ID para evitar conflictos
+          return { ...rest, invoice_id: savedInvoice.id };
+        });
 
         const { error: itemsError } = await (supabase as any)
           .from("invoice_items")
           .insert(itemsToInsert);
 
-        if (itemsError) {
-          console.error("Error inserting items:", itemsError);
-          throw new Error("Error items: " + itemsError.message);
-        }
+        if (itemsError) throw new Error("Error al guardar conceptos: " + itemsError.message);
       }
 
-      return createdInvoice;
+      return savedInvoice;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -165,12 +190,57 @@ export function useAddInvoicePayment() {
         .single();
 
       if (error) throw error;
+
+      // Automatización: Crear transacción financiera automáticamente
+      try {
+        const { data: invoice } = await supabase
+          .from("invoices")
+          .select("organization_id, document_type, contact_id, cost_center_id, invoice_number")
+          .eq("id", payment.invoice_id)
+          .single();
+
+        if (invoice) {
+          const { data: defaultAccount } = await supabase
+            .from("financial_accounts")
+            .select("id")
+            .eq("organization_id", invoice.organization_id)
+            .eq("is_default", true)
+            .maybeSingle();
+
+          const transType = (invoice.document_type === "invoice" || invoice.document_type === "debit_note") ? "income" : "expense";
+          
+          await supabase
+            .from("financial_transactions")
+            .insert({
+              organization_id: invoice.organization_id,
+              type: transType,
+              account_id: defaultAccount?.id || null,
+              cost_center_id: invoice.cost_center_id || null,
+              amount: payment.amount_applied,
+              currency: "COP",
+              description: `Abono/Pago a factura ${invoice.invoice_number}`,
+              date: payment.payment_date,
+              status: "completed",
+              contact_id: invoice.contact_id,
+              invoice_id: payment.invoice_id,
+              source_module: "invoicing",
+              source_ref_id: data.id,
+              source_ref_type: "invoice_payment"
+            } as any);
+        }
+      } catch (err) {
+        console.error("Error al crear transacción financiera automática:", err);
+        // No bloqueamos el pago si la transacción falla
+      }
+
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["invoice", data.invoice_id] });
       queryClient.invalidateQueries({ queryKey: ["invoice-payments", data.invoice_id] });
+      queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-accounts"] });
     },
   });
 }

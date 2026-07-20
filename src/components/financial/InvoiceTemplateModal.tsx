@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Save, Building2, Palette, FileText, Scale, Eye } from "lucide-react";
+import { X, Save, Building2, Palette, FileText, Scale, Eye, UploadCloud } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 import { useInvoiceTemplate, useSaveInvoiceTemplate } from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
@@ -160,6 +161,7 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
   const { data: template, isLoading } = useInvoiceTemplate(orgId);
   const saveMutation = useSaveInvoiceTemplate();
   const [activeSection, setActiveSection] = useState<string>("appearance");
+  const [isUploading, setIsUploading] = useState(false);
 
   const [form, setForm] = useState({
     logo_url: "", primary_color: "#d97706", layout_style: "modern",
@@ -202,6 +204,39 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Error al guardar");
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !orgId) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return toast.error("El logo no debe superar los 2MB");
+    }
+
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${orgId}_logo_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('invoicing-assets')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('invoicing-assets')
+        .getPublicUrl(fileName);
+
+      set("logo_url", publicUrl);
+      toast.success("Logo subido correctamente");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Error al subir el logo");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -268,18 +303,39 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
                   {activeSection === "appearance" && (
                     <>
                       <div className="form-group">
-                        <label>URL del Logo</label>
-                        <div className="flex gap-2 items-center mt-1">
-                          <div className="h-12 w-12 shrink-0 bg-secondary rounded-lg border border-border flex items-center justify-center overflow-hidden">
-                            {form.logo_url ? (
-                              <img src={form.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
-                            ) : (
-                              <span className="text-xl">🏇</span>
-                            )}
-                          </div>
-                          <input type="url" className="form-input flex-1 text-sm" placeholder="https://..." value={form.logo_url} onChange={e => set("logo_url", e.target.value)} />
+                        <label>Logo de la Empresa</label>
+                        <div className="mt-2 border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center text-center relative hover:bg-secondary/20 transition-colors">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            onChange={handleLogoUpload}
+                            disabled={isUploading}
+                          />
+                          {form.logo_url ? (
+                            <div className="space-y-3 w-full">
+                              <div className="h-20 bg-white rounded-lg border flex items-center justify-center overflow-hidden">
+                                <img src={form.logo_url} alt="Logo" className="max-h-full max-w-full object-contain p-2" />
+                              </div>
+                              <p className="text-xs text-muted-foreground">Click o arrastra para cambiar</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 py-2 pointer-events-none">
+                              <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
+                                <UploadCloud size={20} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">Subir Logo</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">PNG o JPG (Máx. 2MB)</p>
+                              </div>
+                            </div>
+                          )}
+                          {isUploading && (
+                            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                              <span className="text-sm font-medium animate-pulse">Subiendo...</span>
+                            </div>
+                          )}
                         </div>
-                        <small>Enlace directo a tu imagen (PNG, SVG recomendado)</small>
                       </div>
 
                       <div className="form-group">

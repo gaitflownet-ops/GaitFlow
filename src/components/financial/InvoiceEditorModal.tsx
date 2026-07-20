@@ -2,9 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Plus, Trash2, Save, Send, ChevronDown, AlertCircle } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { useCreateInvoice } from "@/lib/hooks/useInvoicing";
-import { useContacts } from "@/lib/hooks/useCRM";
+import { useSaveInvoice, useInvoiceDetails } from "@/lib/hooks/useInvoicing";
+import { useContacts, useCreateContact } from "@/lib/hooks/useCRM";
 import { useHorses } from "@/lib/hooks/useHorses";
+import { useFinancialCostCenters } from "@/lib/hooks/useFinancialCostCenters";
 import { toast } from "sonner";
 import type { InvoiceItemInsert } from "@/lib/hooks/useInvoicing";
 
@@ -30,18 +31,28 @@ const PAYMENT_METHODS = [
   { value: "other",         label: "Otro" },
 ];
 
+const ITEM_CATEGORIES = [
+  { value: "service", label: "Servicio" },
+  { value: "product", label: "Producto" },
+  { value: "fee",     label: "Cargo / Cuota" },
+  { value: "other",   label: "Otro" },
+];
+
 const fmtCurrency = (v: number, currency: string) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: boolean; onClose: () => void; initialInvoiceId?: string | null }) {
   const { state } = useApp();
   const orgId = state.user?.organization_id;
-  const createMutation = useCreateInvoice();
+  const saveMutation = useSaveInvoice();
+  const createContactMutation = useCreateContact();
 
   const { data: contacts } = useContacts();
   const { data: horses }   = useHorses();
+  const { data: costCenters } = useFinancialCostCenters();
+  const { data: initialInvoice } = useInvoiceDetails(initialInvoiceId || undefined);
 
   // ── Estado del formulario ──
   const [documentType,      setDocumentType]      = useState("invoice");
@@ -49,6 +60,7 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
   const [currency,          setCurrency]          = useState("COP");
   const [paymentCondition,  setPaymentCondition]  = useState("immediate");
   const [paymentMethod,     setPaymentMethod]     = useState("bank_transfer");
+  const [costCenterId,      setCostCenterId]      = useState("");
   const [issueDate,         setIssueDate]         = useState(() => new Date().toISOString().split("T")[0]);
   const [dueDate,           setDueDate]           = useState(() => {
     const d = new Date(); d.setDate(d.getDate() + 15); return d.toISOString().split("T")[0];
@@ -57,8 +69,16 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
   const [terms,  setTerms]  = useState("");
 
   const [items, setItems] = useState<Partial<InvoiceItemInsert & { discount_pct: number }>[]>([
-    { product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0 }
+    { product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0, category: "", horse_id: "" }
   ]);
+
+  // Quick Create Contact State
+  const [showQuickContact, setShowQuickContact] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactType, setNewContactType] = useState("person");
+  const [newContactTaxId, setNewContactTaxId] = useState("");
+  const [newContactEmail, setNewContactEmail] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
 
   // Auto-calcular vencimiento según condición de pago
   useEffect(() => {
@@ -72,11 +92,61 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
   // Reset al abrir
   useEffect(() => {
     if (open) {
-      setContactId(""); setDocumentType("invoice");
-      setItems([{ product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0 }]);
-      setNotes(""); setTerms(""); setPaymentCondition("immediate"); setPaymentMethod("bank_transfer");
+      if (initialInvoiceId && initialInvoice) {
+        setDocumentType(initialInvoice.document_type || "invoice");
+        setContactId(initialInvoice.contact_id);
+        setCurrency(initialInvoice.currency || "COP");
+        setPaymentCondition(initialInvoice.payment_condition || "immediate");
+        setPaymentMethod(initialInvoice.payment_method || "bank_transfer");
+        setCostCenterId(initialInvoice.cost_center_id || "");
+        setIssueDate(initialInvoice.issue_date);
+        setDueDate(initialInvoice.due_date);
+        setNotes(initialInvoice.notes || "");
+        setTerms(initialInvoice.terms || "");
+        
+        if (initialInvoice.items && initialInvoice.items.length > 0) {
+          setItems(initialInvoice.items.map(item => ({
+            id: item.id,
+            product_name: item.product_name,
+            description: item.description || "",
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            tax_rate: item.tax_rate,
+            discount_pct: (item as any).discount_pct || 0,
+            category: (item as any).category || "",
+            horse_id: item.horse_id || ""
+          })));
+        }
+      } else {
+        setContactId(""); setDocumentType("invoice");
+        setItems([{ product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0, category: "", horse_id: "" }]);
+        setNotes(""); setTerms(""); setPaymentCondition("immediate"); setPaymentMethod("bank_transfer");
+        setCostCenterId("");
+      }
+      setShowQuickContact(false);
     }
-  }, [open]);
+  }, [open, initialInvoiceId, initialInvoice]);
+
+  const handleQuickCreateContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgId || !newContactName) return;
+    try {
+      const res = await createContactMutation.mutateAsync({
+        organization_id: orgId,
+        name: newContactName,
+        type: newContactType,
+        tax_id: newContactTaxId || null,
+        email: newContactEmail || null,
+        phone: newContactPhone || null,
+        status: "active"
+      } as any);
+      toast.success("Cliente creado");
+      setContactId(res.id);
+      setShowQuickContact(false);
+    } catch (err: any) {
+      toast.error(err.message || "Error al crear cliente");
+    }
+  };
 
   // ── Cálculos en tiempo real ──
   const calculations = useMemo(() => {
@@ -116,11 +186,13 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
     if (!items[0]?.product_name) return toast.error("Añade al menos un concepto");
 
     try {
+      const isUpdate = !!initialInvoiceId;
       const prefix = documentType === "quote" ? "COT" : documentType === "debit_note" ? "ND" : documentType === "credit_note" ? "NC" : "GF";
-      const invNumber = `${prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const invNumber = isUpdate && initialInvoice ? initialInvoice.invoice_number : `${prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      await createMutation.mutateAsync({
+      await saveMutation.mutateAsync({
         invoice: {
+          id: initialInvoiceId || undefined,
           organization_id: orgId,
           contact_id: contactId,
           invoice_number: invNumber,
@@ -130,6 +202,8 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
           status,
           document_type: documentType,
           payment_condition: paymentCondition,
+          payment_method: paymentMethod,
+          cost_center_id: costCenterId || null,
           subtotal: calculations.subtotal,
           tax_amount: calculations.tax_amount,
           discount_amount: calculations.total_discounts,
@@ -149,7 +223,7 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
     }
   };
 
-  const addItem    = () => setItems(p => [...p, { product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0 }]);
+  const addItem    = () => setItems(p => [...p, { product_name: "", quantity: 1, unit_price: 0, tax_rate: 0, discount_pct: 0, category: "", horse_id: "" }]);
   const removeItem = (i: number) => setItems(p => p.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: string, val: any) => {
     setItems(p => { const n = [...p]; n[i] = { ...n[i], [field]: val }; return n; });
@@ -211,22 +285,57 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
                     <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Cliente</label>
                     <button type="button" className="text-[11px] font-semibold text-primary hover:underline bg-primary/10 px-2 py-0.5 rounded">Consumidor final</button>
                   </div>
-                  <div className="flex gap-2">
-                    <select
-                      className="form-input text-sm w-full"
-                      value={contactId}
-                      onChange={e => setContactId(e.target.value)}
-                    >
-                      <option value="">Seleccione Cliente</option>
-                      {contacts?.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name || "Sin nombre"} {c.tax_id ? `- NIT: ${c.tax_id}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                    <button type="button" className="shrink-0 w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover:bg-secondary/80 border border-border">
-                      <Plus size={18} />
-                    </button>
+                  <div className="relative">
+                    {!showQuickContact ? (
+                      <div className="flex gap-2">
+                        <select
+                          className="form-input text-sm w-full"
+                          value={contactId}
+                          onChange={e => setContactId(e.target.value)}
+                        >
+                          <option value="">Seleccione Cliente</option>
+                          {contacts?.map(c => (
+                            <option key={c.id} value={c.id}>
+                              {c.name || "Sin nombre"} {c.tax_id ? `- NIT: ${c.tax_id}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="button" onClick={() => setShowQuickContact(true)} className="shrink-0 w-10 h-10 bg-secondary rounded-lg flex items-center justify-center hover:bg-secondary/80 border border-border">
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 border rounded-lg bg-secondary/10 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold">Crear nuevo cliente</h4>
+                          <button type="button" onClick={() => setShowQuickContact(false)} className="text-muted-foreground hover:text-foreground"><X size={16}/></button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs mb-1">Nombre *</label>
+                            <input type="text" className="form-input text-sm w-full" value={newContactName} onChange={e => setNewContactName(e.target.value)} required />
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1">Tipo *</label>
+                            <select className="form-input text-sm w-full" value={newContactType} onChange={e => setNewContactType(e.target.value)}>
+                              <option value="person">Persona Natural</option>
+                              <option value="company">Empresa / Jurídica</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1">Documento / NIT</label>
+                            <input type="text" className="form-input text-sm w-full" value={newContactTaxId} onChange={e => setNewContactTaxId(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1">Teléfono</label>
+                            <input type="text" className="form-input text-sm w-full" value={newContactPhone} onChange={e => setNewContactPhone(e.target.value)} />
+                          </div>
+                        </div>
+                        <button type="button" onClick={handleQuickCreateContact} className="btn-primary w-full mt-2" disabled={createContactMutation.isPending || !newContactName}>
+                          {createContactMutation.isPending ? "Creando..." : "Guardar Cliente"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -247,23 +356,26 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
                 </div>
               </div>
 
-              {/* Row 3: Métodos de pago y Orden */}
+              {/* Row 3: Métodos de pago y Centro de Costo */}
               <div className="flex flex-wrap lg:flex-nowrap gap-8">
-                <div className="w-72 shrink-0">
+                <div className="w-56 shrink-0">
                   <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Método de Pago</label>
                   <select className="form-input text-sm w-full" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
                     {PAYMENT_METHODS.map(pm => <option key={pm.value} value={pm.value}>{pm.label}</option>)}
                   </select>
                 </div>
-                <div className="w-72 shrink-0">
+                <div className="w-56 shrink-0">
                   <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo de Pago</label>
                   <select className="form-input text-sm w-full" value={paymentCondition} onChange={e => setPaymentCondition(e.target.value)}>
                     {PAYMENT_CONDITIONS.map(pc => <option key={pc.value} value={pc.value}>{pc.label}</option>)}
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Orden de Compra</label>
-                  <input type="text" className="form-input text-sm w-full bg-secondary/20" placeholder="Opcional" />
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Centro de Costo</label>
+                  <select className="form-input text-sm w-full" value={costCenterId} onChange={e => setCostCenterId(e.target.value)}>
+                    <option value="">Seleccionar (Opcional)</option>
+                    {costCenters?.map(cc => <option key={cc.id} value={cc.id}>{cc.name}</option>)}
+                  </select>
                 </div>
               </div>
 
@@ -272,12 +384,13 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
                 <div className="flex text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                   <div className="w-6 text-center">#</div>
                   <div className="flex-1 px-2">Descripción del concepto</div>
-                  <div className="w-24 px-2">Cantidad</div>
-                  <div className="w-32 px-2">Precio</div>
-                  <div className="w-24 px-2">Desc %</div>
-                  <div className="w-28 px-2">Impuesto</div>
-                  <div className="w-32 text-right px-2">Subtotal</div>
-                  <div className="w-32 text-right px-2">Total</div>
+                  <div className="w-36 px-2">Caballo / Cat</div>
+                  <div className="w-20 px-2">Cant.</div>
+                  <div className="w-28 px-2">Precio</div>
+                  <div className="w-20 px-2">Desc %</div>
+                  <div className="w-24 px-2">Imp.</div>
+                  <div className="w-28 text-right px-2">Subtotal</div>
+                  <div className="w-28 text-right px-2">Total</div>
                   <div className="w-10"></div>
                 </div>
 
@@ -296,35 +409,44 @@ export function InvoiceEditorModal({ open, onClose }: { open: boolean; onClose: 
                       <div key={idx} className="flex items-center text-sm gap-1 group">
                         <div className="w-6 text-center text-xs font-medium text-muted-foreground">{idx + 1}</div>
                         <div className="flex-1">
-                          <input type="text" className="form-input text-sm w-full py-1.5 px-3 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto (ej. Mensualidad, Herraje, etc.)" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
+                          <input type="text" className="form-input text-sm w-full py-1.5 px-3 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent transition-colors" placeholder="Concepto (ej. Mensualidad)" value={item.product_name} onChange={e => updateItem(idx, "product_name", e.target.value)} />
                         </div>
-                        <div className="w-24">
-                          <input type="number" min="1" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)} />
-                        </div>
-                        <div className="w-32">
-                          <input type="number" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)} />
-                        </div>
-                        <div className="w-24">
-                          <div className="relative">
-                            <input type="number" className="form-input text-sm w-full py-1.5 px-2 bg-secondary/20 border-transparent focus:border-primary focus:bg-transparent pr-6" value={(item as any).discount_pct || ""} onChange={e => updateItem(idx, "discount_pct", e.target.value)} />
-                            <span className="absolute right-2 top-1.5 text-xs text-muted-foreground">%</span>
-                          </div>
-                        </div>
-                        <div className="w-28">
-                          <select className="form-input text-sm w-full py-1.5 px-2 bg-secondary/10" value={item.tax_rate || ""} onChange={e => updateItem(idx, "tax_rate", e.target.value)}>
-                            <option value="0">Excluido</option>
-                            <option value="5">IVA 5%</option>
-                            <option value="19">IVA 19%</option>
+                        <div className="w-36 space-y-1">
+                          <select className="form-input text-xs w-full py-1 px-2" value={(item as any).horse_id || ""} onChange={e => updateItem(idx, "horse_id", e.target.value)}>
+                            <option value="">Caballo...</option>
+                            {horses?.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                          </select>
+                          <select className="form-input text-xs w-full py-1 px-2" value={(item as any).category || ""} onChange={e => updateItem(idx, "category", e.target.value)}>
+                            <option value="">Categoría...</option>
+                            {ITEM_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                         </div>
-                        <div className="w-32 text-right text-muted-foreground py-1.5 px-2">
+                        <div className="w-20">
+                          <input type="number" min="1" className="form-input text-sm w-full py-1.5 px-2 text-center" value={item.quantity} onChange={e => updateItem(idx, "quantity", Number(e.target.value))} />
+                        </div>
+                        <div className="w-28 relative">
+                          <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                          <input type="number" className="form-input text-sm w-full py-1.5 pl-5 pr-2" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", Number(e.target.value))} />
+                        </div>
+                        <div className="w-20 relative">
+                          <input type="number" className="form-input text-sm w-full py-1.5 pr-5 pl-2" value={(item as any).discount_pct} onChange={e => updateItem(idx, "discount_pct", Number(e.target.value))} />
+                          <span className="absolute right-2 top-1.5 text-muted-foreground text-xs">%</span>
+                        </div>
+                        <div className="w-24">
+                          <select className="form-input text-sm w-full py-1.5 px-2" value={item.tax_rate} onChange={e => updateItem(idx, "tax_rate", Number(e.target.value))}>
+                            <option value={0}>0%</option>
+                            <option value={5}>5%</option>
+                            <option value={19}>19%</option>
+                          </select>
+                        </div>
+                        <div className="w-28 text-right px-2 font-medium text-muted-foreground">
                           {fmtCurrency(subtotalNeto, currency)}
                         </div>
-                        <div className="w-32 text-right font-medium py-1.5 px-2">
+                        <div className="w-28 text-right px-2 font-bold text-foreground">
                           {fmtCurrency(totalLinea, currency)}
                         </div>
-                        <div className="w-10 flex justify-center">
-                          <button type="button" onClick={() => removeItem(idx)} className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                        <div className="w-10 flex justify-end">
+                          <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50" disabled={items.length === 1}>
                             <Trash2 size={16} />
                           </button>
                         </div>

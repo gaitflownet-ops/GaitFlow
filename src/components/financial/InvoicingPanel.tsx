@@ -12,6 +12,7 @@ export function InvoicingPanel() {
   const { data: invoices, isLoading } = useInvoices(orgId);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editorInvoiceId, setEditorInvoiceId] = useState<string | null>(null);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   const [viewerInvoiceId, setViewerInvoiceId] = useState<string | null>(null);
 
@@ -24,7 +25,9 @@ export function InvoicingPanel() {
       case "draft":
         return <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"><FileEdit size={12}/> Borrador</span>;
       case "sent":
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-600"><FileText size={12}/> Enviada</span>;
+        return <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-600"><FileText size={12}/> Emitida</span>;
+      case "pending":
+        return <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-600"><Clock size={12}/> Pendiente</span>;
       case "partial":
         return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600"><Clock size={12}/> Parcial</span>;
       case "paid":
@@ -38,64 +41,60 @@ export function InvoicingPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="font-display text-2xl">Facturas Emitidas</h2>
-          <p className="text-sm text-muted-foreground">Gestiona tus cobros y cartera a clientes.</p>
+          <h2 className="text-2xl font-display font-medium">Facturación</h2>
+          <p className="text-sm text-muted-foreground mt-1">Crea, envía y gestiona las facturas de tus clientes.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button className="btn-secondary" onClick={() => setIsTemplateOpen(true)}>
-            <FileEdit size={16} /> Plantilla y Logo
+            <FileText size={16} /> Configurar Plantilla
           </button>
-          <button className="btn-primary" onClick={() => setIsEditorOpen(true)}>
-            <Plus size={16} /> Crear Factura
+          <button className="btn-primary" onClick={() => { setEditorInvoiceId(null); setIsEditorOpen(true); }}>
+            <Plus size={16} /> Nueva Factura
           </button>
         </div>
       </div>
 
-      <div className="lux-card overflow-hidden">
+      <div className="lux-card">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-secondary/50 text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Factura #</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Fecha Emisión</th>
-                <th className="px-4 py-3 font-medium">Vencimiento</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Saldo Pendiente</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-secondary/50 text-left">
+                <th className="px-4 py-3 font-medium text-muted-foreground w-32">Nº Factura</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground">Cliente</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground w-32">Emisión</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground w-32">Vencimiento</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground text-right w-36">Monto Total</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground text-right w-36">Saldo Pendiente</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground w-32">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {invoices?.length === 0 ? (
+            <tbody>
+              {!invoices?.length ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                    No hay facturas creadas.
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                    No hay facturas registradas. Crea la primera factura para empezar.
                   </td>
                 </tr>
               ) : (
-                invoices?.map((inv) => (
+                invoices.map((inv) => (
                   <tr 
                     key={inv.id} 
-                    className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-secondary/50 transition-colors cursor-pointer"
                     onClick={() => setViewerInvoiceId(inv.id)}
                   >
-                    <td className="px-4 py-3 font-medium text-primary">{inv.invoice_number}</td>
-                    <td className="px-4 py-3">
-                      {inv.contact ? inv.contact.name : "Cliente Desconocido"}
-                    </td>
+                    <td className="px-4 py-3 font-medium">{inv.invoice_number}</td>
+                    <td className="px-4 py-3">{inv.contact?.name || "Sin cliente"}</td>
                     <td className="px-4 py-3">{new Date(inv.issue_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">
-                      {new Date(inv.due_date).toLocaleDateString()}
+                    <td className="px-4 py-3">{new Date(inv.due_date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {new Intl.NumberFormat("es-CO", { style: "currency", currency: inv.currency || "COP", minimumFractionDigits: 0 }).format(inv.total)}
                     </td>
-                    <td className="px-4 py-3 font-medium">
-                      {new Intl.NumberFormat("es-CO", { style: "currency", currency: inv.currency }).format(inv.total)}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-right">
                       {inv.balance_due > 0 ? (
-                        <span className="font-medium text-red-500">
-                          {new Intl.NumberFormat("es-CO", { style: "currency", currency: inv.currency }).format(inv.balance_due)}
+                        <span className="text-amber-600 font-medium">
+                          {new Intl.NumberFormat("es-CO", { style: "currency", currency: inv.currency || "COP", minimumFractionDigits: 0 }).format(inv.balance_due)}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">$0.00</span>
@@ -110,9 +109,22 @@ export function InvoicingPanel() {
         </div>
       </div>
 
-      <InvoiceEditorModal open={isEditorOpen} onClose={() => setIsEditorOpen(false)} />
+      <InvoiceEditorModal 
+        open={isEditorOpen} 
+        onClose={() => setIsEditorOpen(false)} 
+        initialInvoiceId={editorInvoiceId}
+      />
       <InvoiceTemplateModal open={isTemplateOpen} onClose={() => setIsTemplateOpen(false)} />
-      <InvoiceViewerModal invoiceId={viewerInvoiceId} open={!!viewerInvoiceId} onClose={() => setViewerInvoiceId(null)} />
+      <InvoiceViewerModal 
+        invoiceId={viewerInvoiceId} 
+        open={!!viewerInvoiceId} 
+        onClose={() => setViewerInvoiceId(null)} 
+        onEdit={(id) => {
+          setViewerInvoiceId(null);
+          setEditorInvoiceId(id);
+          setIsEditorOpen(true);
+        }}
+      />
     </div>
   );
 }
