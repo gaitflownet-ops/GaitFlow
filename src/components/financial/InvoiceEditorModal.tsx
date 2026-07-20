@@ -508,10 +508,10 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
           {/* ── Footer Actions ── */}
           <div className="flex justify-end gap-3 p-4 border-t border-border bg-secondary/10 shrink-0">
             <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
-            <button type="button" className="btn-secondary" onClick={() => handleSubmit("draft")} disabled={createMutation.isPending}>
+            <button type="button" className="btn-secondary" onClick={() => handleSubmit("draft")} disabled={saveMutation.isPending}>
               <Save size={16} /> Guardar Borrador
             </button>
-            <button type="button" className="btn-primary" onClick={() => handleSubmit("sent")} disabled={createMutation.isPending}>
+            <button type="button" className="btn-primary" onClick={() => handleSubmit("sent")} disabled={saveMutation.isPending}>
               <Send size={16} /> Emitir Factura
             </button>
           </div>
