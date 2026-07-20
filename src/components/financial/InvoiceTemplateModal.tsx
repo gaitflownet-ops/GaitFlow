@@ -170,8 +170,16 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
     default_notes: "", default_terms: "", footer_text: "", legal_text: "",
   });
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
-    if (template) {
+    if (open) {
+      setIsInitialized(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (template && !isInitialized) {
       setForm({
         logo_url:       template.logo_url || "",
         primary_color:  template.primary_color || "#d97706",
@@ -190,8 +198,9 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
         footer_text:    template.footer_text || "",
         legal_text:     (template as any).legal_text || "",
       });
+      setIsInitialized(true);
     }
-  }, [template]);
+  }, [template, isInitialized]);
 
   if (!orgId) return null;
 
