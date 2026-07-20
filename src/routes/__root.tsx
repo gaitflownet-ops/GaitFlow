@@ -12,6 +12,7 @@ import {
 import { useEffect } from "react";
 import { AppProvider, useApp } from "@/lib/store";
 import { Toaster } from "@/components/ui/sonner";
+import { Loader2 } from "lucide-react";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -166,7 +167,11 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [state.isAuthenticated, state.authLoading, isPublic, isAuthPage, navigate]);
 
   if (state.authLoading) {
-    return null; // or a full-screen spinner
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!state.isAuthenticated && !isPublic) {

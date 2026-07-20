@@ -93,88 +93,92 @@ function RegisterPage() {
     setConfirmationPending(false);
     setConfirmationEmail("");
 
-    if (!emailValid) {
-      setError("Ingresa un correo electrónico válido.");
-      setLoading(false);
-      return;
-    }
-
-    if (!passwordValid) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirm) {
-      setError("Las contraseñas no coinciden.");
-      setLoading(false);
-      return;
-    }
-
-    const appUrl = typeof window !== "undefined" ? window.location.origin : undefined;
-    const profileName = name || "Usuario CCC";
-    const safeRole = role ?? "Owner";
-
-    const profileInput = buildProfileInput({
-      id: "pending",
-      name: profileName,
-      role: safeRole,
-      stableName: stable,
-      phone,
-    });
-
-    // 1. Sign up user
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: profileName,
-          role: safeRole === "Owner" ? "Propietario" : safeRole, // Mapeo si es necesario
-          stable_name: stable || null,
-          phone: phone || null,
-          initials: profileInput.initials,
-        },
-        emailRedirectTo: appUrl ? `${appUrl}/auth/callback` : undefined,
-      },
-    });
-
-    if (authError) {
-      setError(getAuthErrorMessage(authError));
-      setLoading(false);
-      return;
-    }
-
-    if (!data.user || !data.session) {
-      setConfirmationPending(true);
-      setConfirmationEmail(email);
-      setError("Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      await upsertProfile({ ...profileInput, id: data.user.id });
-    } catch (profileError) {
-      setError(
-        profileError instanceof Error ? profileError.message : "No pudimos crear tu perfil.",
-      );
+      if (!emailValid) {
+        setError("Ingresa un correo electrónico válido.");
+        return;
+      }
+
+      if (!passwordValid) {
+        setError("La contraseña debe tener al menos 8 caracteres.");
+        return;
+      }
+
+      if (password !== confirm) {
+        setError("Las contraseñas no coinciden.");
+        return;
+      }
+
+      const appUrl = typeof window !== "undefined" ? window.location.origin : undefined;
+      const profileName = name || "Usuario CCC";
+      const safeRole = role ?? "Owner";
+
+      const profileInput = buildProfileInput({
+        id: "pending",
+        name: profileName,
+        role: safeRole,
+        stableName: stable,
+        phone,
+      });
+
+      // 1. Sign up user
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: profileName,
+            role: safeRole === "Owner" ? "Propietario" : safeRole, // Mapeo si es necesario
+            stable_name: stable || null,
+            phone: phone || null,
+            initials: profileInput.initials,
+          },
+          emailRedirectTo: appUrl ? `${appUrl}/auth/callback` : undefined,
+        },
+      });
+
+      if (authError) {
+        setError(getAuthErrorMessage(authError));
+        return;
+      }
+
+      if (!data.user || !data.session) {
+        setConfirmationPending(true);
+        setConfirmationEmail(email);
+        setError("Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.");
+        return;
+      }
+
+      try {
+        await upsertProfile({ ...profileInput, id: data.user.id });
+      } catch (profileError) {
+        setError(
+          profileError instanceof Error ? profileError.message : "No pudimos crear tu perfil.",
+        );
+        return;
+      }
+
+      // Log lead capture in DB (non-fatal)
+      try {
+        storeUTM();
+        await insertLeadCapture({
+          full_name: profileName,
+          email,
+          stable_name: stable || undefined,
+          plan_interest: undefined,
+          form_type: "registration",
+          profile_id: data.user.id,
+        });
+      } catch (e) {
+        console.warn("Non-fatal lead capture error", e);
+      }
+
+      navigate({ to: "/dashboard", search: { onboarding: "true" } as any });
+    } catch (err: any) {
+      setError(err instanceof Error ? err.message : "Error inesperado al crear la cuenta.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Log lead capture in DB (non-fatal)
-    storeUTM();
-    await insertLeadCapture({
-      full_name: profileName,
-      email,
-      stable_name: stable || undefined,
-      plan_interest: undefined,
-      form_type: "registration",
-      profile_id: data.user.id,
-    });
-
-    navigate({ to: "/dashboard", search: { onboarding: "true" } });
   };
 
   const inputClass =

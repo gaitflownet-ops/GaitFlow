@@ -55,16 +55,21 @@ function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(getErrorMessage(authError.message));
+      if (authError) {
+        setError(getErrorMessage(authError.message));
+      } else {
+        navigate({ to: "/dashboard" });
+      }
+    } catch (err: any) {
+      setError("Error de red o de conexión. Inténtalo de nuevo.");
+    } finally {
       setLoading(false);
-    } else {
-      navigate({ to: "/dashboard" });
     }
   };
 

@@ -101,28 +101,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // 1. Check active session on mount
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        const profile = await loadOrCreateProfile(session.user);
+        if (session?.user) {
+          let profile = null;
+          try {
+            profile = await loadOrCreateProfile(session.user);
+          } catch (e) {
+            console.error("Failed to load or create profile during init:", e);
+          }
 
-        dispatch({
-          type: "AUTH_STATE_CHANGE",
-          payload: { isAuthenticated: true, user: profile || null },
-        });
+          dispatch({
+            type: "AUTH_STATE_CHANGE",
+            payload: { isAuthenticated: true, user: profile || null },
+          });
 
-        // Fetch notifications
-        const { data: notifications } = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", session.user.id);
+          // Fetch notifications
+          try {
+            const { data: notifications } = await supabase
+              .from("notifications")
+              .select("*")
+              .eq("user_id", session.user.id);
 
-        if (notifications) {
-          dispatch({ type: "SET_NOTIFICATIONS", payload: notifications });
+            if (notifications) {
+              dispatch({ type: "SET_NOTIFICATIONS", payload: notifications });
+            }
+          } catch (e) {
+             console.error("Failed to load notifications:", e);
+          }
+        } else {
+          dispatch({
+            type: "AUTH_STATE_CHANGE",
+            payload: { isAuthenticated: false, user: null },
+          });
         }
-      } else {
+      } catch (err) {
+        console.error("Critical error in checkSession:", err);
         dispatch({
           type: "AUTH_STATE_CHANGE",
           payload: { isAuthenticated: false, user: null },
@@ -137,7 +154,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        const profile = await loadOrCreateProfile(session.user);
+        let profile = null;
+        try {
+          profile = await loadOrCreateProfile(session.user);
+        } catch (e) {
+          console.error("Failed to load or create profile on SIGNED_IN:", e);
+        }
 
         dispatch({
           type: "AUTH_STATE_CHANGE",
