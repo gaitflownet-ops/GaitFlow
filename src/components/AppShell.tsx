@@ -20,6 +20,8 @@ import {
   FolderOpen,
   Contact,
   User,
+  Menu,
+  X,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect, useMemo } from "react";
 import { useApp } from "@/lib/store";
@@ -56,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [topbarMenuOpen, setTopbarMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const topbarMenuRef = useRef<HTMLDivElement>(null);
 
@@ -195,6 +198,19 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-2">
+                {/* Mobile Menu Toggle */}
+                <button
+                  id="header-mobile-menu"
+                  onClick={() => {
+                    setMobileMenuOpen(!mobileMenuOpen);
+                    setNotifOpen(false);
+                    setTopbarMenuOpen(false);
+                  }}
+                  className="lg:hidden grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition-colors"
+                >
+                  {mobileMenuOpen ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
+                </button>
+
                 {/* Quick action */}
                 <button
                   id="header-quick-action"
@@ -298,6 +314,45 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
+
+          {/* Mobile Full Menu Overlay */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden fixed inset-0 top-16 z-40 bg-background/95 backdrop-blur-xl animate-in fade-in overflow-y-auto">
+              <nav className="flex flex-col p-6 space-y-2">
+                {filteredNav.map(({ to, label, icon: Icon }) => {
+                  const active = (to as string) === "/" ? path === "/" : path.startsWith(to);
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-4 rounded-xl px-4 py-3.5 text-[15px] transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-foreground/80 hover:bg-secondary"
+                      }`}
+                    >
+                      <Icon className={`h-5 w-5 ${active ? "text-primary" : "opacity-70"}`} />
+                      {label}
+                    </Link>
+                  );
+                })}
+                <div className="h-px w-full bg-border/60 my-4" />
+                <Link
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-4 rounded-xl px-4 py-3.5 text-[15px] transition-colors ${
+                    path === "/settings"
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-foreground/80 hover:bg-secondary"
+                  }`}
+                >
+                  <Settings className={`h-5 w-5 ${path === "/settings" ? "text-primary" : "opacity-70"}`} />
+                  Configuración
+                </Link>
+              </nav>
+            </div>
+          )}
 
           <div className="px-6 lg:px-10 py-8 lg:py-10 max-w-[1440px] mx-auto">{children}</div>
 
