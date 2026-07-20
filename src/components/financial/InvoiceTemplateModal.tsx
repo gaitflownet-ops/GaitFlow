@@ -222,7 +222,11 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
       
       const { data, error } = await supabase.storage
         .from('invoicing-assets')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type
+        });
 
       if (error) throw error;
 
