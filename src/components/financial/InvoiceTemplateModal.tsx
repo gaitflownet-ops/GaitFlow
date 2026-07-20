@@ -238,13 +238,19 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
       const fileExt = file.name.split('.').pop();
       const fileName = `${orgId}_logo_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-      const { data, error } = await supabase.storage
+      const uploadPromise = supabase.storage
         .from('invoicing-assets')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true,
           contentType: file.type
         });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("La subida está tardando demasiado (Timeout). Intenta con una imagen más ligera o revisa tu conexión.")), 15000)
+      );
+
+      const { data, error } = await Promise.race([uploadPromise, timeoutPromise]) as any;
 
       if (error) {
         toast.error(`Error Supabase: ${error.message}`);
@@ -259,12 +265,12 @@ export function InvoiceTemplateModal({ open, onClose }: { open: boolean; onClose
       toast.success("Logo subido correctamente");
     } catch (err: any) {
       console.error(err);
-      // Solo mostramos el error si no fue ya mostrado por Supabase (para capturar errores de red, etc)
       if (!err.message?.includes("Supabase")) {
         toast.error(err.message || "Error al subir el logo");
       }
     } finally {
       setIsUploading(false);
+      if (e?.target) e.target.value = '';
     }
   };
 
