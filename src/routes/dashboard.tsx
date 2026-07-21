@@ -24,8 +24,10 @@ import {
   MessageCircle,
   Share2,
   Play,
+  Zap,
 } from "lucide-react";
 import { AddUpdateModal } from "@/components/modals/AddUpdateModal";
+import { GlobalTimeline } from "@/components/timeline/GlobalTimeline";
 import { AddHealthRecordModal } from "@/components/modals/AddHealthRecordModal";
 import { AddCompetitionModal } from "@/components/modals/AddCompetitionModal";
 import { PremiumKPICards } from "@/components/dashboard/PremiumKPICards";
@@ -387,6 +389,19 @@ function Dashboard() {
           <StableOperationsWidget onAddLog={() => setAddCoverageLogOpen(true)} />
 
           <DocumentVaultWidget />
+
+          {/* Automation Engine Feed */}
+          <div className="lux-card p-6 space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+              <Zap className="h-24 w-24" />
+            </div>
+            <h3 className="font-display text-lg flex items-center gap-2 border-b border-border/60 pb-2 relative z-10">
+              <Zap className="h-4.5 w-4.5 text-indigo-500 fill-indigo-500/20" /> Motor de Automatizaciones
+            </h3>
+            <div className="relative z-10">
+              <GlobalTimeline />
+            </div>
+          </div>
 
           <DailyScheduleWidget />
         </div>
