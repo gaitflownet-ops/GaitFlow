@@ -5,7 +5,8 @@ import {
   useUpdatePharmaceutical,
   type Pharmaceutical,
 } from "@/lib/hooks/usePharmaceuticals";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Camera, RefreshCw } from "lucide-react";
+import { AnimatedLoaderText } from "../ui/AnimatedLoaderText";
 
 type Props = {
   open: boolean;
@@ -275,7 +276,7 @@ export function AddPharmaceuticalModal({ open, onOpenChange, editItem }: Props) 
               className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-70 inline-flex items-center justify-center gap-2"
             >
               {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <AnimatedLoaderText />
               ) : isEditMode ? (
                 "Guardar cambios"
               ) : (

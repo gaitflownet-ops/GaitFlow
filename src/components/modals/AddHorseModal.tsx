@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, Loader2, Camera } from "lucide-react";
+import { Check, Camera } from "lucide-react";
+import { AnimatedLoaderText } from "../ui/AnimatedLoaderText";
 import { Modal } from "./Modal";
 import { useApp } from "@/lib/store";
 import { useCreateHorse, useHorses } from "@/lib/hooks/useHorses";
@@ -831,7 +832,7 @@ export function AddHorseModal({ open, onOpenChange }: Props) {
               className="flex-1 rounded-full bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-95 disabled:opacity-70 inline-flex items-center justify-center gap-2"
             >
               {createHorse.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <AnimatedLoaderText />
               ) : (
                 "Create horse"
               )}

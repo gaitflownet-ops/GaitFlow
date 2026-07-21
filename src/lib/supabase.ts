@@ -9,9 +9,21 @@ if (!isSupabaseConfigured) {
   console.error("Supabase environment variables missing! GaitFlow requires a live database.");
 }
 
+const customFetch = (url: RequestInfo | URL, options?: RequestInit) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+};
+
 export const supabase = createClient<Database>(
   supabaseUrl || "https://lrtlhvemfdkdsctnicwi.supabase.co",
-  supabaseAnonKey || "sb_publishable_zJbfejfByt20C-JNvm8tpA_0A2vXJfK"
+  supabaseAnonKey || "sb_publishable_zJbfejfByt20C-JNvm8tpA_0A2vXJfK",
+  {
+    global: {
+      fetch: customFetch
+    }
+  }
 );
 
 export function disableSupabase() {
