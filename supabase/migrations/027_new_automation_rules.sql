@@ -16,7 +16,7 @@ BEGIN
   END IF;
   
   -- Stock Low (Update)
-  IF TG_OP = 'UPDATE' AND NEW.stock_quantity <= NEW.min_stock_alert AND OLD.stock_quantity > NEW.min_stock_alert THEN
+  IF TG_OP = 'UPDATE' AND NEW.stock_quantity != OLD.stock_quantity AND NEW.stock_quantity <= NEW.min_stock_alert THEN
     PERFORM dispatch_system_event(
       NEW.organization_id,
       'inventory',
@@ -107,7 +107,9 @@ BEGIN
       'create_expense',
       '{
          "amount_compute": { "field1": "cost_per_unit", "field2": "stock_quantity", "operator": "multiply" },
-         "description_template": "Compra de Insumo (Inventario): {{name}}"
+         "description_template": "Compra de Insumo (Inventario): {{name}}",
+         "status": "pending",
+         "category": "Medicamentos y Farmacia"
        }'::jsonb,
       true,
       100

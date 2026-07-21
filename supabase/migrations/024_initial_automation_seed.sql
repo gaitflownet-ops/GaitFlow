@@ -18,7 +18,7 @@ BEGIN
     'health', 'health.record.created', 
     '{"field": "cost", "operator": "gt", "value": 0}'::jsonb,
     'create_expense',
-    '{"description_template": "Registro de Salud - {{type}}: {{horse_name}}", "amount_field": "cost", "status": "completed"}'::jsonb
+    '{"description_template": "Registro de Salud - {{type}}: {{horse_name}}", "amount_field": "cost", "status": "pending", "category": "Veterinaria y Sanidad"}'::jsonb
   ) ON CONFLICT DO NOTHING;
 
   -- 2. Marketplace -> Factura / Ingreso

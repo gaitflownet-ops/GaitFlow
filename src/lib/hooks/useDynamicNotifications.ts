@@ -4,6 +4,7 @@ import { useTasks } from "./useTasks";
 import { usePharmaceuticals } from "./usePharmaceuticals";
 import { useHealthRecords } from "./useHealth";
 import { useDocuments } from "./useVault";
+import { useGlobalTimeline } from "./useGlobalTimeline";
 
 export function useDynamicNotifications() {
   const { state } = useApp();
@@ -11,6 +12,7 @@ export function useDynamicNotifications() {
   const { data: pharmaceuticals = [] } = usePharmaceuticals();
   const { data: healthRecords = [] } = useHealthRecords();
   const { data: documents = [] } = useDocuments();
+  const { data: timelineEvents = [] } = useGlobalTimeline();
 
   const combinedNotifications = useMemo(() => {
     const stateNotifs = state.notifications;
@@ -175,6 +177,24 @@ export function useDynamicNotifications() {
       }
     });
 
+    // 6. Automation Engine Events (Global Timeline)
+    timelineEvents.forEach((te: any) => {
+      if (te.is_automated) {
+        dynamic.push({
+          id: `auto-${te.id}`,
+          user_id: state.user?.id || "local",
+          title: te.title,
+          body: te.description,
+          kind: "reminder", // default icon for automation
+          read: false,
+          horse_id: null,
+          at: te.module || "Automated",
+          organization_id: state.user?.organization_id || null,
+          created_at: te.created_at,
+        });
+      }
+    });
+
     const processedDynamic = dynamic.map((d) => {
       const dbNotif = stateNotifs.find((sn) => sn.id === d.id || sn.at === d.id);
       return {
@@ -189,7 +209,7 @@ export function useDynamicNotifications() {
     return [...processedDynamic, ...uniqueStateNotifs].sort((a, b) => {
       return (b.created_at || "") > (a.created_at || "") ? 1 : -1;
     });
-  }, [state.notifications, state.user, tasks, pharmaceuticals, healthRecords, documents]);
+  }, [state.notifications, state.user, tasks, pharmaceuticals, healthRecords, documents, timelineEvents]);
 
   const unreadCount = combinedNotifications.filter((n) => !n.read).length;
 

@@ -88,6 +88,7 @@ serve(async (req) => {
           amount: amount,
           description: desc,
           status: rule.action_config.status || "completed",
+          category: rule.action_config.category || null,
           reference_module: event.module,
           reference_id: event.payload.id,
           horse_id: event.payload.horse_id // Si viene en el payload
