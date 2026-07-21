@@ -85,7 +85,6 @@ function Dashboard() {
   const [addCompetitionOpen, setAddCompetitionOpen] = useState(false);
   const [addCoverageLogOpen, setAddCoverageLogOpen] = useState(false);
   const [likedUpdates, setLikedUpdates] = useState<Set<string>>(new Set());
-  const [showAllUpdates, setShowAllUpdates] = useState(false);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
@@ -302,7 +301,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {(showAllUpdates ? allUpdates : allUpdates.slice(0, 3)).map((update, i) => {
+              {allUpdates.slice(0, 3).map((update, i) => {
                 const horse = horses.find((h) => h.id === update.horse_id);
                 const isLiked = likedUpdates.has(update.id);
                 const Icon = getUpdateIcon(update.type);
@@ -389,13 +388,13 @@ function Dashboard() {
                   </div>
                 );
               })}
-              {allUpdates.length > 3 && !showAllUpdates && (
-                <button
-                  onClick={() => setShowAllUpdates(true)}
-                  className="w-full py-3 text-sm font-medium text-primary hover:bg-secondary/50 rounded-xl transition-colors border border-border/50"
+              {allUpdates.length > 3 && (
+                <Link
+                  to="/activity"
+                  className="block w-full py-3 text-center text-sm font-medium text-primary hover:bg-secondary/50 rounded-xl transition-colors border border-border/50"
                 >
                   Ver más actividad ({allUpdates.length - 3} pendientes)
-                </button>
+                </Link>
               )}
             </div>
           )}
