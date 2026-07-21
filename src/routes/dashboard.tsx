@@ -217,8 +217,75 @@ function Dashboard() {
 
 
       {/* Timeline + side rail */}
-      <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2">
+      <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">{/* Side rail widgets */}
+        <div className="lg:col-span-2 space-y-6 lg:mt-0">
+          {/* Spatial Control Center quick stats */}
+          <div className="lux-card p-6 space-y-4">
+            <h3 className="font-display text-lg flex items-center gap-2 border-b border-border/60 pb-2">
+              <Home className="h-4.5 w-4.5 text-primary" /> Ocupación del Criadero
+            </h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
+                <span className="text-[10px] uppercase font-mono text-muted-foreground">Pesebreras</span>
+                <div className="font-display text-2xl font-bold mt-1 text-foreground">
+                  {stableStats.occupiedStables} / {stableStats.totalStableCap || 0}
+                </div>
+                <div className="h-1 w-full bg-border/50 rounded-full mt-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-primary" 
+                    style={{ width: `${stableStats.totalStableCap ? Math.min(100, Math.round((stableStats.occupiedStables / stableStats.totalStableCap) * 100)) : 0}%` }} 
+                  />
+                </div>
+              </div>
+
+              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
+                <span className="text-[10px] uppercase font-mono text-muted-foreground">Potreros Activos</span>
+                <div className="font-display text-2xl font-bold mt-1 text-emerald-500">
+                  {stableStats.grazingPaddocks} / {stableStats.totalPaddocks || 0}
+                </div>
+                <div className="text-[9px] text-muted-foreground mt-2">
+                  {stableStats.restingPaddocks} en descanso
+                </div>
+              </div>
+
+              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
+                <span className="text-[10px] uppercase font-mono text-muted-foreground">En Clínica</span>
+                <div className="font-display text-2xl font-bold mt-1 text-sky-500">
+                  {stableStats.inClinic}
+                </div>
+                <div className="text-[9px] text-muted-foreground mt-2 font-medium">
+                  Atención médica
+                </div>
+              </div>
+
+              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center border-red-500/20 bg-red-500/5">
+                <span className="text-[10px] uppercase font-mono text-red-500 font-semibold">En Aislamiento</span>
+                <div className="font-display text-2xl font-bold mt-1 text-red-500">
+                  {stableStats.activeQuarantine}
+                </div>
+                <div className="text-[9px] text-red-500 mt-2 font-medium">
+                  Cuarentena activa
+                </div>
+              </div>
+            </div>
+
+            <Link
+              to="/locations"
+              className="mt-2 block w-full text-center text-xs font-semibold text-primary hover:underline"
+            >
+              Ver mapa del criadero →
+            </Link>
+          </div>
+
+          <StableOperationsWidget onAddLog={() => setAddCoverageLogOpen(true)} />
+
+          <DocumentVaultWidget />
+
+
+          <DailyScheduleWidget />
+        </div>
+        <div className="space-y-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-3xl">Actividad del Criadero</h2>
           </div>
@@ -323,75 +390,6 @@ function Dashboard() {
               })}
             </div>
           )}
-        </div>
-
-        {/* Side rail widgets */}
-        <div className="space-y-6 lg:mt-0">
-          {/* Spatial Control Center quick stats */}
-          <div className="lux-card p-6 space-y-4">
-            <h3 className="font-display text-lg flex items-center gap-2 border-b border-border/60 pb-2">
-              <Home className="h-4.5 w-4.5 text-primary" /> Ocupación del Criadero
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
-                <span className="text-[10px] uppercase font-mono text-muted-foreground">Pesebreras</span>
-                <div className="font-display text-2xl font-bold mt-1 text-foreground">
-                  {stableStats.occupiedStables} / {stableStats.totalStableCap || 0}
-                </div>
-                <div className="h-1 w-full bg-border/50 rounded-full mt-2 overflow-hidden">
-                  <div 
-                    className="h-full bg-primary" 
-                    style={{ width: `${stableStats.totalStableCap ? Math.min(100, Math.round((stableStats.occupiedStables / stableStats.totalStableCap) * 100)) : 0}%` }} 
-                  />
-                </div>
-              </div>
-
-              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
-                <span className="text-[10px] uppercase font-mono text-muted-foreground">Potreros Activos</span>
-                <div className="font-display text-2xl font-bold mt-1 text-emerald-500">
-                  {stableStats.grazingPaddocks} / {stableStats.totalPaddocks || 0}
-                </div>
-                <div className="text-[9px] text-muted-foreground mt-2">
-                  {stableStats.restingPaddocks} en descanso
-                </div>
-              </div>
-
-              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center">
-                <span className="text-[10px] uppercase font-mono text-muted-foreground">En Clínica</span>
-                <div className="font-display text-2xl font-bold mt-1 text-sky-500">
-                  {stableStats.inClinic}
-                </div>
-                <div className="text-[9px] text-muted-foreground mt-2 font-medium">
-                  Atención médica
-                </div>
-              </div>
-
-              <div className="bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-center border-red-500/20 bg-red-500/5">
-                <span className="text-[10px] uppercase font-mono text-red-500 font-semibold">En Aislamiento</span>
-                <div className="font-display text-2xl font-bold mt-1 text-red-500">
-                  {stableStats.activeQuarantine}
-                </div>
-                <div className="text-[9px] text-red-500 mt-2 font-medium">
-                  Cuarentena activa
-                </div>
-              </div>
-            </div>
-
-            <Link
-              to="/locations"
-              className="mt-2 block w-full text-center text-xs font-semibold text-primary hover:underline"
-            >
-              Ver mapa del criadero →
-            </Link>
-          </div>
-
-          <StableOperationsWidget onAddLog={() => setAddCoverageLogOpen(true)} />
-
-          <DocumentVaultWidget />
-
-
-          <DailyScheduleWidget />
         </div>
       </div>
 
