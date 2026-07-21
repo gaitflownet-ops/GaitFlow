@@ -23,23 +23,7 @@ export function useDynamicNotifications() {
 
     const dynamic: any[] = [];
 
-    // 1. Low Stock alerts
-    pharmaceuticals.forEach((p) => {
-      if ((p.stock_quantity ?? 0) <= (p.min_stock_alert ?? 5)) {
-        dynamic.push({
-          id: `low-stock-${p.id}`,
-          user_id: state.user?.id || "local",
-          title: "Alerta de Stock Bajo",
-          body: `El stock de ${p.name} está bajo (quedan ${p.stock_quantity} ${p.unit}).`,
-          kind: "reminder",
-          read: false,
-          horse_id: null,
-          at: "Alerta Stock",
-          organization_id: state.user?.organization_id || null,
-          created_at: p.created_at || new Date().toISOString(),
-        });
-      }
-    });
+    // 1. Low Stock alerts (REMOVED: Now handled exclusively by the Automation Engine)
 
     // 2. Expiration alerts
     pharmaceuticals.forEach((p) => {
