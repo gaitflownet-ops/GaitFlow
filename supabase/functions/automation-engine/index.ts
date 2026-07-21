@@ -66,16 +66,22 @@ serve(async (req) => {
 
       // 3. Ejecutar Action Handler
       if (rule.action_type === 'create_expense') {
-        // Ejemplo de config: { "amount_field": "cost", "description_template": "Registro de Salud - {{type}}: {{horse_name}}" }
-        const amount = event.payload[rule.action_config.amount_field || 'cost'] || 0;
+        let amount = 0;
         
-        // Reemplazar variables simples tipo {{variable}}
+        // Handle computed amounts (e.g. cost_per_unit * stock_quantity)
+        if (rule.action_config.amount_compute) {
+            const f1 = event.payload[rule.action_config.amount_compute.field1] || 0;
+            const f2 = event.payload[rule.action_config.amount_compute.field2] || 0;
+            if (rule.action_config.amount_compute.operator === 'multiply') amount = f1 * f2;
+        } else {
+            amount = event.payload[rule.action_config.amount_field || 'cost'] || 0;
+        }
+        
         let desc = rule.action_config.description_template || "Gasto Automático";
         Object.keys(event.payload).forEach(k => {
           desc = desc.replace(new RegExp(`{{${k}}}`, 'g'), event.payload[k]);
         });
 
-        // Escribir en transacciones financieras
         await supabase.from("financial_transactions").insert({
           organization_id: event.organization_id,
           type: "expense",
@@ -87,10 +93,9 @@ serve(async (req) => {
           horse_id: event.payload.horse_id // Si viene en el payload
         });
 
-        // Registrar en el Timeline!
         await supabase.from("global_timeline").insert({
           organization_id: event.organization_id,
-          title: "Gasto generado automáticamente",
+          title: rule.action_config.timeline_title || "Gasto generado automáticamente",
           description: desc,
           module: "financial",
           is_automated: true
@@ -123,12 +128,45 @@ serve(async (req) => {
 
           await supabase.from("global_timeline").insert({
             organization_id: event.organization_id,
-            title: `Factura # borrador creada automáticamente`,
+            title: rule.action_config.timeline_title || `Factura borrador creada automáticamente`,
             description: desc,
             module: "financial",
             is_automated: true,
             metadata: { invoice_id: invoice.id }
           });
+        }
+      } else if (rule.action_type === 'create_task') {
+        let title = rule.action_config.title_template || "Nueva tarea automatizada";
+        Object.keys(event.payload).forEach(k => {
+            title = title.replace(new RegExp(`{{${k}}}`, 'g'), event.payload[k]);
+        });
+
+        // TBD: Insert into Tasks table (assuming a tasks table exists)
+        // Since we don't have a strict tasks table schema identified yet, we'll log it in global timeline directly.
+        await supabase.from("global_timeline").insert({
+          organization_id: event.organization_id,
+          title: title,
+          description: "Notificación prioritaria generada por el motor de automatizaciones",
+          module: event.module,
+          is_automated: true
+        });
+      } else if (rule.action_type === 'create_health_record') {
+        let notes = rule.action_config.notes_template || "Registro automático desde tarea";
+        Object.keys(event.payload).forEach(k => {
+            notes = notes.replace(new RegExp(`{{${k}}}`, 'g'), event.payload[k]);
+        });
+
+        if (event.payload.horse_id) {
+            await supabase.from("health_records").insert({
+                organization_id: event.organization_id,
+                horse_id: event.payload.horse_id,
+                record_type: rule.action_config.record_type || 'General',
+                date: new Date().toISOString().split('T')[0],
+                notes: notes,
+                provider: 'Automation Engine',
+                cost: 0
+            });
+            // Triggers de DB se encargarán del timeline de health
         }
       }
       

@@ -87,28 +87,22 @@ export const TRANSACTION_STATUSES: {
   { value: 'reconciled',  label: 'Conciliado', color: 'text-blue-600',    bg: 'bg-blue-500/10 border-blue-500/20' },
 ];
 
-// ─── Formato de moneda COP ────────────────────────────────────────────────────
+import { formatMoney } from '../utils';
+
+// ─── Formato de moneda COP (Escalable) ────────────────────────────────────────
 
 export function formatCOP(amount: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return formatMoney(amount, 'COP');
 }
 
 export function formatCOPCompact(amount: number): string {
-  if (Math.abs(amount) >= 1_000_000_000) {
-    return `$${(amount / 1_000_000_000).toFixed(1)}B`;
-  }
-  if (Math.abs(amount) >= 1_000_000) {
-    return `$${(amount / 1_000_000).toFixed(1)}M`;
-  }
-  if (Math.abs(amount) >= 1_000) {
-    return `$${(amount / 1_000).toFixed(0)}K`;
-  }
-  return formatCOP(amount);
+  // A compact version (e.g. 1M, 500K)
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
 }
 
 // ─── Interfaz principal de transacción ───────────────────────────────────────

@@ -23,13 +23,13 @@ type Category =
   | "other";
 
 const categories: { value: Category; label: string }[] = [
-  { value: "vaccine", label: "Vaccine" },
-  { value: "dewormer", label: "Dewormer" },
-  { value: "antibiotic", label: "Antibiotic" },
-  { value: "anti-inflammatory", label: "Anti-inflammatory" },
-  { value: "supplement", label: "Supplement" },
-  { value: "topical", label: "Topical" },
-  { value: "other", label: "Other" },
+  { value: "vaccine", label: "Vacuna" },
+  { value: "dewormer", label: "Desparasitante" },
+  { value: "antibiotic", label: "Antibiótico" },
+  { value: "anti-inflammatory", label: "Antiinflamatorio" },
+  { value: "supplement", label: "Suplemento" },
+  { value: "topical", label: "Tópico" },
+  { value: "other", label: "Otro" },
 ];
 
 type Unit = "ml" | "mg" | "tablets" | "doses" | "tubes";
@@ -37,9 +37,9 @@ type Unit = "ml" | "mg" | "tablets" | "doses" | "tubes";
 const units: { value: Unit; label: string }[] = [
   { value: "ml", label: "ml" },
   { value: "mg", label: "mg" },
-  { value: "tablets", label: "Tablets" },
-  { value: "doses", label: "Doses" },
-  { value: "tubes", label: "Tubes" },
+  { value: "tablets", label: "Tabletas" },
+  { value: "doses", label: "Dosis" },
+  { value: "tubes", label: "Tubos o Jeringas" },
 ];
 
 export function AddPharmaceuticalModal({ open, onOpenChange, editItem }: Props) {
@@ -127,7 +127,7 @@ export function AddPharmaceuticalModal({ open, onOpenChange, editItem }: Props) 
     <Modal
       open={open}
       onClose={handleClose}
-      title={isEditMode ? "Edit pharmaceutical" : "Add pharmaceutical"}
+      title={isEditMode ? "Editar medicamento" : "Agregar medicamento al inventario"}
     >
       {done ? (
         <div className="p-10 flex flex-col items-center gap-4">
@@ -135,169 +135,138 @@ export function AddPharmaceuticalModal({ open, onOpenChange, editItem }: Props) 
             <Check className="h-8 w-8" />
           </span>
           <p className="font-display text-2xl">
-            {isEditMode ? "Product updated" : "Product added"}
+            {isEditMode ? "Producto actualizado" : "Producto agregado"}
           </p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-sm text-center">
             {isEditMode
-              ? "Pharmaceutical inventory has been updated."
-              : "New product added to inventory."}
+              ? "El inventario del criadero ha sido actualizado."
+              : "Nuevo medicamento agregado exitosamente a la bodega."}
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="p-7 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Name */}
           <div>
-            <label className="eyebrow block mb-1.5">Product name</label>
+            <label className="eyebrow block mb-1.5">Nombre del Producto</label>
             <input
-              className="lux-input"
-              placeholder="E.g. West Nile Vaccine"
+              type="text"
+              required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
-              id="pharma-name"
+              placeholder="Ej: Ivermectina 1%"
+              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="eyebrow block mb-2">Category</label>
-            <div className="flex flex-wrap gap-2">
-              {categories.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setCategory(value)}
-                  className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
-                    category === value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Manufacturer */}
-          <div>
-            <label className="eyebrow block mb-1.5">Manufacturer</label>
-            <input
-              className="lux-input"
-              placeholder="E.g. Zoetis, Merck"
-              value={manufacturer}
-              onChange={(e) => setManufacturer(e.target.value)}
-              id="pharma-manufacturer"
-            />
-          </div>
-
-          {/* Unit */}
-          <div>
-            <label className="eyebrow block mb-2">Unit</label>
-            <div className="flex flex-wrap gap-2">
-              {units.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setUnit(value)}
-                  className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
-                    unit === value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stock + Min Stock Alert */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="eyebrow block mb-1.5">Stock quantity</label>
+              <label className="eyebrow block mb-1.5">Categoría</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as Category)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {categories.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="eyebrow block mb-1.5">Fabricante / Marca</label>
+              <input
+                type="text"
+                value={manufacturer}
+                onChange={(e) => setManufacturer(e.target.value)}
+                placeholder="Opcional"
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="eyebrow block mb-1.5">Unidad</label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as Unit)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {units.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="eyebrow block mb-1.5">Stock Inicial</label>
               <input
                 type="number"
-                className="lux-input"
-                placeholder="0"
-                min={0}
+                min="0"
                 value={stockQuantity}
-                onChange={(e) =>
-                  setStockQuantity(e.target.value === "" ? "" : Number(e.target.value))
-                }
-                id="pharma-stock"
+                onChange={(e) => setStockQuantity(e.target.value ? Number(e.target.value) : "")}
+                placeholder="0"
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="eyebrow block mb-1.5">Min stock alert</label>
+              <label className="eyebrow block mb-1.5">Alerta Mínimo</label>
               <input
                 type="number"
-                className="lux-input"
-                placeholder="5"
-                min={0}
+                min="0"
                 value={minStockAlert}
-                onChange={(e) =>
-                  setMinStockAlert(e.target.value === "" ? "" : Number(e.target.value))
-                }
-                id="pharma-min-stock"
+                onChange={(e) => setMinStockAlert(e.target.value ? Number(e.target.value) : "")}
+                placeholder="5"
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
 
-          {/* Cost per Unit */}
-          <div>
-            <label className="eyebrow block mb-1.5">Cost per unit</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                $
-              </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="eyebrow block mb-1.5">Costo por unidad (COP)</label>
               <input
                 type="number"
-                className="lux-input pl-7"
-                placeholder="0.00"
-                min={0}
-                step={0.01}
+                min="0"
+                step="100"
                 value={costPerUnit}
-                onChange={(e) =>
-                  setCostPerUnit(e.target.value === "" ? "" : Number(e.target.value))
-                }
-                id="pharma-cost"
+                onChange={(e) => setCostPerUnit(e.target.value ? Number(e.target.value) : "")}
+                placeholder="$ 0"
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="eyebrow block mb-1.5">Fecha de expiración</label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
 
-          {/* Expiry Date */}
           <div>
-            <label className="eyebrow block mb-1.5">Expiry date</label>
-            <input
-              type="date"
-              className="lux-input"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              id="pharma-expiry"
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="eyebrow block mb-1.5">Notes</label>
+            <label className="eyebrow block mb-1.5">Notas adicionales</label>
             <textarea
-              className="lux-input resize-none"
-              rows={3}
-              placeholder="Storage instructions, usage notes…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              id="pharma-notes"
+              placeholder="Instrucciones, lote, proveedor, etc."
+              rows={2}
+              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 rounded-full bg-secondary px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              disabled={isPending}
+              className="rounded-full px-5 py-2.5 text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-70"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
@@ -308,9 +277,9 @@ export function AddPharmaceuticalModal({ open, onOpenChange, editItem }: Props) 
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isEditMode ? (
-                "Update product"
+                "Guardar cambios"
               ) : (
-                "Add product"
+                "Agregar producto"
               )}
             </button>
           </div>
