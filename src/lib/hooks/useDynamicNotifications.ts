@@ -36,7 +36,7 @@ export function useDynamicNotifications() {
           horse_id: null,
           at: "Alerta Stock",
           organization_id: state.user?.organization_id || null,
-          created_at: new Date().toISOString(),
+          created_at: p.created_at || new Date().toISOString(),
         });
       }
     });
@@ -56,7 +56,7 @@ export function useDynamicNotifications() {
             horse_id: null,
             at: "Vencido",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: p.expiry_date,
           });
         } else if (expDate < thirtyDaysFromNow) {
           dynamic.push({
@@ -69,7 +69,7 @@ export function useDynamicNotifications() {
             horse_id: null,
             at: "Por vencer",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: p.expiry_date,
           });
         }
       }
@@ -90,7 +90,7 @@ export function useDynamicNotifications() {
             horse_id: t.horse_id,
             at: "Atrasada",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: t.due_date,
           });
         } else if (dueDate < threeDaysFromNow) {
           dynamic.push({
@@ -103,7 +103,7 @@ export function useDynamicNotifications() {
             horse_id: t.horse_id,
             at: "Próxima",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: t.due_date,
           });
         }
       }
@@ -124,7 +124,7 @@ export function useDynamicNotifications() {
             horse_id: r.horse_id,
             at: "Overdue",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: r.next_due,
           });
         } else if (nextDue < sevenDaysFromNow) {
           dynamic.push({
@@ -137,7 +137,7 @@ export function useDynamicNotifications() {
             horse_id: r.horse_id,
             at: "Upcoming",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: r.next_due,
           });
         }
       }
@@ -158,7 +158,7 @@ export function useDynamicNotifications() {
             horse_id: d.owner_type === "horse" ? d.owner_id : null,
             at: "Vencido",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: d.expiration_date,
           });
         } else if (expDate < thirtyDaysFromNow) {
           dynamic.push({
@@ -171,7 +171,7 @@ export function useDynamicNotifications() {
             horse_id: d.owner_type === "horse" ? d.owner_id : null,
             at: "Por vencer",
             organization_id: state.user?.organization_id || null,
-            created_at: new Date().toISOString(),
+            created_at: d.expiration_date,
           });
         }
       }
@@ -207,7 +207,9 @@ export function useDynamicNotifications() {
     const uniqueStateNotifs = stateNotifs.filter((n) => !dynamicIds.has(n.id));
 
     return [...processedDynamic, ...uniqueStateNotifs].sort((a, b) => {
-      return (b.created_at || "") > (a.created_at || "") ? 1 : -1;
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return dateB - dateA;
     });
   }, [state.notifications, state.user, tasks, pharmaceuticals, healthRecords, documents, timelineEvents]);
 
