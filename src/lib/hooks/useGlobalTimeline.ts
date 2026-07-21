@@ -11,8 +11,7 @@ export function useGlobalTimeline() {
     queryFn: async () => {
       if (!orgId) return [];
       
-      const { data, error } = await supabase
-        .from('global_timeline')
+      const { data, error } = await (supabase.from('global_timeline') as any)
         .select('*')
         .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
