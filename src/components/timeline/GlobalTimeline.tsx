@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useApp } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { realtimeService } from '@/lib/services/RealtimeService';
 import { Activity, DollarSign, HeartPulse, FileText, CheckCircle2, Clock } from 'lucide-react';
@@ -26,7 +26,8 @@ const getIconForModule = (module: string) => {
 };
 
 export const GlobalTimeline = () => {
-  const { orgId } = useAuth();
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
