@@ -409,7 +409,7 @@ function LocationsPage() {
         stall_number: stallNumber,
         availability: true,
         horse_id: null,
-        organization_id: selectedLoc.organization_id || "00000000-0000-0000-0000-000000000000"
+        organization_id: selectedLoc.organization_id || state.user?.organization_id || "00000000-0000-0000-0000-000000000000"
       });
       toast.success(`Pesebrera ${stallNumber} agregada`);
       setStallNumber("");

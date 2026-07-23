@@ -35,7 +35,8 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
   const fallbackHorse = horses.find(h => h.farm_id && h.organization_id);
   
   const targetFarmId = selectedHorse?.farm_id || fallbackHorse?.farm_id;
-  const targetOrgId = selectedHorse?.organization_id || fallbackHorse?.organization_id;
+  // Always fallback to the user's active organization ID to prevent null constraint errors when there are no horses.
+  const targetOrgId = selectedHorse?.organization_id || fallbackHorse?.organization_id || state.user?.organization_id;
 
   // Clean up and deduplicate profiles for the team dropdown
   const uniqueProfiles = (profiles as any[]).filter((p: any, index: number, self: any[]) => 
@@ -61,7 +62,7 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
 
     try {
       await createTask({
-        farm_id: (targetFarmId || "00000000-0000-0000-0000-000000000000") as string,
+        farm_id: targetFarmId || undefined,
         title,
         description,
         priority,

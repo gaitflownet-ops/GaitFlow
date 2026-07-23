@@ -150,7 +150,7 @@ export function AddHealthRecordModal({ open, onOpenChange, defaultHorseId }: Pro
       const selectedContact = contacts.find(c => c.id === professional);
       if (selectedContact) {
         await createActivityLog.mutateAsync({
-          organization_id: horse?.organization_id || "00000000-0000-0000-0000-000000000000",
+          organization_id: horse?.organization_id || state.user?.organization_id || "00000000-0000-0000-0000-000000000000",
           user_id: null, // we would ideally use auth.uid() if we had user in state here, but backend triggers might handle it
           date: new Date().toISOString(),
           module_source: "health",

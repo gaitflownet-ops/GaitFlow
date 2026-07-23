@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { AppProvider, useApp } from "@/lib/store";
 import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
+import { AnimatedLoaderText } from "@/components/ui/AnimatedLoaderText";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -168,8 +169,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (state.authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-background text-primary">
+        <AnimatedLoaderText className="scale-110" />
       </div>
     );
   }

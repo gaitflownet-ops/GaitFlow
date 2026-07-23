@@ -45,7 +45,7 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
     
     try {
       await createActivityLog.mutateAsync({
-        organization_id: (contact as any).organization_id || "00000000-0000-0000-0000-000000000000",
+        organization_id: (contact as any).organization_id || state.user?.organization_id || "00000000-0000-0000-0000-000000000000",
         user_id: null,
         date: new Date().toISOString(),
         module_source: "crm",
@@ -74,7 +74,7 @@ export function ContactProfileModal({ open, onClose, contact }: Props) {
 
     try {
       await createHorseContact.mutateAsync({
-        organization_id: (contact as any).organization_id || "00000000-0000-0000-0000-000000000000",
+        organization_id: (contact as any).organization_id || state.user?.organization_id || "00000000-0000-0000-0000-000000000000",
         horse_id: newHorseId,
         contact_id: contact.id,
         relationship_category: category,
