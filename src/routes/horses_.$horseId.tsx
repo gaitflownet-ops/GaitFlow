@@ -249,7 +249,7 @@ function HorseProfile() {
         due_date: today.toISOString(),
         notes: newTaskAssignee,
         horse_id: horse.id,
-        farm_id: horse.farm_id || "00000000-0000-0000-0000-000000000000",
+        farm_id: horse.farm_id || undefined,
         organization_id: horse.organization_id || state.user?.organization_id || undefined,
       });
       await createActivityLog.mutateAsync({
