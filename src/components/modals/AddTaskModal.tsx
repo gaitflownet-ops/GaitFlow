@@ -62,7 +62,8 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
 
     try {
       await createTask({
-        farm_id: targetFarmId || undefined,
+        horse_id: horseId || null,
+        farm_id: (targetFarmId || "00000000-0000-0000-0000-000000000000") as string,
         title,
         description,
         priority,

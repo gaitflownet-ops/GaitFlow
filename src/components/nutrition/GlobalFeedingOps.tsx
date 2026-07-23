@@ -85,7 +85,7 @@ export function GlobalFeedingOps() {
         status: "Pendiente",
         due_date: taskDate.toISOString(),
         notes: `Ración requerida para ${globalSchedule[schedule].horseCount} caballos: \n${horseNames}\n\nRevisar perfil individual del caballo para detalles exactos.`,
-        farm_id: activeOrgId || undefined,
+        farm_id: activeOrgId || "00000000-0000-0000-0000-000000000000",
         organization_id: activeOrgId || undefined,
       });
 
