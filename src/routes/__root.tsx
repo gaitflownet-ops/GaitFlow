@@ -170,7 +170,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (state.authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-primary">
-        <AnimatedLoaderText className="scale-110" />
+        <AnimatedLoaderText className="scale-110" context="auth" />
       </div>
     );
   }
@@ -184,7 +184,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     }, 0);
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-primary">
-        <AnimatedLoaderText className="scale-110" />
+        <AnimatedLoaderText className="scale-110" context="auth" />
       </div>
     );
   }
