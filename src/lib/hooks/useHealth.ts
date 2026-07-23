@@ -122,16 +122,21 @@ export function useHealthCalendarEvents(month: number, year: number, orgId?: str
 // ────────────────────────────────────────────
 // useUpcomingHealthEvents — next 30 days + overdue
 // ────────────────────────────────────────────
-export function useUpcomingHealthEvents() {
+export function useUpcomingHealthEvents(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<HealthRecord[]>({
-    queryKey: ["health_upcoming"],
+    queryKey: ["health_upcoming", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
       const future = new Date();
       future.setDate(future.getDate() + 30);
       const futureDate = future.toISOString().slice(0, 10);
 
       const { data, error } = await (supabase.from("health_records") as any)
         .select("*")
+        .eq("organization_id", activeOrgId)
         .not("next_due", "is", null)
         .lte("next_due", futureDate)
         .order("next_due", { ascending: true });
@@ -139,6 +144,7 @@ export function useUpcomingHealthEvents() {
       if (error) throw error;
       return data as HealthRecord[];
     },
+    enabled: !!activeOrgId,
   });
 }
 

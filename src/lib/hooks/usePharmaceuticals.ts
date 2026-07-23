@@ -7,31 +7,42 @@ export type Pharmaceutical = Database["public"]["Tables"]["pharmaceutical_invent
 // ────────────────────────────────────────────
 // usePharmaceuticals — list all
 // ────────────────────────────────────────────
-export function usePharmaceuticals() {
+export function usePharmaceuticals(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<Pharmaceutical[]>({
-    queryKey: ["pharmaceuticals"],
+    queryKey: ["pharmaceuticals", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
       const { data, error } = await (supabase
         .from("pharmaceutical_inventory") as any)
         .select("*")
+        .eq("organization_id", activeOrgId)
         .order("name", { ascending: true });
 
       if (error) throw error;
       return data as Pharmaceutical[];
     },
+    enabled: !!activeOrgId,
   });
 }
 
 // ────────────────────────────────────────────
 // useLowStockAlerts
 // ────────────────────────────────────────────
-export function useLowStockAlerts() {
+export function useLowStockAlerts(orgId?: string | null) {
+  const { state } = useApp();
+  const activeOrgId = orgId || state.user?.organization_id;
+
   return useQuery<Pharmaceutical[]>({
-    queryKey: ["pharmaceuticals", "low-stock"],
+    queryKey: ["pharmaceuticals", "low-stock", activeOrgId],
     queryFn: async () => {
+      if (!activeOrgId) return [];
       const { data, error } = await (supabase
         .from("pharmaceutical_inventory") as any)
-        .select("*");
+        .select("*")
+        .eq("organization_id", activeOrgId);
 
       if (error) throw error;
       const all = data as Pharmaceutical[];
@@ -39,6 +50,7 @@ export function useLowStockAlerts() {
         (p) => (p.stock_quantity ?? 0) <= (p.min_stock_alert ?? 5)
       );
     },
+    enabled: !!activeOrgId,
   });
 }
 
