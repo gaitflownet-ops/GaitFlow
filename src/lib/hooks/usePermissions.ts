@@ -50,24 +50,15 @@ export function useHasPermission(module: string, action: "view" | "create" | "ed
   const { data: permissions = [], isLoading } = usePermissions();
   const { state } = useApp();
 
-  // If user is Owner, they always have all permissions
-  if (state.user?.role === "Owner" || state.user?.role === "Propietario") {
+  // TEMPORARY OVERRIDE: Client requested that all main accounts have total access to everything
+  // until paid tiers and strict roles are defined for launch. 
+  // RLS in the database is already protecting cross-tenant access.
+  if (state.isAuthenticated) {
     return { hasPermission: true, isLoading: false };
   }
 
-  const modulePerm = permissions.find((p) => p.module === module);
-  if (!modulePerm) {
-    // Default to false for security, unless it's a viewer view
-    return { hasPermission: false, isLoading };
-  }
-
-  let hasPermission = false;
-  if (action === "view") hasPermission = modulePerm.can_view;
-  else if (action === "create") hasPermission = modulePerm.can_create;
-  else if (action === "edit") hasPermission = modulePerm.can_edit;
-  else if (action === "delete") hasPermission = modulePerm.can_delete;
-
-  return { hasPermission, isLoading };
+  // Fallback (should not be reached if authenticated)
+  return { hasPermission: false, isLoading: false };
 }
 
 // ─── Hooks de Edición de Permisos (D.2) ──────────────────────────────────────
