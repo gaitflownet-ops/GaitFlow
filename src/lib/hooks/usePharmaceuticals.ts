@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Database } from "../supabase.types";
+import { useApp } from "../store";
 
 export type Pharmaceutical = Database["public"]["Tables"]["pharmaceutical_inventory"]["Row"];
 
