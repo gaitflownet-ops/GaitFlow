@@ -176,7 +176,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!state.isAuthenticated && !isPublic) {
-    return null;
+    // Prevent rendering anything while redirecting
+    setTimeout(() => {
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }, 0);
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-primary">
+        <AnimatedLoaderText className="scale-110" />
+      </div>
+    );
   }
 
   return <>{children}</>;
