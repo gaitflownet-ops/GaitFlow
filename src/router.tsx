@@ -17,10 +17,10 @@ export const getRouter = () => {
     }),
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
-        retry: 1, // Reducir retries para que no se quede cargando 30 segundos si hay error de red
-        retryDelay: 1000,
-        refetchOnWindowFocus: false,
+        staleTime: 300_000, // 5 minutes
+        retry: 2, 
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+        refetchOnWindowFocus: true, // Crucial for re-syncing after inactivity
       },
     },
   });
