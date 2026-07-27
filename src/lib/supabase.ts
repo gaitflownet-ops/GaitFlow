@@ -1,17 +1,19 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "./supabase.types";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://lrtlhvemfdkdsctnicwi.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_zJbfejfByt20C-JNvm8tpA_0A2vXJfK";
-export const isSupabaseConfigured = true;
 
-if (!isSupabaseConfigured) {
-  console.error("Supabase environment variables missing! GaitFlow requires a live database.");
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Critical Security Warning: Supabase environment variables missing (VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY).");
 }
 
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
 export const supabase = createClient<Database>(
-  supabaseUrl || "https://lrtlhvemfdkdsctnicwi.supabase.co",
-  supabaseAnonKey || "sb_publishable_zJbfejfByt20C-JNvm8tpA_0A2vXJfK",
+  supabaseUrl || "",
+  supabaseAnonKey || "",
   {
     auth: {
       autoRefreshToken: true,
@@ -24,4 +26,5 @@ export const supabase = createClient<Database>(
 export function disableSupabase() {
   console.warn("disableSupabase called: database operation is enforced, ignoring request to disable.");
 }
+
 

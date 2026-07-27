@@ -50,16 +50,44 @@ export function useHasPermission(module: string, action: "view" | "create" | "ed
   const { data: permissions = [], isLoading } = usePermissions();
   const { state } = useApp();
 
-  // TEMPORARY OVERRIDE: Client requested that all main accounts have total access to everything
-  // until paid tiers and strict roles are defined for launch. 
-  // RLS in the database is already protecting cross-tenant access.
-  if (state.isAuthenticated) {
+  if (!state.isAuthenticated) {
+    return { hasPermission: false, isLoading: false };
+  }
+
+  // El propietario / administrador del criadero siempre tiene acceso completo a todos los módulos
+  const role = state.user?.role || "Viewer";
+  if (role === "Propietario" || role === "Owner" || role === "SUPER_ADMIN") {
     return { hasPermission: true, isLoading: false };
   }
 
-  // Fallback (should not be reached if authenticated)
-  return { hasPermission: false, isLoading: false };
+  // Buscar en la lista de permisos del usuario obtenidos de DB
+  const modPerm = permissions.find((p) => p.module === module);
+  if (modPerm) {
+    const actionKeyMap = {
+      view: modPerm.can_view,
+      create: modPerm.can_create,
+      edit: modPerm.can_edit,
+      delete: modPerm.can_delete,
+    };
+    return { hasPermission: Boolean(actionKeyMap[action]), isLoading };
+  }
+
+  // Fallback: Si no hay registro explícito en DB, usar matriz de permisos por defecto del rol
+  const defaultPerms = getDefaultPermissions(role as any);
+  const modDefault = defaultPerms[module];
+  if (modDefault) {
+    const actionKeyMap = {
+      view: modDefault.can_view,
+      create: modDefault.can_create,
+      edit: modDefault.can_edit,
+      delete: modDefault.can_delete,
+    };
+    return { hasPermission: Boolean(actionKeyMap[action]), isLoading };
+  }
+
+  return { hasPermission: false, isLoading };
 }
+
 
 // ─── Hooks de Edición de Permisos (D.2) ──────────────────────────────────────
 
