@@ -447,3 +447,239 @@ export function useDeleteTransaction() {
     },
   });
 }
+
+// ─── Hook: Cierre Contable Fiscal ([SEC-001]) ─────────────────────────────────
+
+export interface FinancialPeriod {
+  id: string;
+  organization_id: string;
+  year: number;
+  month: number;
+  is_closed: boolean;
+  closed_by?: string;
+  closed_at?: string;
+  notes?: string;
+}
+
+export function useFinancialPeriods(year: number) {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
+  return useQuery<FinancialPeriod[]>({
+    queryKey: ['financial-periods', orgId, year],
+    enabled: !!orgId,
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any)
+        .from('financial_periods')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('year', year)
+        .order('month');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useToggleFiscalPeriod() {
+  const queryClient = useQueryClient();
+  const { state } = useApp();
+
+  return useMutation({
+    mutationFn: async ({ year, month, isClosed }: { year: number; month: number; isClosed: boolean }) => {
+      const orgId = state.user?.organization_id;
+      const userId = state.user?.id;
+      if (!orgId) throw new Error('No active organization');
+
+      const { data: existing } = await (supabase as any)
+        .from('financial_periods')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('year', year)
+        .eq('month', month)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await (supabase as any)
+          .from('financial_periods')
+          .update({
+            is_closed: isClosed,
+            closed_by: isClosed ? userId : null,
+            closed_at: isClosed ? new Date().toISOString() : null,
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from('financial_periods')
+          .insert({
+            organization_id: orgId,
+            year,
+            month,
+            is_closed: isClosed,
+            closed_by: isClosed ? userId : null,
+            closed_at: isClosed ? new Date().toISOString() : null,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['financial-periods'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+    },
+  });
+}
+
+// ─── HOOKS DE INTELIGENCIA FINANCIERA (A/R AGING, A/P AGING, P&L CABALLO, BUDGETS) ───
+
+export interface ARAgingItem {
+  contact_id: string;
+  contact_name: string;
+  total_due: number;
+  current_0_30: number;
+  days_31_60: number;
+  days_61_90: number;
+  days_90_plus: number;
+}
+
+export function useARAgingReport() {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
+  return useQuery({
+    queryKey: ['ar-aging-report', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any).rpc('fn_ar_aging_report', { p_org_id: orgId });
+      if (error) throw error;
+      return (data || []) as ARAgingItem[];
+    },
+    enabled: !!orgId,
+  });
+}
+
+export interface APAgingItem {
+  contact_id: string;
+  contact_name: string;
+  total_owed: number;
+  current_0_30: number;
+  days_31_60: number;
+  days_61_90: number;
+  days_90_plus: number;
+}
+
+export function useAPAgingReport() {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
+  return useQuery({
+    queryKey: ['ap-aging-report', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any).rpc('fn_ap_aging_report', { p_org_id: orgId });
+      if (error) throw error;
+      return (data || []) as APAgingItem[];
+    },
+    enabled: !!orgId,
+  });
+}
+
+export interface HorsePnLItem {
+  horse_id: string;
+  horse_name: string;
+  total_income: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin_pct: number;
+}
+
+export function useHorsePnLReport(horseId?: string) {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
+  return useQuery({
+    queryKey: ['horse-pnl-report', orgId, horseId || 'all'],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any).rpc('fn_horse_pnl_report', {
+        p_org_id: orgId,
+        p_horse_id: horseId || null,
+      });
+      if (error) throw error;
+      return (data || []) as HorsePnLItem[];
+    },
+    enabled: !!orgId,
+  });
+}
+
+export interface BudgetVsActualItem {
+  category: string;
+  monthly_budget: number;
+  annual_budget: number;
+  actual_spent: number;
+  variance_amount: number;
+  execution_pct: number;
+  status_alert: 'NORMAL' | 'WARNING' | 'OVER_BUDGET';
+}
+
+export function useBudgetVsActualReport(year?: number) {
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+  const currentYear = year || new Date().getFullYear();
+
+  return useQuery({
+    queryKey: ['budget-vs-actual-report', orgId, currentYear],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any).rpc('fn_budget_vs_actual_report', {
+        p_org_id: orgId,
+        p_year: currentYear,
+      });
+      if (error) throw error;
+      return (data || []) as BudgetVsActualItem[];
+    },
+    enabled: !!orgId,
+  });
+}
+
+export function useCreateBudget() {
+  const queryClient = useQueryClient();
+  const { state } = useApp();
+  const orgId = state.user?.organization_id;
+
+  return useMutation({
+    mutationFn: async ({
+      category,
+      monthly_budget,
+      alert_threshold_pct = 80,
+      year = new Date().getFullYear(),
+    }: {
+      category: string;
+      monthly_budget: number;
+      alert_threshold_pct?: number;
+      year?: number;
+    }) => {
+      if (!orgId) throw new Error('Sin organización');
+      const { data, error } = await (supabase as any)
+        .from('financial_budgets')
+        .upsert(
+          {
+            organization_id: orgId,
+            category,
+            monthly_budget,
+            alert_threshold_pct,
+            year,
+          },
+          { onConflict: 'organization_id,category,year' }
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-vs-actual-report'] });
+    },
+  });
+}

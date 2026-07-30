@@ -16,6 +16,9 @@ import {
   ArrowLeftRight,
   Target,
   Receipt,
+  Zap,
+  Settings,
+  Award,
 } from "lucide-react";
 import { KPICard } from "@/components/financial/KPICard";
 import { BalanceChart } from "@/components/financial/BalanceChart";
@@ -26,6 +29,8 @@ import { AccountsPanel } from "@/components/financial/AccountsPanel";
 import { CostCentersPanel } from "@/components/financial/CostCentersPanel";
 import { InvoicingPanel } from "@/components/financial/InvoicingPanel";
 import { FinancialSettingsPanel } from "@/components/financial/FinancialSettingsPanel";
+import { RulesPanel } from "@/components/financial/RulesPanel";
+import { FinancialIntelligencePanel } from "@/components/financial/FinancialIntelligencePanel";
 import {
   useFinancialKPIs,
   useFinancialChart,
@@ -49,7 +54,7 @@ export const Route = createFileRoute("/financials")({
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "invoicing" | "accounts" | "movements" | "cost-centers";
+type Tab = "dashboard" | "invoicing" | "accounts" | "movements" | "cost-centers" | "intelligence" | "automation" | "settings";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "dashboard",    label: "Dashboard",        icon: LayoutDashboard },
@@ -57,6 +62,9 @@ const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "movements",    label: "Movimientos",      icon: ArrowLeftRight },
   { id: "accounts",     label: "Cuentas",          icon: Wallet },
   { id: "cost-centers", label: "Centros de Costo", icon: Target },
+  { id: "intelligence", label: "Inteligencia & P&L", icon: Award },
+  { id: "automation",   label: "Automatizaciones", icon: Zap },
+  { id: "settings",     label: "Ajustes y Cierre", icon: Settings },
 ];
 
 // ─── Fecha helpers ────────────────────────────────────────────────────────────
@@ -338,6 +346,9 @@ function FinancialCenterPage() {
         <div style={{ display: activeTab === "accounts"     ? "block" : "none" }}><AccountsPanel /></div>
         <div style={{ display: activeTab === "movements"    ? "block" : "none" }}><MovementsTab onOpenModal={openModal} /></div>
         <div style={{ display: activeTab === "cost-centers" ? "block" : "none" }}><CostCentersPanel /></div>
+        <div style={{ display: activeTab === "intelligence" ? "block" : "none" }}><FinancialIntelligencePanel /></div>
+        <div style={{ display: activeTab === "automation"   ? "block" : "none" }}><RulesPanel /></div>
+        <div style={{ display: activeTab === "settings"     ? "block" : "none" }}><FinancialSettingsPanel /></div>
       </div>
 
       {/* ── Modal de transacción ──────────────────────────────────────────────── */}

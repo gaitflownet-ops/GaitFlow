@@ -42,7 +42,7 @@ export function useInvoices(organizationId?: string) {
       const now = new Date().toISOString().split("T")[0];
       return (data as Invoice[]).map(inv => ({
         ...inv,
-        status: (inv.status === "pending" && inv.due_date < now) ? "overdue" : inv.status
+        status: (inv.status === "pending" && inv.due_date && inv.due_date < now) ? "overdue" : inv.status
       }));
     },
     enabled: !!organizationId,
@@ -68,7 +68,7 @@ export function useInvoiceDetails(invoiceId?: string) {
       if (error) throw error;
       const inv = data as Invoice;
       const now = new Date().toISOString().split("T")[0];
-      if (inv.status === "pending" && inv.due_date < now) {
+      if (inv.status === "pending" && inv.due_date && inv.due_date < now) {
         inv.status = "overdue";
       }
       return inv;
@@ -190,49 +190,8 @@ export function useAddInvoicePayment() {
         .single();
 
       if (error) throw error;
-
-      // Automatización: Crear transacción financiera automáticamente
-      try {
-        const { data: invoice } = await supabase
-          .from("invoices")
-          .select("organization_id, document_type, contact_id, cost_center_id, invoice_number")
-          .eq("id", payment.invoice_id)
-          .single();
-
-        if (invoice) {
-          const { data: defaultAccount } = await supabase
-            .from("financial_accounts")
-            .select("id")
-            .eq("organization_id", invoice.organization_id)
-            .eq("is_default", true)
-            .maybeSingle();
-
-          const transType = (invoice.document_type === "invoice" || invoice.document_type === "debit_note") ? "income" : "expense";
-          
-          await supabase
-            .from("financial_transactions")
-            .insert({
-              organization_id: invoice.organization_id,
-              type: transType,
-              account_id: defaultAccount?.id || null,
-              cost_center_id: invoice.cost_center_id || null,
-              amount: payment.amount_applied,
-              currency: "COP",
-              description: `Abono/Pago a factura ${invoice.invoice_number}`,
-              date: payment.payment_date,
-              status: "completed",
-              contact_id: invoice.contact_id,
-              invoice_id: payment.invoice_id,
-              source_module: "invoicing",
-              source_ref_id: data.id,
-              source_ref_type: "invoice_payment"
-            } as any);
-        }
-      } catch (err) {
-        console.error("Error al crear transacción financiera automática:", err);
-        // No bloqueamos el pago si la transacción falla
-      }
-
+      // [ARQ-001]: La transacción en el libro mayor y la notificación en Event Bus ahora 
+      // son generadas de forma atómica en el servidor por el trigger trg_invoice_payment_to_ledger
       return data;
     },
     onSuccess: (data) => {
@@ -284,6 +243,128 @@ export function useSaveInvoiceTemplate() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["invoice-template", variables.organization_id] });
+    },
+  });
+}
+
+// ─── RESOLUCIONES DE FACTURACIÓN (DIAN / SAT / SRI) ─────────────────────────
+
+export interface InvoiceResolution {
+  id: string;
+  organization_id: string;
+  resolution_number: string;
+  prefix: string;
+  start_number: number;
+  end_number: number;
+  current_number: number;
+  valid_from: string;
+  valid_to: string;
+  is_active: boolean;
+}
+
+export function useInvoiceResolutions(organizationId?: string) {
+  return useQuery<InvoiceResolution[]>({
+    queryKey: ["invoice-resolutions", organizationId],
+    enabled: !!organizationId,
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await (supabase as any)
+        .from("invoice_resolutions")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useCreateInvoiceResolution() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (res: Partial<InvoiceResolution>) => {
+      const { data, error } = await (supabase as any)
+        .from("invoice_resolutions")
+        .insert(res)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["invoice-resolutions", data.organization_id] });
+    },
+  });
+}
+
+// ─── AUTOMATION DISPATCHER & CORREOS ELECTRÓNICOS ───────────────────────────
+
+export function useProcessAutomationQueue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (limit: number = 25) => {
+      const { data, error } = await (supabase as any).rpc("process_automation_queue", { p_limit: limit });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["global-timeline"] });
+    },
+  });
+}
+
+export function useSendInvoiceEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      invoiceId,
+      email,
+      organizationId,
+      invoiceNumber,
+    }: {
+      invoiceId: string;
+      email: string;
+      organizationId: string;
+      invoiceNumber: string;
+    }) => {
+      // 1. Despachar evento a la cola
+      const { error: evErr } = await (supabase as any)
+        .from("system_events_queue")
+        .insert({
+          organization_id: organizationId,
+          module: "invoicing",
+          event_name: "invoice.email.sent",
+          payload: {
+            invoice_id: invoiceId,
+            recipient_email: email,
+            description: `Factura ${invoiceNumber} enviada por correo electrónico a ${email}`,
+          },
+          status: "pending",
+        });
+      if (evErr) throw evErr;
+
+      // 2. Ejecutar procesamiento de cola de inmediato (simula Edge Worker en caliente)
+      await (supabase as any).rpc("process_automation_queue", { p_limit: 10 });
+
+      // 3. Actualizar estado de factura a 'sent' si estaba como borrador
+      const { error: updErr } = await (supabase as any)
+        .from("invoices")
+        .update({ status: "sent" })
+        .eq("id", invoiceId)
+        .eq("status", "draft");
+
+      if (updErr) throw updErr;
+      return { success: true };
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice", vars.invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["global-timeline"] });
     },
   });
 }

@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Printer, DollarSign, Download, ArrowRight } from "lucide-react";
+import { X, Printer, DollarSign, Download, ArrowRight, Mail } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { useInvoiceDetails, useInvoiceTemplate, useAddInvoicePayment, useUpdateInvoiceStatus } from "@/lib/hooks/useInvoicing";
+import { useInvoiceDetails, useInvoiceTemplate, useAddInvoicePayment, useUpdateInvoiceStatus, useSendInvoiceEmail } from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
 export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoiceId: string | null; open: boolean; onClose: () => void; onEdit?: (id: string) => void }) {
@@ -12,6 +12,7 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
   const { data: template } = useInvoiceTemplate(orgId);
   const paymentMutation = useAddInvoicePayment();
   const updateStatusMutation = useUpdateInvoiceStatus();
+  const sendEmailMutation = useSendInvoiceEmail();
   
   const [showPayment, setShowPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
@@ -96,6 +97,22 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
     }
   };
 
+  const handleSendEmail = async () => {
+    if (!invoice || !orgId) return;
+    const recipientEmail = invoice.contact?.email || "cliente@hacienda.com";
+    try {
+      await sendEmailMutation.mutateAsync({
+        invoiceId: invoice.id,
+        email: recipientEmail,
+        organizationId: orgId,
+        invoiceNumber: invoice.invoice_number,
+      });
+      toast.success(`Factura enviada por correo electrónico a ${recipientEmail}`);
+    } catch (err: any) {
+      toast.error(err.message || "Error al enviar la factura por correo");
+    }
+  };
+
   const primaryColor = template?.primary_color || "#111827";
 
   return (
@@ -123,6 +140,16 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
               {invoice?.status === "draft" && (
                 <button className="btn-secondary text-emerald-600 hover:bg-emerald-50" onClick={handleMarkAsSent}>
                   Emitir Factura
+                </button>
+              )}
+              {invoice?.status !== "void" && (
+                <button
+                  type="button"
+                  className="btn-secondary text-blue-600 hover:bg-blue-50"
+                  onClick={handleSendEmail}
+                  disabled={sendEmailMutation.isPending}
+                >
+                  <Mail size={16} /> Enviar
                 </button>
               )}
               {invoice?.status !== "void" && invoice?.status !== "paid" && (

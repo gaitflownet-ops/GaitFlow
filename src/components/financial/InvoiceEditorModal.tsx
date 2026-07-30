@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Plus, Trash2, Save, Send, ChevronDown, AlertCircle } from "lucide-react";
+import { X, Plus, Trash2, Save, Send, ChevronDown, AlertCircle, FileText, ShieldCheck } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { useSaveInvoice, useInvoiceDetails } from "@/lib/hooks/useInvoicing";
+import { useSaveInvoice, useInvoiceDetails, useInvoiceResolutions, useInvoices } from "@/lib/hooks/useInvoicing";
 import { useContacts, useCreateContact } from "@/lib/hooks/useCRM";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useFinancialCostCenters } from "@/lib/hooks/useFinancialCostCenters";
@@ -38,6 +38,14 @@ const ITEM_CATEGORIES = [
   { value: "other",   label: "Otro" },
 ];
 
+const RETENTION_RATES = [
+  { label: "Sin retención (0%)", value: 0 },
+  { label: "ReteFuente Servicios (4%)", value: 4 },
+  { label: "ReteFuente Honorarios / Vet (10%)", value: 10 },
+  { label: "ReteFuente Compras (2.5%)", value: 2.5 },
+  { label: "ReteICA (0.968%)", value: 0.968 },
+];
+
 const fmtCurrency = (v: number, currency: string) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 
@@ -53,11 +61,17 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
   const { data: horses }   = useHorses();
   const { data: costCenters } = useFinancialCostCenters();
   const { data: initialInvoice } = useInvoiceDetails(initialInvoiceId || undefined);
+  const { data: resolutions } = useInvoiceResolutions(orgId);
+  const { data: existingInvoices } = useInvoices(orgId);
 
   // ── Estado del formulario ──
   const [documentType,      setDocumentType]      = useState("invoice");
   const [contactId,         setContactId]         = useState("");
   const [currency,          setCurrency]          = useState("COP");
+  const [resolutionId,      setResolutionId]      = useState("");
+  const [parentInvoiceId,   setParentInvoiceId]   = useState("");
+  const [retentionRate,     setRetentionRate]     = useState(0);
+  const [showRetention,     setShowRetention]     = useState(false);
   const [paymentCondition,  setPaymentCondition]  = useState("immediate");
   const [paymentMethod,     setPaymentMethod]     = useState("bank_transfer");
   const [costCenterId,      setCostCenterId]      = useState("");
@@ -174,10 +188,11 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
     });
 
     const netSubtotal = subtotal - total_discounts;
-    const total = netSubtotal + tax_amount;
+    const retention_amount = netSubtotal * (retentionRate / 100);
+    const total = Math.max(0, netSubtotal + tax_amount - retention_amount);
 
-    return { subtotal, tax_amount, total_discounts, total, validItems };
-  }, [items]);
+    return { subtotal, tax_amount, total_discounts, retention_amount, total, validItems };
+  }, [items, retentionRate]);
 
   // ── Submit ──
   const handleSubmit = async (status: "draft" | "sent") => {
@@ -187,7 +202,11 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
 
     try {
       const isUpdate = !!initialInvoiceId;
-      const prefix = documentType === "quote" ? "COT" : documentType === "debit_note" ? "ND" : documentType === "credit_note" ? "NC" : "GF";
+      let prefix = documentType === "quote" ? "COT" : documentType === "debit_note" ? "ND" : documentType === "credit_note" ? "NC" : "GF";
+      if (resolutionId && resolutions) {
+        const selRes = resolutions.find(r => r.id === resolutionId);
+        if (selRes) prefix = selRes.prefix;
+      }
       const invNumber = isUpdate && initialInvoice ? initialInvoice.invoice_number : `${prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       await saveMutation.mutateAsync({
@@ -211,6 +230,10 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
           balance_due: calculations.total,
           notes,
           terms,
+          resolution_id: resolutionId || null,
+          retention_rate: retentionRate,
+          retention_amount: calculations.retention_amount,
+          parent_invoice_id: parentInvoiceId || null,
         } as any,
         items: calculations.validItems as any,
       });
@@ -247,18 +270,60 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
           <div className="flex-1 overflow-y-auto bg-card">
             <div className="p-8 max-w-5xl mx-auto space-y-8">
               
-              {/* Row 1: Tipo y Moneda */}
-              <div className="flex flex-wrap gap-8">
-                <div className="w-72">
+              {/* Row 1: Tipo, Resolución, Factura original y Moneda */}
+              <div className="flex flex-wrap gap-8 items-end">
+                <div className="w-64">
                   <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo de Factura</label>
                   <select 
                     className="form-input text-sm w-full bg-transparent border-b border-0 border-border rounded-none px-0 focus:ring-0 focus:border-primary"
                     value={documentType}
-                    onChange={e => setDocumentType(e.target.value)}
+                    onChange={e => {
+                      setDocumentType(e.target.value);
+                      if (e.target.value !== "credit_note" && e.target.value !== "debit_note") {
+                        setParentInvoiceId("");
+                      }
+                    }}
                   >
                     {DOCUMENT_TYPES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                   </select>
                 </div>
+
+                {resolutions && resolutions.length > 0 && (
+                  <div className="w-56">
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Resolución DIAN/SAT</label>
+                    <select
+                      className="form-input text-sm w-full"
+                      value={resolutionId}
+                      onChange={e => setResolutionId(e.target.value)}
+                    >
+                      <option value="">Prefijo defecto (GF)</option>
+                      {resolutions.map(r => (
+                        <option key={r.id} value={r.id}>
+                          {r.prefix} (Res. {r.resolution_number})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {(documentType === "credit_note" || documentType === "debit_note") && (
+                  <div className="w-64">
+                    <label className="block text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1.5">Factura Original *</label>
+                    <select
+                      className="form-input text-sm w-full border-amber-500/50 bg-amber-500/5"
+                      value={parentInvoiceId}
+                      onChange={e => setParentInvoiceId(e.target.value)}
+                    >
+                      <option value="">Seleccione Factura Original...</option>
+                      {existingInvoices?.map((inv: any) => (
+                        <option key={inv.id} value={inv.id}>
+                          {inv.invoice_number} ({fmtCurrency(inv.total, inv.currency || "COP")})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Moneda</label>
                   <div className="flex gap-2">
@@ -465,15 +530,44 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
               {/* ── TOTALES Y BOTONES INFERIORES ── */}
               <div className="flex justify-between items-start mt-8 pt-8 border-t border-border">
                 <div className="flex flex-col gap-3">
-                  <div className="flex gap-2">
-                    <button type="button" className="bg-secondary/50 text-muted-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-                      Agregar Retención
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowRetention(!showRetention)}
+                      className={`text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 ${
+                        retentionRate > 0
+                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/30"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <ShieldCheck size={14} />
+                      {retentionRate > 0 ? `Retención: ${retentionRate}%` : "Agregar Retención"}
                     </button>
                     <button type="button" className="bg-secondary/50 text-muted-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
                       Agregar Términos
                     </button>
                   </div>
-                  <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground mt-4">
+
+                  {showRetention && (
+                    <div className="p-3 border rounded-lg bg-card/80 space-y-2 w-72 shadow-sm">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Tipo de Retención Fiscal (DIAN)
+                      </label>
+                      <select
+                        className="form-input text-xs w-full"
+                        value={retentionRate}
+                        onChange={(e) => setRetentionRate(parseFloat(e.target.value) || 0)}
+                      >
+                        {RETENTION_RATES.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground mt-2">
                     Notas <Plus size={14} className="bg-foreground text-background rounded-full p-0.5" />
                   </button>
                 </div>
@@ -495,8 +589,14 @@ export function InvoiceEditorModal({ open, onClose, initialInvoiceId }: { open: 
                       <span>{fmtCurrency(calculations.tax_amount, currency)}</span>
                     </div>
                   )}
+                  {calculations.retention_amount > 0 && (
+                    <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400 font-medium">
+                      <span>Retención ({retentionRate}%)</span>
+                      <span>−{fmtCurrency(calculations.retention_amount, currency)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-2xl font-display font-semibold pt-3 border-t border-border mt-3">
-                    <span>Total</span>
+                    <span>Total a Pagar</span>
                     <span>{fmtCurrency(calculations.total, currency)}</span>
                   </div>
                 </div>

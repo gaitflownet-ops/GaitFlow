@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Settings, Save, Building2, Receipt, Percent, Globe, Calendar, Bell } from 'lucide-react';
+import { Settings, Save, Building2, Receipt, Percent, Globe, Calendar, Bell, Lock, Unlock, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFinancialSettings, useUpdateFinancialSettings, type FinancialSettings } from '@/lib/hooks/useFinancialSettings';
+import { useFinancialPeriods, useToggleFiscalPeriod } from '@/lib/hooks/useFinancialCenter';
 
 function SectionCard({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
   return (
@@ -12,6 +13,89 @@ function SectionCard({ icon: Icon, title, children }: { icon: any; title: string
       </div>
       {children}
     </div>
+  );
+}
+
+const MONTHS_LABELS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+function FiscalPeriodLockCard() {
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const { data: periods, isLoading } = useFinancialPeriods(selectedYear);
+  const togglePeriod = useToggleFiscalPeriod();
+
+  const isMonthClosed = (m: number) => {
+    const found = periods?.find((p: any) => p.month === m);
+    return found ? found.is_closed : false;
+  };
+
+  const handleToggle = async (month: number, currentlyClosed: boolean) => {
+    try {
+      await togglePeriod.mutateAsync({
+        year: selectedYear,
+        month,
+        isClosed: !currentlyClosed
+      });
+      toast.success(currentlyClosed ? `Mes de ${MONTHS_LABELS[month - 1]} abierto nuevamente` : `Mes de ${MONTHS_LABELS[month - 1]} cerrado y protegido contra modificaciones`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al cambiar estado del periodo fiscal');
+    }
+  };
+
+  return (
+    <SectionCard icon={Lock} title="Cierre de Período Contable Fiscal (Auditoría)">
+      <p className="settings-hint">
+        Protege y congela los meses contables cerrados para evitar inserciones, ediciones o borrados de movimientos en períodos auditados o declarados ante la DIAN/SAT.
+      </p>
+      <div className="flex items-center justify-between mb-4 mt-2">
+        <span className="text-sm font-medium text-foreground">Año Fiscal:</span>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium"
+        >
+          <option value={currentYear - 1}>{currentYear - 1}</option>
+          <option value={currentYear}>{currentYear}</option>
+          <option value={currentYear + 1}>{currentYear + 1}</option>
+        </select>
+      </div>
+      {isLoading ? (
+        <div className="text-center py-4 text-xs text-muted-foreground">Cargando períodos del año...</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+          {MONTHS_LABELS.map((monthName, idx) => {
+            const monthNumber = idx + 1;
+            const closed = isMonthClosed(monthNumber);
+            return (
+              <button
+                key={monthNumber}
+                type="button"
+                disabled={togglePeriod.isPending}
+                onClick={() => handleToggle(monthNumber, closed)}
+                className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                  closed
+                    ? 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400 font-semibold shadow-sm'
+                    : 'border-border/60 bg-card hover:bg-secondary/40 text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  {closed ? <Lock size={14} className="shrink-0 text-red-500" /> : <Unlock size={14} className="shrink-0 text-emerald-600 opacity-60" />}
+                  <span className="text-xs truncate">{monthName}</span>
+                </div>
+                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                  closed ? 'bg-red-500/20 text-red-800 dark:text-red-300' : 'bg-emerald-500/10 text-emerald-600'
+                }`}>
+                  {closed ? 'Cerrado' : 'Abierto'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </SectionCard>
   );
 }
 
@@ -205,6 +289,9 @@ export function FinancialSettingsPanel() {
             />
           </div>
         </SectionCard>
+
+        {/* Cierre de Período Contable Fiscal */}
+        <FiscalPeriodLockCard />
 
         {/* Recordatorios */}
         <SectionCard icon={Bell} title="Recordatorios de Pago">
