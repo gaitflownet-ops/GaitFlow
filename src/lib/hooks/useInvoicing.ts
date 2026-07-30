@@ -368,3 +368,140 @@ export function useSendInvoiceEmail() {
     },
   });
 }
+
+// ─── CONVERSIÓN DE COTIZACIÓN A FACTURA DE VENTA ────────────────────────────
+
+export function useConvertQuoteToInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      quoteId,
+      organizationId,
+    }: {
+      quoteId: string;
+      organizationId: string;
+    }) => {
+      // 1. Obtener la cotización original
+      const { data: quote, error: quoteErr } = await supabase
+        .from("invoices")
+        .select("*, items:invoice_items(*)")
+        .eq("id", quoteId)
+        .single();
+
+      if (quoteErr || !quote) throw quoteErr || new Error("Cotización no encontrada");
+
+      // 2. Crear nueva factura de venta oficial
+      const newInvoiceNumber = `FACT-${Date.now().toString().slice(-6)}`;
+      const { data: newInvoice, error: invErr } = await (supabase as any)
+        .from("invoices")
+        .insert({
+          organization_id: organizationId,
+          contact_id: quote.contact_id,
+          invoice_number: newInvoiceNumber,
+          issue_date: new Date().toISOString().split("T")[0],
+          due_date: quote.due_date,
+          status: "draft",
+          subtotal: quote.subtotal,
+          total_tax: quote.total_tax,
+          total_amount: quote.total_amount,
+          balance_due: quote.total_amount,
+          notes: `Factura generada desde Cotización #${quote.invoice_number}. ${quote.notes || ""}`,
+          terms: quote.terms,
+          currency: (quote as any).currency || "COP",
+          document_type: "invoice",
+          parent_invoice_id: quote.id,
+        })
+        .select()
+        .single();
+
+      if (invErr) throw invErr;
+
+      // 3. Copiar las líneas de ítems
+      const itemsToInsert = ((quote as any).items || []).map((item: any) => ({
+        invoice_id: newInvoice.id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        tax_rate: item.tax_rate,
+        total: item.total,
+        horse_id: item.horse_id,
+        category: item.category,
+      }));
+
+      if (itemsToInsert.length > 0) {
+        const { error: itemsErr } = await supabase
+          .from("invoice_items")
+          .insert(itemsToInsert);
+        if (itemsErr) throw itemsErr;
+      }
+
+      // 4. Marcar cotización como pagada/facturada en el sistema
+      await (supabase as any)
+        .from("invoices")
+        .update({ status: "paid", notes: `${quote.notes || ""} [Facturada -> ${newInvoiceNumber}]` })
+        .eq("id", quoteId);
+
+      return newInvoice;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+// ─── REVERSIÓN DE PAGO / ABONO ──────────────────────────────────────────────
+
+export function useReverseInvoicePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      paymentId,
+      invoiceId,
+      amount,
+    }: {
+      paymentId: string;
+      invoiceId: string;
+      amount: number;
+    }) => {
+      // 1. Eliminar o registrar reversión en invoice_payments
+      const { error: delErr } = await supabase
+        .from("invoice_payments")
+        .delete()
+        .eq("id", paymentId);
+
+      if (delErr) throw delErr;
+
+      // 2. Restaurar saldo balance_due en la factura
+      const { data: currentInv, error: getErr } = await supabase
+        .from("invoices")
+        .select("balance_due, total_amount")
+        .eq("id", invoiceId)
+        .single();
+
+      if (getErr || !currentInv) throw getErr || new Error("Factura no encontrada");
+
+      const newBalance = Number(currentInv.balance_due || 0) + Number(amount);
+      const newStatus = newBalance >= Number(currentInv.total_amount || 0) ? "pending" : "partial";
+
+      const { error: updErr } = await (supabase as any)
+        .from("invoices")
+        .update({
+          balance_due: newBalance,
+          status: newStatus,
+        })
+        .eq("id", invoiceId);
+
+      if (updErr) throw updErr;
+      return { success: true };
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice", vars.invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-payments", vars.invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
+    },
+  });
+}
+

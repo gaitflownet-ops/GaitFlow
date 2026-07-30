@@ -1,8 +1,17 @@
 import { useState, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Printer, DollarSign, Download, ArrowRight, Mail } from "lucide-react";
+import { X, Printer, DollarSign, Download, ArrowRight, Mail, FileText, RotateCcw } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { useInvoiceDetails, useInvoiceTemplate, useAddInvoicePayment, useUpdateInvoiceStatus, useSendInvoiceEmail } from "@/lib/hooks/useInvoicing";
+import { 
+  useInvoiceDetails, 
+  useInvoiceTemplate, 
+  useAddInvoicePayment, 
+  useUpdateInvoiceStatus, 
+  useSendInvoiceEmail, 
+  useInvoicePayments, 
+  useReverseInvoicePayment, 
+  useConvertQuoteToInvoice 
+} from "@/lib/hooks/useInvoicing";
 import { toast } from "sonner";
 
 export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoiceId: string | null; open: boolean; onClose: () => void; onEdit?: (id: string) => void }) {
@@ -13,10 +22,45 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
   const paymentMutation = useAddInvoicePayment();
   const updateStatusMutation = useUpdateInvoiceStatus();
   const sendEmailMutation = useSendInvoiceEmail();
-  
+  const { data: payments = [] } = useInvoicePayments(invoiceId || undefined);
+  const reversePaymentMutation = useReverseInvoicePayment();
+  const convertQuoteMutation = useConvertQuoteToInvoice();
+
   const [showPayment, setShowPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
   const invoiceRef = useRef<HTMLDivElement>(null);
+
+  const handleConvertQuote = async () => {
+    if (!invoice || !orgId) return;
+    if (confirm("¿Deseas convertir esta cotización en una Factura de Venta formal?")) {
+      try {
+        const newInv = await convertQuoteMutation.mutateAsync({
+          quoteId: invoice.id,
+          organizationId: orgId,
+        });
+        toast.success(`¡Factura ${newInv.invoice_number} generada exitosamente desde cotización!`);
+        onClose();
+      } catch (err: any) {
+        toast.error(err.message || "Error al convertir cotización");
+      }
+    }
+  };
+
+  const handleReversePayment = async (paymentId: string, amount: number) => {
+    if (!invoice) return;
+    if (confirm(`¿Estás seguro de revertir este abono por $${amount.toLocaleString()} COP? El saldo pendiente volverá a incrementarse.`)) {
+      try {
+        await reversePaymentMutation.mutateAsync({
+          paymentId,
+          invoiceId: invoice.id,
+          amount,
+        });
+        toast.success("Abono revertido y saldo restaurado");
+      } catch (err: any) {
+        toast.error(err.message || "Error al revertir abono");
+      }
+    }
+  };
 
   if (!invoiceId) return null;
 
@@ -135,6 +179,16 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
               {invoice?.status === "draft" && onEdit && (
                 <button className="btn-secondary text-blue-600 hover:bg-blue-50" onClick={() => onEdit(invoice.id)}>
                   Editar
+                </button>
+              )}
+              {invoice?.document_type === "quote" && invoice?.status !== "void" && (
+                <button
+                  type="button"
+                  className="btn-primary bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-1.5"
+                  onClick={handleConvertQuote}
+                  disabled={convertQuoteMutation.isPending}
+                >
+                  <FileText size={16} /> Convertir a Factura
                 </button>
               )}
               {invoice?.status === "draft" && (
@@ -338,6 +392,38 @@ export function InvoiceViewerModal({ invoiceId, open, onClose, onEdit }: { invoi
                     </div>
                   </div>
                 </div>
+
+                {/* Historial de Pagos / Abonos Recibidos */}
+                {payments && payments.length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-slate-200">
+                    <h4 className="font-bold text-slate-800 text-sm mb-3">Historial de Abonos / Pagos Recibidos</h4>
+                    <div className="space-y-2">
+                      {payments.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-lg text-xs">
+                          <div>
+                            <span className="font-semibold text-slate-700">{p.payment_date}</span>
+                            <span className="text-slate-500 ml-2">({p.payment_method || "Consignación"})</span>
+                            {p.notes && <span className="text-slate-400 ml-2">— {p.notes}</span>}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-emerald-600">
+                              + {new Intl.NumberFormat("es-CO", { style: "currency", currency: invoice.currency || "COP" }).format(p.amount)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleReversePayment(p.id, p.amount)}
+                              className="text-slate-400 hover:text-red-600 transition-colors print:hidden flex items-center gap-1"
+                              title="Revertir este abono"
+                            >
+                              <RotateCcw size={14} />
+                              <span>Revertir</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Footer Notes & Terms */}
                 <div className="mt-16 pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-xs text-slate-500">

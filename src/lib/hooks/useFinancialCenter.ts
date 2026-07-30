@@ -683,3 +683,188 @@ export function useCreateBudget() {
     },
   });
 }
+
+// ─── SINDICACIÓN & CO-PROPIEDAD (SYNDICATE BILLING) ─────────────────────────
+
+export interface HorseOwner {
+  id: string;
+  organization_id: string;
+  horse_id: string;
+  contact_id: string;
+  ownership_pct: number;
+  start_date: string;
+  is_active: boolean;
+  contact?: { name: string; email?: string };
+}
+
+export function useHorseOwners(horseId?: string) {
+  return useQuery({
+    queryKey: ['horse-owners', horseId],
+    queryFn: async () => {
+      if (!horseId) return [];
+      const { data, error } = await (supabase as any)
+        .from('horse_owners')
+        .select('*, contact:contact_id(name, email)')
+        .eq('horse_id', horseId)
+        .eq('is_active', true)
+        .order('ownership_pct', { ascending: false });
+      if (error) throw error;
+      return data as HorseOwner[];
+    },
+    enabled: Boolean(horseId),
+    ...CACHE_CONFIG,
+  });
+}
+
+export function useGenerateSyndicateInvoices() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      orgId,
+      horseId,
+      year,
+      month,
+    }: {
+      orgId: string;
+      horseId: string;
+      year: number;
+      month: number;
+    }) => {
+      const { data, error } = await (supabase as any).rpc('fn_generate_syndicate_invoices', {
+        p_org_id: orgId,
+        p_horse_id: horseId,
+        p_year: year,
+        p_month: month,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
+}
+
+// ─── COSTEO BIOLÓGICO & NIIF 41 (FOAL COST BASIS) ───────────────────────────
+
+export interface HorseCostBasis {
+  horse_id: string;
+  horse_name: string;
+  total_breeding_cost: number;
+  total_operational_expense: number;
+  niif41_book_value: number;
+  costs_breakdown: Array<{
+    category: string;
+    amount: number;
+    date: string;
+    description: string;
+  }>;
+}
+
+export function useHorseCostBasis(horseId?: string) {
+  return useQuery({
+    queryKey: ['horse-cost-basis', horseId],
+    queryFn: async () => {
+      if (!horseId) return null;
+      const { data, error } = await (supabase as any).rpc('fn_get_horse_cost_basis', {
+        p_horse_id: horseId,
+      });
+      if (error) throw error;
+      return (data?.[0] || null) as HorseCostBasis | null;
+    },
+    enabled: Boolean(horseId),
+    ...CACHE_CONFIG,
+  });
+}
+
+// ─── ANTICIPOS DE CLIENTES (CUSTOMER ADVANCES) ──────────────────────────────
+
+export interface CustomerAdvance {
+  id: string;
+  organization_id: string;
+  contact_id: string;
+  amount: number;
+  balance_available: number;
+  payment_method: string;
+  reference_number?: string;
+  notes?: string;
+  date: string;
+  contact?: { name: string };
+}
+
+export function useCustomerAdvances(orgId?: string) {
+  return useQuery({
+    queryKey: ['customer-advances', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any)
+        .from('customer_advances')
+        .select('*, contact:contact_id(name)')
+        .eq('organization_id', orgId)
+        .gt('balance_available', 0)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      return data as CustomerAdvance[];
+    },
+    enabled: Boolean(orgId),
+    ...CACHE_CONFIG,
+  });
+}
+
+export function useApplyCustomerAdvance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      advanceId,
+      invoiceId,
+      amount,
+    }: {
+      advanceId: string;
+      invoiceId: string;
+      amount: number;
+    }) => {
+      const { data, error } = await (supabase as any).rpc('fn_apply_customer_advance_to_invoice', {
+        p_advance_id: advanceId,
+        p_invoice_id: invoiceId,
+        p_amount: amount,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-advances'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+    },
+  });
+}
+
+// ─── CATÁLOGO DE CUENTAS PUC/NIIF (CHART OF ACCOUNTS) ───────────────────────
+
+export interface ChartOfAccount {
+  id: string;
+  organization_id: string;
+  code: string;
+  name: string;
+  account_type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  is_active: boolean;
+}
+
+export function useChartOfAccounts(orgId?: string) {
+  return useQuery({
+    queryKey: ['chart-of-accounts', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await (supabase as any)
+        .from('financial_chart_of_accounts')
+        .select('*')
+        .eq('organization_id', orgId)
+        .order('code', { ascending: true });
+      if (error) throw error;
+      return data as ChartOfAccount[];
+    },
+    enabled: Boolean(orgId),
+    ...CACHE_CONFIG,
+  });
+}
+
