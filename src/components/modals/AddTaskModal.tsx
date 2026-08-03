@@ -69,7 +69,6 @@ export function AddTaskModal({ open, onOpenChange }: AddTaskModalProps) {
         priority,
         status: "Pendiente",
         due_date: dueDate ? new Date(`${dueDate}T12:00:00Z`).toISOString() : new Date().toISOString(),
-        horse_id: horseId || null,
         assignee_id: assigneeId || null,
         team_id: teamId || null,
         organization_id: (targetOrgId || "00000000-0000-0000-0000-000000000000") as string,

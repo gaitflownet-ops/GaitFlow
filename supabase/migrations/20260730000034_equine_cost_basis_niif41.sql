@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS foal_breeding_costs (
 
 ALTER TABLE foal_breeding_costs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "foal_breeding_costs_org_isolation" ON foal_breeding_costs;
 CREATE POLICY "foal_breeding_costs_org_isolation" ON foal_breeding_costs
   USING (organization_id = ANY(get_user_orgs()))
   WITH CHECK (organization_id = ANY(get_user_orgs()));

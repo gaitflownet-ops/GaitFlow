@@ -239,6 +239,14 @@ export function AccountsPanel() {
 
   return (
     <div className="accounts-panel">
+      {/* Encabezado descriptivo de Tesorería */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold font-display tracking-tight text-foreground">Tesorería — Bancos y Caja</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Administra las cuentas bancarias, cajas chicas y saldos disponibles para ingresos y egresos del criadero (requerido para conciliación bancaria y flujo de efectivo en ERPs profesionales).
+        </p>
+      </div>
+
       {/* Resumen */}
       <div className="accounts-summary">
         <div className="summary-stat">

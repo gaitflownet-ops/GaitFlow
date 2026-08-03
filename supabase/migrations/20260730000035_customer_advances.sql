@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS customer_advances (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id   UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  contact_id        UUID NOT NULL REFERENCES crm_contacts(id) ON DELETE CASCADE,
+  contact_id        UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
   amount            NUMERIC(15,2) NOT NULL CHECK (amount > 0),
   balance_available NUMERIC(15,2) NOT NULL CHECK (balance_available >= 0),
   payment_method    TEXT DEFAULT 'bank_transfer',

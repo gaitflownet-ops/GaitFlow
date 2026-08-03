@@ -76,9 +76,9 @@ CREATE POLICY "journal_lines_org_isolation" ON financial_journal_lines
 INSERT INTO financial_chart_of_accounts (organization_id, code, name, account_type)
 SELECT 
   id AS organization_id,
-  code,
-  name,
-  account_type
+  default_puc.code,
+  default_puc.name,
+  default_puc.account_type
 FROM organizations
 CROSS JOIN (
   VALUES 

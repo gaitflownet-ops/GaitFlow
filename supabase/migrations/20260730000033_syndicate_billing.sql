@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS horse_owners (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   horse_id        UUID NOT NULL REFERENCES horses(id) ON DELETE CASCADE,
-  contact_id      UUID NOT NULL REFERENCES crm_contacts(id) ON DELETE CASCADE,
+  contact_id      UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
   ownership_pct   NUMERIC(5,2) NOT NULL CHECK (ownership_pct > 0 AND ownership_pct <= 100),
   start_date      DATE DEFAULT CURRENT_DATE,
   end_date        DATE,
@@ -76,7 +76,7 @@ BEGIN
   FOR v_owner IN (
     SELECT ho.contact_id, c.name AS contact_name, ho.ownership_pct
     FROM horse_owners ho
-    JOIN crm_contacts c ON ho.contact_id = c.id
+    JOIN contacts c ON ho.contact_id = c.id
     WHERE ho.horse_id = p_horse_id
       AND ho.organization_id = p_org_id
       AND ho.is_active = TRUE

@@ -24,7 +24,7 @@ BEGIN
     COALESCE(SUM(CASE WHEN (CURRENT_DATE - i.due_date) BETWEEN 31 AND 60 THEN i.balance_due ELSE 0 END), 0)::NUMERIC(15,2) AS days_31_60,
     COALESCE(SUM(CASE WHEN (CURRENT_DATE - i.due_date) BETWEEN 61 AND 90 THEN i.balance_due ELSE 0 END), 0)::NUMERIC(15,2) AS days_61_90,
     COALESCE(SUM(CASE WHEN (CURRENT_DATE - i.due_date) > 90 THEN i.balance_due ELSE 0 END), 0)::NUMERIC(15,2) AS days_90_plus
-  FROM crm_contacts c
+  FROM contacts c
   JOIN invoices i ON i.contact_id = c.id
   WHERE i.organization_id = p_org_id
     AND i.document_type IN ('invoice', 'debit_note')
@@ -58,7 +58,7 @@ BEGIN
     COALESCE(SUM(CASE WHEN (CURRENT_DATE - ft.date) BETWEEN 61 AND 90 THEN ft.amount ELSE 0 END), 0)::NUMERIC(15,2) AS days_61_90,
     COALESCE(SUM(CASE WHEN (CURRENT_DATE - ft.date) > 90 THEN ft.amount ELSE 0 END), 0)::NUMERIC(15,2) AS days_90_plus
   FROM financial_transactions ft
-  LEFT JOIN crm_contacts c ON ft.contact_id = c.id
+  LEFT JOIN contacts c ON ft.contact_id = c.id
   WHERE ft.organization_id = p_org_id
     AND ft.type = 'expense'
     AND ft.status = 'pending'
@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS financial_budgets (
 
 ALTER TABLE financial_budgets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "financial_budgets_org_isolation" ON financial_budgets;
 CREATE POLICY "financial_budgets_org_isolation" ON financial_budgets
   USING (organization_id = ANY(get_user_orgs()))
   WITH CHECK (organization_id = ANY(get_user_orgs()));
@@ -161,13 +162,14 @@ BEGIN
   RETURN QUERY
   WITH spent_data AS (
     SELECT 
-      COALESCE(ft.category, 'General') AS cat,
+      COALESCE(fc.name, 'General') AS cat,
       COALESCE(SUM(ft.amount), 0)::NUMERIC(15,2) AS spent
     FROM financial_transactions ft
+    LEFT JOIN financial_categories fc ON ft.category_id = fc.id
     WHERE ft.organization_id = p_org_id
       AND ft.type = 'expense'
       AND EXTRACT(YEAR FROM ft.date) = p_year
-    GROUP BY ft.category
+    GROUP BY fc.name
   )
   SELECT 
     b.category,
