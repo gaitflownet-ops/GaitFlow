@@ -310,9 +310,13 @@ export function FinancialIntelligencePanel() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Ejecutado: <strong className="text-foreground">{formatCOPCompact(b.actual_spent)}</strong> de{" "}
-                        {formatCOPCompact(b.annual_budget)}
+                      <div className="text-right">
+                        <div className="text-xs font-medium text-muted-foreground">
+                          Gasto anual acumulado: <strong className="text-foreground">{formatCOPCompact(b.actual_spent)}</strong> de {formatCOPCompact(b.annual_budget)} ({b.execution_pct}% anual)
+                        </div>
+                        <div className="text-[11px] text-primary font-semibold mt-0.5">
+                          Gasto este mes: {formatCOPCompact(b.monthly_spent || 0)} de {formatCOPCompact(b.monthly_budget)} mensual
+                        </div>
                       </div>
                     </div>
 
@@ -324,8 +328,8 @@ export function FinancialIntelligencePanel() {
                     </div>
 
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Presupuesto Mensual: {formatCOPCompact(b.monthly_budget)}</span>
-                      <span className="font-bold">{b.execution_pct}% utilizado</span>
+                      <span>Presupuesto Mensual: <strong className="text-foreground">{formatCOPCompact(b.monthly_budget)}</strong> / mes</span>
+                      <span>Presupuesto Anual (12m): <strong className="text-foreground">{formatCOPCompact(b.annual_budget)}</strong></span>
                     </div>
                   </div>
                 );
@@ -363,11 +367,14 @@ export function FinancialIntelligencePanel() {
                     <input
                       type="number"
                       required
-                      placeholder="Ej. 5000000"
+                      placeholder="Ej. 500000"
                       className="form-input text-sm w-full"
                       value={newBudget}
                       onChange={(e) => setNewBudget(e.target.value)}
                     />
+                    <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
+                      * El sistema proyectará automáticamente el presupuesto anual ({newBudget ? formatCOPCompact(Number(newBudget) * 12) : '$0'} en 12 meses) para auditar el gasto anual y el del mes actual.
+                    </p>
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2">

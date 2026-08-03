@@ -618,6 +618,7 @@ export interface BudgetVsActualItem {
   monthly_budget: number;
   annual_budget: number;
   actual_spent: number;
+  monthly_spent: number;
   variance_amount: number;
   execution_pct: number;
   status_alert: 'NORMAL' | 'WARNING' | 'OVER_BUDGET';

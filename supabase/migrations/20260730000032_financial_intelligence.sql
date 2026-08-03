@@ -148,12 +148,14 @@ CREATE POLICY "financial_budgets_org_isolation" ON financial_budgets
   WITH CHECK (organization_id = ANY(get_user_orgs()));
 
 
+DROP FUNCTION IF EXISTS fn_budget_vs_actual_report(UUID, INTEGER);
 CREATE OR REPLACE FUNCTION fn_budget_vs_actual_report(p_org_id UUID, p_year INTEGER DEFAULT EXTRACT(YEAR FROM NOW())::int)
 RETURNS TABLE (
   category TEXT,
   monthly_budget NUMERIC(15,2),
   annual_budget NUMERIC(15,2),
   actual_spent NUMERIC(15,2),
+  monthly_spent NUMERIC(15,2),
   variance_amount NUMERIC(15,2),
   execution_pct NUMERIC(5,2),
   status_alert TEXT
@@ -163,7 +165,8 @@ BEGIN
   WITH spent_data AS (
     SELECT 
       COALESCE(fc.name, 'General') AS cat,
-      COALESCE(SUM(ft.amount), 0)::NUMERIC(15,2) AS spent
+      COALESCE(SUM(ft.amount), 0)::NUMERIC(15,2) AS spent,
+      COALESCE(SUM(CASE WHEN EXTRACT(MONTH FROM ft.date) = EXTRACT(MONTH FROM CURRENT_DATE) THEN ft.amount ELSE 0 END), 0)::NUMERIC(15,2) AS month_spent
     FROM financial_transactions ft
     LEFT JOIN financial_categories fc ON ft.category_id = fc.id
     WHERE ft.organization_id = p_org_id
@@ -176,6 +179,7 @@ BEGIN
     b.monthly_budget,
     (b.monthly_budget * 12)::NUMERIC(15,2) AS annual_budget,
     COALESCE(s.spent, 0)::NUMERIC(15,2) AS actual_spent,
+    COALESCE(s.month_spent, 0)::NUMERIC(15,2) AS monthly_spent,
     ((b.monthly_budget * 12) - COALESCE(s.spent, 0))::NUMERIC(15,2) AS variance_amount,
     CASE 
       WHEN b.monthly_budget > 0 THEN 
