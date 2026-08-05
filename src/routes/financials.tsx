@@ -291,6 +291,7 @@ function FinancialCenterPage() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [defaultType, setDefaultType] = useState<TransactionType>("expense");
+  const { data: categories = [] } = useFinancialCategories();
 
   const openModal = (type: TransactionType) => {
     setDefaultType(type);
@@ -354,7 +355,7 @@ function FinancialCenterPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         defaultType={defaultType}
-        categories={[]}
+        categories={categories}
       />
     </AppShell>
   );

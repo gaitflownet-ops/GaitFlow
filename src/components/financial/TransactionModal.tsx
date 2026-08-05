@@ -10,6 +10,7 @@ import {
 } from '@/lib/financial/types';
 import {
   useCreateTransaction,
+  useCreateFinancialCategory,
   type CreateTransactionInput,
 } from '@/lib/hooks/useFinancialCenter';
 import { useHorses } from '@/lib/hooks/useHorses';
@@ -51,6 +52,11 @@ export function TransactionModal({
   const [horseId, setHorseId]       = useState('');
   const [notes, setNotes]           = useState('');
   const [error, setError]           = useState('');
+
+  // Custom Category State
+  const createCat = useCreateFinancialCategory();
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Reset when opening
   useEffect(() => {
@@ -99,7 +105,19 @@ export function TransactionModal({
     };
 
     try {
-      await createTx.mutateAsync(input);
+      let finalCategoryId = categoryId;
+      
+      // If creating a custom category
+      if (isCreatingCategory && newCategoryName.trim()) {
+        const newCat = await createCat.mutateAsync({
+          name: newCategoryName.trim(),
+          type,
+          description: 'Categoría personalizada',
+        });
+        finalCategoryId = newCat.id;
+      }
+
+      await createTx.mutateAsync({ ...input, category_id: finalCategoryId || null });
       onClose();
     } catch (err: any) {
       setError(err.message ?? 'Error al guardar');
@@ -181,19 +199,41 @@ export function TransactionModal({
           {/* Category + Status */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={LABEL.className}>Categoría</label>
-              <select
-                {...INPUT}
-                value={categoryId}
-                onChange={e => setCategoryId(e.target.value)}
-              >
-                <option value="">Sin categoría</option>
-                {filteredCats.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categoría</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingCategory(!isCreatingCategory)}
+                  className="text-xs text-primary font-medium hover:underline"
+                >
+                  {isCreatingCategory ? 'Usar existente' : '+ Nueva'}
+                </button>
+              </div>
+              
+              {isCreatingCategory ? (
+                <input
+                  {...INPUT}
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Ej. Compra de heno especial"
+                  value={newCategoryName}
+                  onChange={e => setNewCategoryName(e.target.value)}
+                />
+              ) : (
+                <select
+                  {...INPUT}
+                  value={categoryId}
+                  onChange={e => setCategoryId(e.target.value)}
+                >
+                  <option value="">Sin categoría</option>
+                  {filteredCats.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.icon} {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
@@ -281,14 +321,14 @@ export function TransactionModal({
 
           <button
             type="submit"
-            disabled={createTx.isPending}
+            disabled={createTx.isPending || createCat.isPending}
             className={`w-full py-3 rounded-xl text-sm font-semibold text-white transition-all ${
               type === 'income'
                 ? 'bg-emerald-500 hover:bg-emerald-600'
                 : 'bg-red-500 hover:bg-red-600'
             } disabled:opacity-60`}
           >
-            {createTx.isPending
+            {(createTx.isPending || createCat.isPending)
               ? 'Guardando...'
               : type === 'income'
               ? '+ Registrar Ingreso'

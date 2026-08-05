@@ -90,6 +90,38 @@ export function useFinancialCategories() {
   });
 }
 
+export function useCreateFinancialCategory() {
+  const queryClient = useQueryClient();
+  const { state } = useApp();
+
+  return useMutation({
+    mutationFn: async (input: { name: string; type: TransactionType; description?: string; icon?: string }) => {
+      const orgId = state.user?.organization_id;
+      if (!orgId) throw new Error('No organization ID');
+
+      const { data, error } = await supabase
+        .from('financial_categories')
+        .insert([{
+          organization_id: orgId,
+          name: input.name,
+          type: input.type,
+          description: input.description,
+          icon: input.icon || (input.type === 'income' ? '💰' : '🏷️'),
+          is_system: false,
+          sort_order: 99
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as FinancialCategory;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-categories', state.user?.organization_id] });
+    }
+  });
+}
+
 // ─── Hook: transacciones con join a categoría, contacto y caballo ─────────────
 
 export interface TransactionFilters {
