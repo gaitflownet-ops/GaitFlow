@@ -14,7 +14,7 @@ import {
   AlertOctagon,
   Clock,
 } from "lucide-react";
-import type { ReproductionKPIs as KPIData } from "@/lib/hooks/useBreeding";
+import type { ReproductionKPIData as KPIData } from "@/lib/hooks/useBreeding";
 
 interface Props {
   kpis: KPIData;
