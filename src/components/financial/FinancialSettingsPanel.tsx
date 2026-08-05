@@ -233,7 +233,7 @@ export function FinancialSettingsPanel() {
                 className="form-input text-sm w-full"
                 value={(current.fiscal_info as any)?.razon_social ?? ''}
                 onChange={(e) => setFiscal('razon_social', e.target.value)}
-                placeholder="Criadero Equino El Nogal S.A.S"
+                placeholder="Criadero Ejemplo S.A.S"
               />
             </div>
             <div>
@@ -261,7 +261,7 @@ export function FinancialSettingsPanel() {
                 className="form-input text-sm w-full"
                 value={(current.fiscal_info as any)?.ciudad ?? ''}
                 onChange={(e) => setFiscal('ciudad', e.target.value)}
-                placeholder="Medellín, Antioquia"
+                placeholder="Ej: Ciudad, Departamento"
               />
             </div>
             <div>
@@ -272,7 +272,7 @@ export function FinancialSettingsPanel() {
                 className="form-input text-sm w-full"
                 value={(current.fiscal_info as any)?.direccion ?? ''}
                 onChange={(e) => setFiscal('direccion', e.target.value)}
-                placeholder="Km 3 Vía Llanogrande, Vereda La Palma"
+                placeholder="Ej: Dirección Principal 123"
               />
             </div>
           </div>
