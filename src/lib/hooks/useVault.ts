@@ -92,10 +92,8 @@ export function useUploadDocument() {
 
       if (uploadError) throw uploadError;
 
-      // 3. Get Public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("horse-documents").getPublicUrl(filePath);
+      // 3. Store relative file path (No public URL for private horse-documents bucket)
+      // The path format is `${organization_id}/${fileName}`
 
       // 4. Calculate new version if it's an update
       let newVersion = 1;
@@ -114,14 +112,14 @@ export function useUploadDocument() {
       const { getSmartVerificationStatus } = await import("../documentTypes");
       const smartStatus = getSmartVerificationStatus(params.type, state.user.role || "");
 
-      // 6. Insert record in Database
+      // 6. Insert record in Database (file_url stores the relative path)
       const { data, error: insertError } = await (supabase as any)
         .from("documents")
         .insert({
           organization_id: state.user.organization_id,
           name: params.name,
           type: params.type,
-          file_url: publicUrl,
+          file_url: filePath,
           file_size: params.file.size.toString(),
           uploaded_by: state.user.id,
           issue_date: params.issue_date || null,
@@ -140,6 +138,7 @@ export function useUploadDocument() {
         })
         .select()
         .single();
+
 
       if (insertError) {
         // Rollback storage if DB fails
@@ -187,7 +186,47 @@ export function useVerifyDocument() {
 }
 
 /**
- * Hook to delete a document (or archive it ideally, but let's do delete for now)
+ * Helper function to generate a temporary signed URL (default 60 minutes)
+ * for a private document path in horse-documents bucket.
+ */
+export async function getDocumentSignedUrl(filePathOrUrl: string, expiresInSeconds = 3600): Promise<string> {
+  if (!filePathOrUrl || !isSupabaseConfigured) return "";
+
+  // Extract relative path if full legacy URL was stored
+  let relativePath = filePathOrUrl;
+  if (filePathOrUrl.includes("/horse-documents/")) {
+    relativePath = filePathOrUrl.split("/horse-documents/").pop() || filePathOrUrl;
+  }
+
+  const { data, error } = await supabase.storage
+    .from("horse-documents")
+    .createSignedUrl(relativePath, expiresInSeconds);
+
+  if (error) {
+    console.error("Error creating signed URL for document:", error);
+    throw error;
+  }
+
+  return data.signedUrl;
+}
+
+/**
+ * Hook to retrieve a temporary signed URL for a private document
+ */
+export function useDocumentSignedUrl(filePathOrUrl?: string | null, expiresInSeconds = 3600) {
+  return useQuery({
+    queryKey: ["document-signed-url", filePathOrUrl, expiresInSeconds],
+    queryFn: async () => {
+      if (!filePathOrUrl || !isSupabaseConfigured) return null;
+      return getDocumentSignedUrl(filePathOrUrl, expiresInSeconds);
+    },
+    enabled: !!filePathOrUrl && isSupabaseConfigured,
+    staleTime: (expiresInSeconds - 60) * 1000,
+  });
+}
+
+/**
+ * Hook to delete a document from storage and database
  */
 export function useDeleteDocument() {
   const queryClient = useQueryClient();
@@ -195,12 +234,14 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: async (doc: DocumentRow) => {
       if (!isSupabaseConfigured) throw new Error("Supabase no configurado");
-      // Optionally remove from storage as well
-      const urlParts = doc.file_url.split("/");
-      const fileName = urlParts.pop();
-      const orgFolder = urlParts.pop();
-      if (fileName && orgFolder) {
-        await supabase.storage.from("horse-documents").remove([`${orgFolder}/${fileName}`]);
+
+      let relativePath = doc.file_url;
+      if (doc.file_url.includes("/horse-documents/")) {
+        relativePath = doc.file_url.split("/horse-documents/").pop() || doc.file_url;
+      }
+
+      if (relativePath) {
+        await supabase.storage.from("horse-documents").remove([relativePath]);
       }
       const { error } = await supabase.from("documents").delete().eq("id", doc.id);
       if (error) throw error;

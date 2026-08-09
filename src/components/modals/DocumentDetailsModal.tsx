@@ -3,7 +3,8 @@ import { FileText, Download, ShieldCheck, ShieldAlert, Shield, Clock, Upload, Lo
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Database } from "@/lib/supabase.types";
-import { useVerifyDocument, useDeleteDocument } from "@/lib/hooks/useVault";
+import { useVerifyDocument, useDeleteDocument, getDocumentSignedUrl } from "@/lib/hooks/useVault";
+import { toast } from "sonner";
 
 type DocumentRow = Database["public"]["Tables"]["documents"]["Row"];
 
@@ -20,9 +21,16 @@ export function DocumentDetailsModal({ open, onClose, document, onUploadNewVersi
 
   if (!document) return null;
 
-  const handleDownload = () => {
-    window.open(document.file_url, "_blank");
+  const handleDownload = async () => {
+    try {
+      toast.info("Generando enlace seguro de descarga...");
+      const signedUrl = await getDocumentSignedUrl(document.file_url);
+      window.open(signedUrl, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Error al obtener la URL segura de descarga.");
+    }
   };
+
 
   const handleVerify = async (status: "Revisado" | "No válido" | "Pendiente") => {
     await verifyDoc.mutateAsync({ id: document.id, status });
