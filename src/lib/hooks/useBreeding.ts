@@ -204,13 +204,44 @@ export function useStallions() {
   });
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+export function isValidUUID(uuid?: string) {
+  if (!uuid) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+}
+
+export async function resolveOrgId(stateOrgId?: string) {
+  if (stateOrgId) return stateOrgId;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Debes iniciar sesión para realizar esta operación.");
+
+  const { data: profile } = await (supabase.from("profiles") as any)
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.organization_id) return profile.organization_id;
+
+  const { data: member } = await (supabase.from("organization_members") as any)
+    .select("organization_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (member?.organization_id) return member.organization_id;
+
+  throw new Error("No se encontró una organización asociada a tu cuenta.");
+}
+
 // ── 3. Embryo Center ──────────────────────────────────────────────────────────
 
 export interface Embryo {
   id: string;
   organization_id: string;
   donor_mare_id: string;
-  stallion_id: string;
+  stallion_id?: string;
+  stallion_name?: string;
   recipient_mare_id?: string;
   flush_date: string;
   transfer_date?: string;
@@ -254,12 +285,20 @@ export function useEmbryos() {
 export function useCreateEmbryo() {
   const { state } = useApp();
   const qc = useQueryClient();
-  const orgId = state.user?.organization_id;
 
   return useMutation({
     mutationFn: async (payload: Omit<Embryo, "id" | "organization_id" | "created_at" | "updated_at">) => {
+      const orgId = await resolveOrgId(state.user?.organization_id);
+      const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
+      const cleanRecipientId = isValidUUID(payload.recipient_mare_id) ? payload.recipient_mare_id : null;
+
       const { data, error } = await (supabase.from("embryos") as any)
-        .insert({ ...payload, organization_id: orgId })
+        .insert({
+          ...payload,
+          stallion_id: cleanStallionId,
+          recipient_mare_id: cleanRecipientId,
+          organization_id: orgId,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -330,12 +369,20 @@ export function useGeneticsInventory() {
 export function useCreateGeneticItem() {
   const { state } = useApp();
   const qc = useQueryClient();
-  const orgId = state.user?.organization_id;
 
   return useMutation({
     mutationFn: async (payload: Omit<GeneticItem, "id" | "organization_id" | "created_at" | "updated_at">) => {
+      const orgId = await resolveOrgId(state.user?.organization_id);
+      const cleanDonorId = isValidUUID(payload.donor_id) ? payload.donor_id : null;
+      const cleanDamId = isValidUUID(payload.dam_id) ? payload.dam_id : null;
+
       const { data, error } = await (supabase.from("genetic_bank") as any)
-        .insert({ ...payload, organization_id: orgId })
+        .insert({
+          ...payload,
+          donor_id: cleanDonorId,
+          dam_id: cleanDamId,
+          organization_id: orgId,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -393,12 +440,18 @@ export function useReproductiveEvents() {
 export function useCreateReproductiveEvent() {
   const { state } = useApp();
   const qc = useQueryClient();
-  const orgId = state.user?.organization_id;
 
   return useMutation({
     mutationFn: async (payload: Omit<ReproductiveEvent, "id" | "organization_id" | "created_at">) => {
+      const orgId = await resolveOrgId(state.user?.organization_id);
+      const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
+
       const { data, error } = await (supabase.from("reproductive_events") as any)
-        .insert({ ...payload, organization_id: orgId })
+        .insert({
+          ...payload,
+          stallion_id: cleanStallionId,
+          organization_id: orgId,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -463,12 +516,22 @@ export function useBreedingCycles() {
 export function useCreateBreedingCycle() {
   const { state } = useApp();
   const qc = useQueryClient();
-  const orgId = state.user?.organization_id;
 
   return useMutation({
     mutationFn: async (payload: Omit<BreedingCycle, "id" | "organization_id" | "created_at" | "updated_at" | "mare">) => {
+      const orgId = await resolveOrgId(state.user?.organization_id);
+      const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
+      const cleanGeneticMaterialId = isValidUUID(payload.genetic_material_id) ? payload.genetic_material_id : null;
+      const cleanEmbryoId = isValidUUID(payload.embryo_id) ? payload.embryo_id : null;
+
       const { data, error } = await (supabase.from("breeding_cycles") as any)
-        .insert({ ...payload, organization_id: orgId })
+        .insert({
+          ...payload,
+          stallion_id: cleanStallionId,
+          genetic_material_id: cleanGeneticMaterialId,
+          embryo_id: cleanEmbryoId,
+          organization_id: orgId,
+        })
         .select()
         .single();
       if (error) throw error;

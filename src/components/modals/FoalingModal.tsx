@@ -1,12 +1,10 @@
-/**
- * FoalingModal.tsx — Registro de parto que auto-crea el perfil del potro (Horse Profile C.1)
- */
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { useUpdateBreedingCycle, type BreedingCycle } from "@/lib/hooks/useBreeding";
+import { useUpdateBreedingCycle, useUpdateMareStatus, type BreedingCycle } from "@/lib/hooks/useBreeding";
 import { useCreateHorse } from "@/lib/hooks/useHorses";
 import { useApp } from "@/lib/store";
-import { Baby, Check, Heart } from "lucide-react";
+import { Baby, Check, Heart, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -26,7 +24,9 @@ function toSlug(name: string) {
 export function FoalingModal({ open, onClose, cycle }: Props) {
   const { state } = useApp();
   const updateCycle = useUpdateBreedingCycle();
+  const updateMareStatus = useUpdateMareStatus();
   const createHorse = useCreateHorse();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     actual_foaling_date: new Date().toISOString().split("T")[0],
@@ -45,38 +45,55 @@ export function FoalingModal({ open, onClose, cycle }: Props) {
   const canSubmit = !!form.actual_foaling_date && !!form.foal_name;
 
   async function handleSubmit() {
-    if (!cycle || !canSubmit) return;
+    if (!cycle || !canSubmit) {
+      toast.error("Ingresa el nombre oficial del potro y la fecha de nacimiento.");
+      return;
+    }
 
-    // 1. Create foal horse profile (C.1)
-    const slug = `${toSlug(form.foal_name)}-${Date.now().toString(36)}`;
-    const foalData = await createHorse.mutateAsync({
-      name: form.foal_name,
-      barn_name: form.foal_barn_name || form.foal_name,
-      slug,
-      sex: form.foal_sex,
-      color: form.foal_color || undefined,
-      breed: cycle.mare?.breed ?? undefined,
-      status: "Potro en Desarrollo",
-      organization_id: (state.user as any)?.organization_id,
-      owner_id: state.user?.id,
-      // Pre-fill bloodline from sire/dam
-      bloodline: cycle.stallion_name ?? undefined,
-    } as any);
+    setIsSubmitting(true);
+    try {
+      // 1. Create foal horse profile
+      const slug = `${toSlug(form.foal_name)}-${Date.now().toString(36)}`;
+      const foalData = await createHorse.mutateAsync({
+        name: form.foal_name,
+        barn_name: form.foal_barn_name || form.foal_name,
+        slug,
+        sex: form.foal_sex.includes("(M)") ? "Macho" : "Hembra",
+        color: form.foal_color || undefined,
+        breed: cycle.mare?.breed ?? undefined,
+        status: "Potro en Desarrollo",
+        organization_id: (state.user as any)?.organization_id,
+        owner_id: state.user?.id,
+        bloodline: cycle.stallion_name ?? undefined,
+      } as any);
 
-    // 2. Mark breeding cycle as foaled
-    await updateCycle.mutateAsync({
-      id: cycle.id,
-      updates: {
-        pregnancy_status: "Confirmed",
-        actual_foaling_date: form.actual_foaling_date,
-        foal_id: foalData?.id,
-        notes: form.outcome_notes
-          ? `${cycle.notes ? cycle.notes + "\n" : ""}PARTO: ${form.outcome_notes}`
-          : cycle.notes,
-      },
-    });
+      // 2. Mark breeding cycle as foaled
+      await updateCycle.mutateAsync({
+        id: cycle.id,
+        updates: {
+          pregnancy_status: "Confirmed",
+          actual_foaling_date: form.actual_foaling_date,
+          foal_id: foalData?.id,
+          notes: form.outcome_notes
+            ? `${cycle.notes ? cycle.notes + "\n" : ""}PARTO: ${form.outcome_notes}`
+            : cycle.notes,
+        },
+      });
 
-    onClose();
+      // 3. Move Mare to Lactancia
+      await updateMareStatus.mutateAsync({
+        id: cycle.mare_id,
+        reproductive_status: "Lactancia",
+      });
+
+      toast.success("Parto registrado y perfil del potro creado con éxito");
+      onClose();
+    } catch (err: any) {
+      console.error("Error al registrar parto:", err);
+      toast.error(err.message || "Error al registrar el nacimiento.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (!cycle) return null;
@@ -159,13 +176,19 @@ export function FoalingModal({ open, onClose, cycle }: Props) {
         </button>
         <button
           id="submit-foaling-btn"
-          disabled={!canSubmit || updateCycle.isPending || createHorse.isPending}
+          disabled={!canSubmit || isSubmitting}
           onClick={handleSubmit}
-          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
+          className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40 transition-opacity shadow-xs"
         >
-          {(updateCycle.isPending || createHorse.isPending) ? "Registrando…" : <>
-            <Check className="h-4 w-4" /> Registrar Parto y Crear Perfil
-          </>}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Guardando...
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4" /> Registrar Parto y Crear Perfil
+            </>
+          )}
         </button>
       </div>
     </Modal>
