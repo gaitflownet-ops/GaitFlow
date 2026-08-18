@@ -690,10 +690,17 @@ export function useBreedingCycles() {
           mare:mare_id ( name, breed, image_url )
         `)
         .eq("organization_id", orgId)
-        .order("insemination_date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) return [];
-      return (data ?? []) as BreedingCycle[];
+      return ((data ?? []) as any[]).map((c) => ({
+        ...c,
+        insemination_date: c.insemination_date || c.date || new Date().toISOString().split("T")[0],
+        date: c.date || c.insemination_date,
+        pregnancy_status: c.pregnancy_status || c.status || "Pending",
+        status: c.status || c.pregnancy_status || "Pending",
+        stallion_name: c.stallion_name || (c.stallion_id ? String(c.stallion_id) : "Semental"),
+      })) as BreedingCycle[];
     },
   });
 }
@@ -708,14 +715,18 @@ export function useCreateBreedingCycle() {
       const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
       const cleanGeneticMaterialId = isValidUUID(payload.genetic_material_id) ? payload.genetic_material_id : null;
       const cleanEmbryoId = isValidUUID(payload.embryo_id) ? payload.embryo_id : null;
+      const serviceDate = payload.insemination_date || new Date().toISOString().split("T")[0];
 
       const cyclePayload: Record<string, any> = {
         ...payload,
+        date: serviceDate,
+        insemination_date: serviceDate,
+        status: payload.pregnancy_status || "Pending",
+        pregnancy_status: payload.pregnancy_status || "Pending",
+        stallion_id: cleanStallionId || payload.stallion_name || "Semental",
+        stallion_name: payload.stallion_name || "Semental",
         organization_id: orgId,
       };
-
-      if (cleanStallionId) cyclePayload.stallion_id = cleanStallionId;
-      else delete cyclePayload.stallion_id;
 
       if (cleanGeneticMaterialId) cyclePayload.genetic_material_id = cleanGeneticMaterialId;
       else delete cyclePayload.genetic_material_id;
