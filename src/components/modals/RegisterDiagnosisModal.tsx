@@ -57,11 +57,23 @@ export function RegisterDiagnosisModal({ open, onClose, preselectedMareId, onNav
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter Female Mares only
+  // Filter Female Mares only (any horse not strictly male)
   const isFemale = (h: any) => {
     if (!h) return false;
-    const sex = String(h.sex || "").trim().toLowerCase();
-    return sex === "yegua" || sex === "mare" || sex === "hembra" || sex === "female" || sex === "f";
+    const s = String(h.sex || h.gender || h.category || "").trim().toLowerCase();
+    if (
+      s.includes("macho") ||
+      s.includes("semental") ||
+      s.includes("stallion") ||
+      s.includes("castrado") ||
+      s.includes("padrillo") ||
+      s.includes("reproductor") ||
+      s === "m" ||
+      s === "male"
+    ) {
+      return false;
+    }
+    return true;
   };
   const femaleHorses = horses.filter(isFemale);
 

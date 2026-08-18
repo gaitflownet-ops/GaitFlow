@@ -96,21 +96,91 @@ export function useMares() {
     queryKey: ["mares", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("mares") as any)
-        .select(`
-          *,
-          horse:horse_id (
-            id, name, code, breed, age, sex, image_url, status, bloodline
-          )
-        `)
+      // 1. Fetch active cycles to compute real pregnancy & gestation days
+      const { data: cycles } = await (supabase.from("breeding_cycles") as any)
+        .select("*")
+        .eq("organization_id", orgId);
+
+      // 2. Fetch existing records in `mares` table (if any)
+      let maresTableData: any[] = [];
+      try {
+        const { data: mData } = await (supabase.from("mares") as any)
+          .select("*")
+          .eq("organization_id", orgId);
+        if (mData) maresTableData = mData;
+      } catch (e) {
+        console.warn("[useMares] Non-critical error reading mares table:", e);
+      }
+
+      // 3. Fetch all horses from `horses` inventory
+      const { data: allHorses, error: horseErr } = await (supabase.from("horses") as any)
+        .select("*")
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
-      if (error) return [];
-      return ((data ?? []) as any[]).map((m) => ({
-        ...m,
-        reproductive_status: m.reproductive_status || m.role || m.horse?.status || "Vacía",
-      })) as Mare[];
+      if (horseErr || !allHorses) return [];
+
+      // Filter all female / mare candidates (or any horse not strictly male)
+      const isFemaleHorse = (h: any) => {
+        if (!h) return false;
+        const s = String(h.sex || h.gender || h.category || "").trim().toLowerCase();
+        if (
+          s.includes("macho") ||
+          s.includes("semental") ||
+          s.includes("stallion") ||
+          s.includes("castrado") ||
+          s.includes("padrillo") ||
+          s.includes("reproductor") ||
+          s === "m" ||
+          s === "male"
+        ) {
+          return false;
+        }
+        return true;
+      };
+
+      const femaleHorses = (allHorses || []).filter(isFemaleHorse);
+
+      // Build unified list of mares
+      return femaleHorses.map((h: any) => {
+        const mareRec = maresTableData.find((m) => m.horse_id === h.id || m.id === h.id);
+        const activeCycle = (cycles || []).find(
+          (c) => c.mare_id === h.id && (c.pregnancy_status === "Confirmed" || c.pregnancy_status === "Preñada")
+        );
+        const lastServiceCycle = (cycles || []).find((c) => c.mare_id === h.id);
+
+        let repStatus: MareReproductiveStatus = "Vacías";
+        if (activeCycle) {
+          repStatus = "Preñadas";
+        } else if (lastServiceCycle && lastServiceCycle.pregnancy_status === "Pending") {
+          repStatus = "Servidas";
+        } else if (mareRec?.reproductive_status) {
+          repStatus = mareRec.reproductive_status;
+        } else if (h.status && h.status !== "Active" && h.status !== "Activo") {
+          repStatus = h.status as any;
+        }
+
+        // Calculate gestation days if pregnant
+        let gestDays: number | undefined = mareRec?.gestation_days;
+        if (activeCycle?.insemination_date) {
+          const diffMs = Date.now() - new Date(activeCycle.insemination_date).getTime();
+          gestDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+        }
+
+        return {
+          id: mareRec?.id || h.id,
+          organization_id: h.organization_id || orgId,
+          horse_id: h.id,
+          role: mareRec?.role || "Receptora",
+          reproductive_status: repStatus,
+          gestation_days: gestDays,
+          expected_foaling_date: activeCycle?.expected_foaling_date || mareRec?.expected_foaling_date,
+          last_service_date: activeCycle?.insemination_date || lastServiceCycle?.insemination_date || mareRec?.last_service_date,
+          created_at: mareRec?.created_at || h.created_at,
+          updated_at: mareRec?.updated_at || h.updated_at,
+          horse: h,
+        } as Mare;
+      });
     },
   });
 }

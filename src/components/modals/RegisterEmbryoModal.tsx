@@ -57,18 +57,39 @@ export function RegisterEmbryoModal({ open, onClose, preselectedMareId, onNaviga
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter Female Mares & Male Stallions
+  // Filter Female Mares & Male Stallions (any horse not strictly male is female candidate)
   const isFemale = (h: any) => {
     if (!h) return false;
-    const sex = String(h.sex || "").trim().toLowerCase();
-    return sex === "yegua" || sex === "mare" || sex === "hembra" || sex === "female" || sex === "f";
+    const s = String(h.sex || h.gender || h.category || "").trim().toLowerCase();
+    if (
+      s.includes("macho") ||
+      s.includes("semental") ||
+      s.includes("stallion") ||
+      s.includes("castrado") ||
+      s.includes("padrillo") ||
+      s.includes("reproductor") ||
+      s === "m" ||
+      s === "male"
+    ) {
+      return false;
+    }
+    return true;
   };
   const femaleHorses = horses.filter(isFemale);
 
   const isMale = (h: any) => {
     if (!h) return false;
-    const sex = String(h.sex || "").trim().toLowerCase();
-    return sex === "stallion" || sex === "semental" || sex === "macho" || sex === "padrillo" || sex === "male" || sex === "m" || sex === "potro";
+    const s = String(h.sex || h.gender || h.category || "").trim().toLowerCase();
+    return (
+      s.includes("stallion") ||
+      s.includes("semental") ||
+      s.includes("macho") ||
+      s.includes("padrillo") ||
+      s.includes("male") ||
+      s.includes("potro") ||
+      s.includes("reproductor") ||
+      s === "m"
+    );
   };
   const maleStallions = horses.filter(isMale);
 
