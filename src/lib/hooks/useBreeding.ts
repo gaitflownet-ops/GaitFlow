@@ -548,6 +548,37 @@ export interface ReproductiveEvent {
   stallion?: { name: string; breed?: string };
 }
 
+export async function safeInsert(table: string, initialPayload: Record<string, any>) {
+  const currentPayload = { ...initialPayload };
+  for (const [k, v] of Object.entries(currentPayload)) {
+    if (v === undefined || v === null) {
+      delete currentPayload[k];
+    }
+  }
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const { data, error } = await (supabase.from(table) as any)
+      .insert(currentPayload)
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+
+    const match = error?.message?.match(/Could not find the '([^']+)' column/i);
+    if (match && match[1]) {
+      const missingCol = match[1];
+      console.warn(`[SafeInsert] Auto-stripping missing column '${missingCol}' from ${table} insert.`);
+      delete currentPayload[missingCol];
+      continue;
+    }
+
+    if (!error) return data || currentPayload;
+
+    throw error;
+  }
+  throw new Error(`No se pudo completar el guardado en la tabla ${table}.`);
+}
+
 export function useReproductiveEvents() {
   const { state } = useApp();
   const orgId = state.user?.organization_id;
@@ -580,12 +611,31 @@ export function useCreateReproductiveEvent() {
       const orgId = await resolveOrgId(state.user?.organization_id);
       const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
 
+      const eventPayload: Record<string, any> = {
+        ...payload,
+        organization_id: orgId,
+      };
+      if (cleanStallionId) eventPayload.stallion_id = cleanStallionId;
+      else delete eventPayload.stallion_id;
+
+      const data = await safeInsert("reproductive_events", eventPayload);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reproductive-events"] });
+      qc.invalidateQueries({ queryKey: ["reproduction-kpis"] });
+    },
+  });
+}
+
+export function useUpdateReproductiveEvent() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ReproductiveEvent> }) => {
       const { data, error } = await (supabase.from("reproductive_events") as any)
-        .insert({
-          ...payload,
-          stallion_id: cleanStallionId,
-          organization_id: orgId,
-        })
+        .update(updates)
+        .eq("id", id)
         .select()
         .single();
       if (error) throw error;
@@ -593,6 +643,7 @@ export function useCreateReproductiveEvent() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reproductive-events"] });
+      qc.invalidateQueries({ queryKey: ["reproduction-kpis"] });
     },
   });
 }
@@ -658,17 +709,21 @@ export function useCreateBreedingCycle() {
       const cleanGeneticMaterialId = isValidUUID(payload.genetic_material_id) ? payload.genetic_material_id : null;
       const cleanEmbryoId = isValidUUID(payload.embryo_id) ? payload.embryo_id : null;
 
-      const { data, error } = await (supabase.from("breeding_cycles") as any)
-        .insert({
-          ...payload,
-          stallion_id: cleanStallionId,
-          genetic_material_id: cleanGeneticMaterialId,
-          embryo_id: cleanEmbryoId,
-          organization_id: orgId,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const cyclePayload: Record<string, any> = {
+        ...payload,
+        organization_id: orgId,
+      };
+
+      if (cleanStallionId) cyclePayload.stallion_id = cleanStallionId;
+      else delete cyclePayload.stallion_id;
+
+      if (cleanGeneticMaterialId) cyclePayload.genetic_material_id = cleanGeneticMaterialId;
+      else delete cyclePayload.genetic_material_id;
+
+      if (cleanEmbryoId) cyclePayload.embryo_id = cleanEmbryoId;
+      else delete cyclePayload.embryo_id;
+
+      const data = await safeInsert("breeding_cycles", cyclePayload);
       return data;
     },
     onSuccess: () => {

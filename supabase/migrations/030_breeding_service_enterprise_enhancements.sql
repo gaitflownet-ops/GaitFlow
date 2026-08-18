@@ -5,6 +5,15 @@
 -- =============================================================================
 
 -- 1. Extend breeding_cycles table for Enterprise clinical & source metadata
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS embryo_id UUID;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS genetic_material_id UUID;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS stallion_name TEXT;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS stallion_registry TEXT;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS insemination_date DATE;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS pregnancy_status TEXT DEFAULT 'Pending';
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS expected_foaling_date DATE;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS vet_name TEXT;
+ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE breeding_cycles ADD COLUMN IF NOT EXISTS service_source TEXT DEFAULT 'internal';
 -- Options: 'internal', 'inventory', 'external'
 
