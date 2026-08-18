@@ -1,9 +1,8 @@
 /**
- * ReproductionHeader.tsx — Header & 6 Quick Action Wizards for the Reproduction Center
+ * ReproductionHeader.tsx — Header & Unified 5 Quick Action Wizards for the Reproduction Center
  */
 import {
   HeartPulse,
-  Syringe,
   Stethoscope,
   Activity,
   Baby,
@@ -11,18 +10,49 @@ import {
   Sparkles,
 } from "lucide-react";
 
+export type ReproductionQuickActionType = "servicio" | "palpacion" | "diagnostico" | "parto" | "embrion";
+
 interface Props {
-  onQuickAction: (actionType: "monta" | "inseminacion" | "palpacion" | "diagnostico" | "parto" | "embrion") => void;
+  onQuickAction: (actionType: ReproductionQuickActionType) => void;
 }
 
 export function ReproductionHeader({ onQuickAction }: Props) {
   const quickActions = [
-    { type: "monta" as const, label: "Nueva Monta", icon: HeartPulse, color: "hover:border-amber-400/50 hover:bg-amber-500/5 text-amber-600" },
-    { type: "inseminacion" as const, label: "Nueva Inseminación", icon: Syringe, color: "hover:border-blue-400/50 hover:bg-blue-500/5 text-blue-600" },
-    { type: "palpacion" as const, label: "Registrar Palpación", icon: Stethoscope, color: "hover:border-purple-400/50 hover:bg-purple-500/5 text-purple-600" },
-    { type: "diagnostico" as const, label: "Registrar Diagnóstico", icon: Activity, color: "hover:border-emerald-400/50 hover:bg-emerald-500/5 text-emerald-600" },
-    { type: "parto" as const, label: "Registrar Parto", icon: Baby, color: "hover:border-rose-400/50 hover:bg-rose-500/5 text-rose-600" },
-    { type: "embrion" as const, label: "Registrar Embrión", icon: Dna, color: "hover:border-cyan-400/50 hover:bg-cyan-500/5 text-cyan-600" },
+    {
+      type: "servicio" as const,
+      label: "Registrar Servicio",
+      sublabel: "Monta / Inseminación / TE",
+      icon: HeartPulse,
+      color: "hover:border-primary/50 hover:bg-primary/5 text-primary border-primary/20",
+    },
+    {
+      type: "palpacion" as const,
+      label: "Registrar Palpación",
+      sublabel: "Examen folicular / Útero",
+      icon: Stethoscope,
+      color: "hover:border-purple-400/50 hover:bg-purple-500/5 text-purple-600",
+    },
+    {
+      type: "diagnostico" as const,
+      label: "Diagnóstico Gestación",
+      sublabel: "Ecografía / Confirmación",
+      icon: Activity,
+      color: "hover:border-emerald-400/50 hover:bg-emerald-500/5 text-emerald-600",
+    },
+    {
+      type: "parto" as const,
+      label: "Registrar Parto",
+      sublabel: "Nacimiento y alta cría",
+      icon: Baby,
+      color: "hover:border-rose-400/50 hover:bg-rose-500/5 text-rose-600",
+    },
+    {
+      type: "embrion" as const,
+      label: "Registrar Embrión",
+      sublabel: "Lavado / Transferencia",
+      icon: Dna,
+      color: "hover:border-cyan-400/50 hover:bg-cyan-500/5 text-cyan-600",
+    },
   ];
 
   return (
@@ -36,21 +66,22 @@ export function ReproductionHeader({ onQuickAction }: Props) {
             Centro de Reproducción
           </h1>
           <p className="text-muted-foreground mt-1.5 text-base max-w-2xl">
-            Gestiona todo el ciclo reproductivo del criadero desde un único lugar: yeguas, sementales, embriones, banco genético, indicadores y planificación.
+            Gestiona todo el ciclo reproductivo del criadero desde un único lugar: servicios, chequeos foliculares, diagnósticos, partos, embriones y banco genético.
           </p>
         </div>
 
         {/* Quick Action Buttons Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 shrink-0">
           {quickActions.map((action) => (
             <button
               key={action.type}
               id={`quick-action-${action.type}`}
               onClick={() => onQuickAction(action.type)}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-border bg-card shadow-xs text-xs font-medium transition-all ${action.color}`}
+              className={`flex flex-col items-start gap-1 p-3 rounded-2xl border bg-card shadow-xs transition-all ${action.color}`}
             >
-              <action.icon className="h-4 w-4 shrink-0" />
-              <span>{action.label}</span>
+              <action.icon className="h-5 w-5 shrink-0 mb-0.5" />
+              <span className="font-bold text-xs leading-tight">{action.label}</span>
+              <span className="text-[10px] text-muted-foreground font-normal leading-none">{action.sublabel}</span>
             </button>
           ))}
         </div>

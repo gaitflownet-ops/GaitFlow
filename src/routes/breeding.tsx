@@ -48,11 +48,13 @@ import { ReproductionCalendarView } from "@/components/breeding/ReproductionCale
 import { ReproductionAnalyticsView } from "@/components/breeding/ReproductionAnalyticsView";
 import { HorseReproductionProfileView } from "@/components/breeding/HorseReproductionProfileView";
 
-// Modals
-import { AddInseminationModal } from "@/components/modals/AddInseminationModal";
+// Enterprise Reproduction Modals
+import { RegisterBreedingServiceModal } from "@/components/modals/RegisterBreedingServiceModal";
+import { RegisterPalpationModal } from "@/components/modals/RegisterPalpationModal";
+import { RegisterDiagnosisModal } from "@/components/modals/RegisterDiagnosisModal";
+import { RegisterFoalingModal } from "@/components/modals/RegisterFoalingModal";
+import { RegisterEmbryoModal } from "@/components/modals/RegisterEmbryoModal";
 import { AddGeneticMaterialModal } from "@/components/modals/AddGeneticMaterialModal";
-import { FoalingModal } from "@/components/modals/FoalingModal";
-import { QuickReproductiveActionModal } from "@/components/modals/QuickReproductiveActionModal";
 
 import {
   Calendar,
@@ -128,13 +130,13 @@ function EnterpriseBreedingPage() {
     type: "mare" | "stallion";
   } | null>(null);
 
-  // Modals state
-  const [quickActionModal, setQuickActionModal] = useState<
-    "monta" | "inseminacion" | "palpacion" | "diagnostico" | "parto" | "embrion" | null
-  >(null);
-  const [inseminationModalOpen, setInseminationModalOpen] = useState(false);
-  const [geneticModalOpen, setGeneticModalOpen] = useState(false);
+  // Dedicated Enterprise Modals state
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [palpationModalOpen, setPalpationModalOpen] = useState(false);
+  const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
   const [foalingModalOpen, setFoalingModalOpen] = useState(false);
+  const [embryoModalOpen, setEmbryoModalOpen] = useState(false);
+  const [geneticModalOpen, setGeneticModalOpen] = useState(false);
 
   // Hooks
   const { data: mares = [], isLoading: loadingMares } = useMares();
@@ -145,13 +147,17 @@ function EnterpriseBreedingPage() {
   const updateMareStatus = useUpdateMareStatus();
   const { data: geneticBank = [] } = useGeneticBank();
 
-  function handleQuickAction(actionType: "monta" | "inseminacion" | "palpacion" | "diagnostico" | "parto" | "embrion") {
-    if (actionType === "inseminacion" || actionType === "monta") {
-      setInseminationModalOpen(true);
+  function handleQuickAction(actionType: "servicio" | "monta" | "inseminacion" | "palpacion" | "diagnostico" | "parto" | "embrion") {
+    if (actionType === "servicio" || actionType === "inseminacion" || actionType === "monta") {
+      setServiceModalOpen(true);
+    } else if (actionType === "palpacion") {
+      setPalpationModalOpen(true);
+    } else if (actionType === "diagnostico") {
+      setDiagnosisModalOpen(true);
     } else if (actionType === "parto") {
       setFoalingModalOpen(true);
-    } else {
-      setQuickActionModal(actionType);
+    } else if (actionType === "embrion") {
+      setEmbryoModalOpen(true);
     }
   }
 
@@ -329,25 +335,35 @@ function EnterpriseBreedingPage() {
         )}
       </div>
 
-      {/* 6. Modals */}
-      <AddInseminationModal
-        open={inseminationModalOpen}
-        onClose={() => setInseminationModalOpen(false)}
+      {/* 6. Dedicated Enterprise Reproduction Modals */}
+      <RegisterBreedingServiceModal
+        open={serviceModalOpen}
+        onClose={() => setServiceModalOpen(false)}
+        onNavigateView={(v) => setActiveView(v as any)}
+      />
+      <RegisterPalpationModal
+        open={palpationModalOpen}
+        onClose={() => setPalpationModalOpen(false)}
+        onNavigateView={(v) => setActiveView(v as any)}
+      />
+      <RegisterDiagnosisModal
+        open={diagnosisModalOpen}
+        onClose={() => setDiagnosisModalOpen(false)}
+        onNavigateView={(v) => setActiveView(v as any)}
+      />
+      <RegisterFoalingModal
+        open={foalingModalOpen}
+        onClose={() => setFoalingModalOpen(false)}
+        onNavigateView={(v) => setActiveView(v as any)}
+      />
+      <RegisterEmbryoModal
+        open={embryoModalOpen}
+        onClose={() => setEmbryoModalOpen(false)}
         onNavigateView={(v) => setActiveView(v as any)}
       />
       <AddGeneticMaterialModal
         open={geneticModalOpen}
         onClose={() => setGeneticModalOpen(false)}
-      />
-      <FoalingModal
-        open={foalingModalOpen}
-        onClose={() => setFoalingModalOpen(false)}
-        cycle={null}
-      />
-      <QuickReproductiveActionModal
-        open={quickActionModal !== null}
-        onClose={() => setQuickActionModal(null)}
-        actionType={quickActionModal}
       />
     </AppShell>
   );
