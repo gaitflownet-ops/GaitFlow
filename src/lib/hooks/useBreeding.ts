@@ -616,11 +616,44 @@ export function useCreateReproductiveEvent() {
     mutationFn: async (payload: Omit<ReproductiveEvent, "id" | "organization_id" | "created_at">) => {
       const orgId = await resolveOrgId(state.user?.organization_id);
       const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
+      let cleanCycleId = isValidUUID(payload.cycle_id) ? payload.cycle_id : null;
+
+      // If cycle_id is null/missing, find the most recent breeding cycle for this mare, or auto-create one
+      if (!cleanCycleId && payload.mare_id) {
+        const { data: existingCycle } = await (supabase.from("breeding_cycles") as any)
+          .select("id")
+          .eq("mare_id", payload.mare_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existingCycle?.id) {
+          cleanCycleId = existingCycle.id;
+        } else {
+          // Auto-create a cycle so the NOT NULL constraint on cycle_id is always satisfied
+          const today = payload.scheduled_date || new Date().toISOString().split("T")[0];
+          const newCycle = await safeInsert("breeding_cycles", {
+            organization_id: orgId,
+            mare_id: payload.mare_id,
+            stallion_id: cleanStallionId || "Semental",
+            stallion_name: "Semental",
+            date: today,
+            insemination_date: today,
+            status: "Pending",
+            pregnancy_status: "Pending",
+            notes: "Ciclo generado automáticamente para evento reproductivo",
+          });
+          if (newCycle?.id) {
+            cleanCycleId = newCycle.id;
+          }
+        }
+      }
 
       const eventPayload: Record<string, any> = {
         ...payload,
         organization_id: orgId,
       };
+      if (cleanCycleId) eventPayload.cycle_id = cleanCycleId;
       if (cleanStallionId) eventPayload.stallion_id = cleanStallionId;
       else delete eventPayload.stallion_id;
 
@@ -630,6 +663,7 @@ export function useCreateReproductiveEvent() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reproductive-events"] });
       qc.invalidateQueries({ queryKey: ["reproduction-kpis"] });
+      qc.invalidateQueries({ queryKey: ["breeding-cycles"] });
     },
   });
 }
