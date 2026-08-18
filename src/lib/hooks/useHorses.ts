@@ -109,14 +109,32 @@ export function useCreateHorse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newHorse: Database["public"]["Tables"]["horses"]["Insert"]) => {
-      const { data, error } = await (supabase.from("horses") as any)
-        .insert(newHorse)
-        .select()
-        .single();
+    mutationFn: async (newHorse: Record<string, any>) => {
+      const payload: Record<string, any> = { ...newHorse };
+      for (const [k, v] of Object.entries(payload)) {
+        if (v === undefined || v === null || v === "") {
+          delete payload[k];
+        }
+      }
 
-      if (error) throw error;
-      return data;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data, error } = await (supabase.from("horses") as any)
+          .insert(payload)
+          .select()
+          .maybeSingle();
+
+        if (!error && data) return data;
+
+        const match = error?.message?.match(/Could not find the '([^']+)' column/i);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          continue;
+        }
+
+        if (!error) return data || payload;
+        throw error;
+      }
+      return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horses"] });

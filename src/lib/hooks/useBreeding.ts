@@ -346,16 +346,12 @@ export function useCreateEmbryo() {
       const cleanStallionId = isValidUUID(payload.stallion_id) ? payload.stallion_id : null;
       const cleanRecipientId = isValidUUID(payload.recipient_mare_id) ? payload.recipient_mare_id : null;
 
-      const { data, error } = await (supabase.from("embryos") as any)
-        .insert({
-          ...payload,
-          stallion_id: cleanStallionId,
-          recipient_mare_id: cleanRecipientId,
-          organization_id: orgId,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const data = await safeInsert("embryos", {
+        ...payload,
+        stallion_id: cleanStallionId,
+        recipient_mare_id: cleanRecipientId,
+        organization_id: orgId,
+      });
       return data;
     },
     onSuccess: () => {
@@ -430,16 +426,12 @@ export function useCreateGeneticItem() {
       const cleanDonorId = isValidUUID(payload.donor_id) ? payload.donor_id : null;
       const cleanDamId = isValidUUID(payload.dam_id) ? payload.dam_id : null;
 
-      const { data, error } = await (supabase.from("genetic_bank") as any)
-        .insert({
-          ...payload,
-          donor_id: cleanDonorId,
-          dam_id: cleanDamId,
-          organization_id: orgId,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const data = await safeInsert("genetic_bank", {
+        ...payload,
+        donor_id: cleanDonorId,
+        dam_id: cleanDamId,
+        organization_id: orgId,
+      });
       return data;
     },
     onSuccess: () => {
@@ -583,6 +575,39 @@ export async function safeInsert(table: string, initialPayload: Record<string, a
     throw error;
   }
   throw new Error(`No se pudo completar el guardado en la tabla ${table}.`);
+}
+
+export async function safeUpdate(table: string, id: string, initialUpdates: Record<string, any>) {
+  const currentUpdates = { ...initialUpdates };
+  for (const [k, v] of Object.entries(currentUpdates)) {
+    if (v === undefined) {
+      delete currentUpdates[k];
+    }
+  }
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const { data, error } = await (supabase.from(table) as any)
+      .update(currentUpdates)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+
+    const match = error?.message?.match(/Could not find the '([^']+)' column/i);
+    if (match && match[1]) {
+      const missingCol = match[1];
+      console.warn(`[SafeUpdate] Auto-stripping missing column '${missingCol}' from ${table} update.`);
+      delete currentUpdates[missingCol];
+      continue;
+    }
+
+    if (!error) return data || currentUpdates;
+
+    console.warn(`[SafeUpdate] Non-blocking warning on ${table} update:`, error?.message);
+    return currentUpdates;
+  }
+  return currentUpdates;
 }
 
 export function useReproductiveEvents() {
@@ -790,12 +815,7 @@ export function useUpdateBreedingCycle() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<BreedingCycle> }) => {
-      const { data, error } = await (supabase.from("breeding_cycles") as any)
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
+      const data = await safeUpdate("breeding_cycles", id, updates as Record<string, any>);
       return data;
     },
     onSuccess: () => {

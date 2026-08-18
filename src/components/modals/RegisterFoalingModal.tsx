@@ -137,6 +137,10 @@ export function RegisterFoalingModal({ open, onClose, preselectedMareId, onNavig
 
       // 1. Create New Foal in `horses` inventory
       const slug = `${toSlug(form.foal_name.trim())}-${Date.now().toString(36)}`;
+      const cleanOwnerId = state.user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state.user.id)
+        ? state.user.id
+        : undefined;
+
       const createdFoal = await createHorse.mutateAsync({
         name: form.foal_name.trim(),
         barn_name: form.foal_barn_name.trim() || form.foal_name.trim(),
@@ -147,7 +151,7 @@ export function RegisterFoalingModal({ open, onClose, preselectedMareId, onNavig
         status: "Potro en Desarrollo",
         birth_date: form.actual_foaling_date,
         organization_id: (state.user as any)?.organization_id,
-        owner_id: state.user?.id,
+        owner_id: cleanOwnerId,
         bloodline: `${sireName} × ${damName}`,
         microchip: form.foal_microchip.trim() || undefined,
       } as any);
