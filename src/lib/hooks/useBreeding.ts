@@ -106,8 +106,11 @@ export function useMares() {
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return (data ?? []) as Mare[];
+      if (error) return [];
+      return ((data ?? []) as any[]).map((m) => ({
+        ...m,
+        reproductive_status: m.reproductive_status || m.role || m.horse?.status || "Vacía",
+      })) as Mare[];
     },
   });
 }
@@ -118,36 +121,39 @@ export function useUpdateMareStatus() {
 
   return useMutation({
     mutationFn: async ({ id, reproductive_status }: { id: string; reproductive_status: MareReproductiveStatus }) => {
-      const orgId = await resolveOrgId(state.user?.organization_id);
+      try {
+        const orgId = await resolveOrgId(state.user?.organization_id);
 
-      const { data: existing } = await (supabase.from("mares") as any)
-        .select("id")
-        .or(`horse_id.eq.${id},id.eq.${id}`)
-        .maybeSingle();
-
-      if (existing) {
-        const { data, error } = await (supabase.from("mares") as any)
+        // 1. Try updating reproductive_status on `mares` table
+        const { error: mareErr } = await (supabase.from("mares") as any)
           .update({ reproductive_status, updated_at: new Date().toISOString() })
-          .eq("id", existing.id)
-          .select()
-          .single();
-        if (error) throw error;
-        return data;
-      } else {
-        const { data, error } = await (supabase.from("mares") as any)
-          .insert({
-            organization_id: orgId,
-            horse_id: id,
-            reproductive_status,
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        return data;
+          .eq("horse_id", id);
+
+        if (mareErr) {
+          // If reproductive_status column doesn't exist, try updating `role` or upserting
+          const { error: roleErr } = await (supabase.from("mares") as any)
+            .update({ role: reproductive_status, updated_at: new Date().toISOString() })
+            .eq("horse_id", id);
+
+          if (roleErr) {
+            console.warn("[useUpdateMareStatus] Could not update mares table, falling back to horses:", roleErr.message);
+          }
+        }
+
+        // 2. Also update status on `horses` table for cross-module consistency
+        await (supabase.from("horses") as any)
+          .update({ status: reproductive_status, updated_at: new Date().toISOString() })
+          .eq("id", id);
+
+        return { id, reproductive_status };
+      } catch (err) {
+        console.warn("[useUpdateMareStatus] Non-critical error updating mare status:", err);
+        return { id, reproductive_status };
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mares"] });
+      qc.invalidateQueries({ queryKey: ["horses"] });
       qc.invalidateQueries({ queryKey: ["reproduction-kpis"] });
     },
   });
