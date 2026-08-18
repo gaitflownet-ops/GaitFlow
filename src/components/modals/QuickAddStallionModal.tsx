@@ -86,7 +86,7 @@ export function QuickAddStallionModal({ open, onClose, onSuccess }: Props) {
             className="input-field mt-1"
             value={form.name}
             onChange={set("name")}
-            placeholder="Ej. Dulce Sueño de Lusitania"
+            placeholder="Ej. Nombre del Semental"
           />
         </div>
 
@@ -98,7 +98,7 @@ export function QuickAddStallionModal({ open, onClose, onSuccess }: Props) {
               className="input-field mt-1"
               value={form.code}
               onChange={set("code")}
-              placeholder="Ej. CCC-8841"
+              placeholder="Ej. REG-123456"
             />
           </div>
           <div>
@@ -133,7 +133,7 @@ export function QuickAddStallionModal({ open, onClose, onSuccess }: Props) {
               className="input-field mt-1"
               value={form.bloodline}
               onChange={set("bloodline")}
-              placeholder="Ej. Capuchino × La Maravilla"
+              placeholder="Ej. Padre × Madre"
             />
           </div>
         </div>

@@ -100,7 +100,7 @@ export function useMares() {
         .select(`
           *,
           horse:horse_id (
-            id, name, breed, age, sex, image_url, status, bloodline
+            id, name, code, breed, age, sex, image_url, status, bloodline
           )
         `)
         .eq("organization_id", orgId)
@@ -113,17 +113,38 @@ export function useMares() {
 }
 
 export function useUpdateMareStatus() {
+  const { state } = useApp();
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, reproductive_status }: { id: string; reproductive_status: MareReproductiveStatus }) => {
-      const { data, error } = await (supabase.from("mares") as any)
-        .update({ reproductive_status })
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const orgId = await resolveOrgId(state.user?.organization_id);
+
+      const { data: existing } = await (supabase.from("mares") as any)
+        .select("id")
+        .or(`horse_id.eq.${id},id.eq.${id}`)
+        .maybeSingle();
+
+      if (existing) {
+        const { data, error } = await (supabase.from("mares") as any)
+          .update({ reproductive_status, updated_at: new Date().toISOString() })
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await (supabase.from("mares") as any)
+          .insert({
+            organization_id: orgId,
+            horse_id: id,
+            reproductive_status,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mares"] });
@@ -150,6 +171,7 @@ export interface StallionProfile {
   horse?: {
     id: string;
     name: string;
+    code?: string;
     breed?: string;
     age?: number;
     image_url?: string;
@@ -166,40 +188,66 @@ export function useStallions() {
     queryKey: ["stallions", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      // Get stallion profiles or fallback to horses with sex = Stallion/Macho
-      const { data: profiles, error } = await (supabase.from("stallion_profiles") as any)
+      const { data: cycles } = await (supabase.from("breeding_cycles") as any)
+        .select("stallion_id, stallion_name, pregnancy_status")
+        .eq("organization_id", orgId);
+
+      const { data: profiles } = await (supabase.from("stallion_profiles") as any)
         .select(`
           *,
           horse:horse_id (
-            id, name, breed, age, image_url, status, bloodline
+            id, name, code, breed, age, image_url, status, bloodline
           )
         `)
         .eq("organization_id", orgId);
 
-      if (error && error.code !== "PGRST116") {
-        // If table doesn't exist yet or query fails, fetch stallions directly from horses
-        const { data: horseStallions } = await (supabase.from("horses") as any)
-          .select("*")
-          .eq("organization_id", orgId)
-          .in("sex", ["Stallion", "Semental", "Macho", "Padrillo"]);
+      if (profiles && profiles.length > 0) {
+        return profiles.map((p: any) => {
+          const stCycles = (cycles || []).filter(
+            (c: any) => c.stallion_id === p.horse_id || (p.horse?.name && c.stallion_name === p.horse.name)
+          );
+          const totalServices = stCycles.length;
+          const confirmed = stCycles.filter((c: any) => c.pregnancy_status === "Confirmed").length;
+          const completed = stCycles.filter((c: any) => c.pregnancy_status !== "Pending").length;
+          const rate = completed > 0 ? Math.round((confirmed / completed) * 100) : 0;
 
-        return (horseStallions || []).map((h: any) => ({
+          return {
+            ...p,
+            total_services_count: totalServices,
+            conception_rate_pct: rate,
+          };
+        }) as StallionProfile[];
+      }
+
+      // Fallback if no stallion_profiles records yet
+      const { data: horseStallions } = await (supabase.from("horses") as any)
+        .select("*")
+        .eq("organization_id", orgId)
+        .in("sex", ["Stallion", "Semental", "Macho", "Padrillo"]);
+
+      return (horseStallions || []).map((h: any) => {
+        const stCycles = (cycles || []).filter(
+          (c: any) => c.stallion_id === h.id || c.stallion_name === h.name
+        );
+        const totalServices = stCycles.length;
+        const confirmed = stCycles.filter((c: any) => c.pregnancy_status === "Confirmed").length;
+        const completed = stCycles.filter((c: any) => c.pregnancy_status !== "Pending").length;
+        const rate = completed > 0 ? Math.round((confirmed / completed) * 100) : 0;
+
+        return {
           id: h.id,
           organization_id: orgId,
           horse_id: h.id,
           status: "Activo",
-          total_services_count: 12,
-          conception_rate_pct: 82.5,
-          total_offspring_count: 8,
-          doses_available_count: 15,
-          stud_fee_usd: 3500,
-          created_at: h.created_at,
-          updated_at: h.created_at,
+          total_services_count: totalServices,
+          conception_rate_pct: rate,
+          total_offspring_count: 0,
+          doses_available_count: 0,
+          created_at: h.created_at || new Date().toISOString(),
+          updated_at: h.created_at || new Date().toISOString(),
           horse: h,
-        })) as StallionProfile[];
-      }
-
-      return (profiles ?? []) as StallionProfile[];
+        };
+      }) as StallionProfile[];
     },
   });
 }

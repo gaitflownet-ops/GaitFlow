@@ -7,7 +7,7 @@
  * 3. Reproductive Source (Semental Criadero / Material Adquirido / Semental Externo)
  * 4. Stallion / Straw Selection + Contextual Quick Add Modals
  * 5. Progressive Clinical Service Details
- * 6. Automated Follow-up Scheduling (Calendar & Timeline sync)
+ * 6. Automated & Customizable Follow-up Scheduling (Calendar & Timeline sync)
  * 7. Executive Registration Summary & Continuous Actions
  */
 
@@ -33,9 +33,7 @@ import { QuickAddGeneticMaterialModal } from "./QuickAddGeneticMaterialModal";
 import {
   Syringe,
   Search,
-  AlertTriangle,
   CheckCircle2,
-  Clock,
   HeartPulse,
   Dna,
   Crown,
@@ -43,17 +41,22 @@ import {
   ShieldCheck,
   Plus,
   Calendar,
-  UserCheck,
-  Activity,
   ChevronRight,
   ChevronLeft,
   Check,
   Loader2,
-  Sparkles,
-  ArrowRight,
   FileText,
+  Trash2,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+
+export interface CustomRevisionTask {
+  id: string;
+  title: string;
+  daysPostService: number;
+  notes?: string;
+}
 
 interface Props {
   open: boolean;
@@ -103,6 +106,12 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
   const [mareSearch, setMareSearch] = useState("");
   const [stallionSearch, setStallionSearch] = useState("");
 
+  // Custom Revisions in Step 6
+  const [customRevisions, setCustomRevisions] = useState<CustomRevisionTask[]>([]);
+  const [newRevTitle, setNewRevTitle] = useState("");
+  const [newRevDays, setNewRevDays] = useState("45");
+  const [showAddRevInput, setShowAddRevInput] = useState(false);
+
   // Form State
   const [form, setForm] = useState({
     mare_id: preselectedMareId || "",
@@ -128,14 +137,14 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
     // Clinical Details
     insemination_date: new Date().toISOString().split("T")[0],
     insemination_time: "10:00",
-    vet_name: "Dr. Juan Manuel Sierra",
+    vet_name: "",
     follicle_size_mm: "38",
     uterine_tone: "Tono II (Folicular Activo)",
     semen_motility_pct: "85",
     doses_used: 1,
     notes: "",
 
-    // Follow-up Scheduling
+    // Follow-up Scheduling Defaults
     schedule_diagnosis: true,
     diagnosis_days: 18,
     schedule_ultrasound: true,
@@ -218,6 +227,28 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
     }));
   }
 
+  // Add Custom Revision Task
+  function handleAddCustomRevision() {
+    if (!newRevTitle.trim()) {
+      toast.error("Ingresa el título de la revisión.");
+      return;
+    }
+    const days = Number(newRevDays) || 30;
+    const newTask: CustomRevisionTask = {
+      id: `rev-${Date.now().toString(36)}`,
+      title: newRevTitle.trim(),
+      daysPostService: days,
+    };
+    setCustomRevisions((prev) => [...prev, newTask]);
+    setNewRevTitle("");
+    setShowAddRevInput(false);
+    toast.success(`Revisión "${newTask.title}" agregada al agendamiento`);
+  }
+
+  function handleRemoveCustomRevision(id: string) {
+    setCustomRevisions((prev) => prev.filter((r) => r.id !== id));
+  }
+
   // Suggested Diagnosis Date
   function getSuggestedDiagnosisDate() {
     if (!form.insemination_date) return "";
@@ -278,7 +309,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
       // 4. Create primary Reproductive Event (Monta / Inseminación)
       const primaryEventType = form.service_type === "Monta natural" ? "Monta" : "Inseminación";
       await createEvent.mutateAsync({
-        cycle_id: cycle.id,
+        cycle_id: cycle?.id,
         mare_id: form.mare_id,
         stallion_id: form.stallion_id || undefined,
         event_type: primaryEventType as any,
@@ -290,11 +321,11 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
         notes: `Hora: ${form.insemination_time} | Folículo: ${form.follicle_size_mm}mm`,
       });
 
-      // 5. Automated Follow-up Tasks (Diagnosis + Ultrasound)
+      // 5. Automated Follow-up Tasks (Diagnosis + Ultrasound + Custom)
       if (form.schedule_diagnosis) {
         const diagDate = getSuggestedDiagnosisDate();
         await createEvent.mutateAsync({
-          cycle_id: cycle.id,
+          cycle_id: cycle?.id,
           mare_id: form.mare_id,
           stallion_id: form.stallion_id || undefined,
           event_type: "Diagnóstico",
@@ -309,7 +340,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
         const dUs = new Date(form.insemination_date);
         dUs.setDate(dUs.getDate() + Number(form.ultrasound_days));
         await createEvent.mutateAsync({
-          cycle_id: cycle.id,
+          cycle_id: cycle?.id,
           mare_id: form.mare_id,
           stallion_id: form.stallion_id || undefined,
           event_type: "Ecografía",
@@ -320,17 +351,33 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
         });
       }
 
+      // Schedule Custom Revisions
+      for (const rev of customRevisions) {
+        const dRev = new Date(form.insemination_date);
+        dRev.setDate(dRev.getDate() + Number(rev.daysPostService));
+        await createEvent.mutateAsync({
+          cycle_id: cycle?.id,
+          mare_id: form.mare_id,
+          stallion_id: form.stallion_id || undefined,
+          event_type: "Palpación",
+          scheduled_date: dRev.toISOString().split("T")[0],
+          status: "Programado",
+          vet_name: form.vet_name || undefined,
+          notes: `${rev.title} (+${rev.daysPostService} días post-servicio)`,
+        });
+      }
+
       // 6. Move Mare to 'Servidas'
       await updateMareStatus.mutateAsync({
         id: form.mare_id,
         reproductive_status: "Servidas",
       });
 
-      toast.success("Servicio reproductivo y seguimiento registrados exitosamente");
+      toast.success("Servicio reproductivo y agendamiento registrados con éxito");
       setStep(7); // Move to Executive Summary Step
     } catch (err: any) {
       console.error("Error al registrar servicio reproductivo:", err);
-      toast.error(err.message || "Error al procesar la operación.");
+      toast.error(err.message || "Ocurrió un error al procesar el registro en el servidor.");
     } finally {
       setIsSubmitting(false);
     }
@@ -344,7 +391,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
         {/* Header */}
         <div className="px-8 pt-7 pb-4 border-b border-border bg-card">
           <div className="flex items-center justify-between mb-1">
-            <div className="eyebrow text-primary">Sección I.1 · Enterprise Breeding ERP</div>
+            <div className="eyebrow text-primary font-bold">Sección I.1 · Enterprise Breeding ERP</div>
             <div className="text-xs font-semibold text-muted-foreground">Paso {step} de 7</div>
           </div>
           <h2 className="font-display text-2xl font-bold flex items-center gap-2">
@@ -374,7 +421,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                   <input
                     id="search-mare-input"
                     className="input-field pl-10 text-sm"
-                    placeholder="Buscar por nombre, código o raza de la yegua..."
+                    placeholder="Buscar yegua por nombre, código o raza..."
                     value={mareSearch}
                     onChange={(e) => setMareSearch(e.target.value)}
                   />
@@ -658,7 +705,9 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                       .filter((s) => s.name.toLowerCase().includes(stallionSearch.toLowerCase()))
                       .map((s) => {
                         const isSel = form.stallion_id === s.id;
-                        const prof = stallionsList.find((p) => p.horse_id === s.id);
+                        const prof = stallionsList.find((p) => p.horse_id === s.id || p.id === s.id);
+                        const rateLabel = prof && prof.total_services_count > 0 ? `${prof.conception_rate_pct}%` : "Sin servicios previos";
+
                         return (
                           <button
                             key={s.id}
@@ -682,8 +731,8 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                                   {s.breed || "Paso Fino"} · {s.code || "Sin código"}
                                 </div>
                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
-                                  <span>Servicios: {prof?.total_services_count || 12}</span>
-                                  <span>• Preñez: {prof?.conception_rate_pct || 88}%</span>
+                                  <span>Servicios: {prof?.total_services_count || 0}</span>
+                                  <span>• Preñez: {rateLabel}</span>
                                 </div>
                               </div>
                               {isSel && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />}
@@ -744,7 +793,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                             </span>
                           </div>
                           <p className="text-[11px] text-muted-foreground truncate">
-                            Lote: {item.lot_number || "SEM-001"} · Tank: {item.storage_tank || "LN2 Main"}
+                            Lote: {item.lot_number || "LOTE-001"} · Tank: {item.storage_tank || "LN2 Main"}
                           </p>
                         </button>
                       );
@@ -777,7 +826,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                         className="input-field mt-1 text-xs"
                         value={form.stallion_name}
                         onChange={setF("stallion_name")}
-                        placeholder="Ej. Promesa del Sol FC"
+                        placeholder="Ej. Nombre del Semental Externo"
                       />
                     </div>
                     <div>
@@ -787,20 +836,20 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                         className="input-field mt-1 text-xs"
                         value={form.stallion_registry}
                         onChange={setF("stallion_registry")}
-                        placeholder="Ej. FEDEQUINAS 4892"
+                        placeholder="Ej. REG-123456"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="label-field text-xs">Criadero Propietario</label>
+                      <label className="label-field text-xs">Criadero / Propietario</label>
                       <input
                         id="ext-stallion-owner"
                         className="input-field mt-1 text-xs"
                         value={form.external_owner}
                         onChange={setF("external_owner")}
-                        placeholder="Ej. Criadero La Marqueza"
+                        placeholder="Ej. Criadero Externo"
                       />
                     </div>
                     <div>
@@ -810,7 +859,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                         className="input-field mt-1 text-xs"
                         value={form.external_country}
                         onChange={setF("external_country")}
-                        placeholder="Colombia, USA, etc."
+                        placeholder="Ej. Colombia, USA, etc."
                       />
                     </div>
                   </div>
@@ -859,7 +908,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                     className="input-field mt-1 text-xs"
                     value={form.vet_name}
                     onChange={setF("vet_name")}
-                    placeholder="Dr. Juan Manuel Sierra"
+                    placeholder="Ej. Dr. Médico Veterinario"
                   />
                 </div>
               </div>
@@ -873,7 +922,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                     className="input-field mt-1 text-xs"
                     value={form.follicle_size_mm}
                     onChange={setF("follicle_size_mm")}
-                    placeholder="38"
+                    placeholder="Ej. 38"
                   />
                 </div>
                 <div>
@@ -893,7 +942,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                     className="input-field mt-1 text-xs"
                     value={form.semen_motility_pct}
                     onChange={setF("semen_motility_pct")}
-                    placeholder="85"
+                    placeholder="Ej. 85"
                   />
                 </div>
               </div>
@@ -905,21 +954,21 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                   className="input-field mt-1 text-xs resize-none h-20"
                   value={form.notes}
                   onChange={setF("notes")}
-                  placeholder="Condiciones del cervix, lavados previos, ovulación observada por ecografía..."
+                  placeholder="Ej. Observaciones del examen, edema folicular, ovulación ecográfica..."
                 />
               </div>
             </div>
           )}
 
-          {/* ── PASO 6: SEGUIMIENTO AUTOMÁTICO EN CALENDARIO ── */}
+          {/* ── PASO 6: SEGUIMIENTO AUTOMÁTICO Y PERSONALIZABLE EN CALENDARIO ── */}
           {step === 6 && (
             <div className="space-y-4">
               <div>
                 <label className="label-field font-semibold text-sm mb-1 block">
-                  6. Programación de Seguimiento Automático
+                  6. Programación de Revisiones y Seguimiento Automático
                 </label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  GaitFlow agendará automáticamente estos controles en el Calendario y Timeline del criadero.
+                  Configura o agrega las revisiones veterinarias que quedarán automáticamente agendadas en el Calendario.
                 </p>
               </div>
 
@@ -934,12 +983,12 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                   <div>
                     <div className="text-xs font-bold">☑ Programar Diagnóstico de Gestación Ecográfico</div>
                     <div className="text-[11px] text-muted-foreground">
-                      Sugerido: +18 días post-servicio (Fecha programada: <strong>{getSuggestedDiagnosisDate()}</strong>)
+                      Sugerido: +18 días post-servicio (Fecha sugerida: <strong>{getSuggestedDiagnosisDate()}</strong>)
                     </div>
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 cursor-pointer pt-2 border-t border-border">
+                <label className="flex items-start gap-3 cursor-pointer pt-2.5 border-t border-border">
                   <input
                     type="checkbox"
                     checked={form.schedule_ultrasound}
@@ -953,6 +1002,80 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                     </div>
                   </div>
                 </label>
+
+                {/* Custom Revision List */}
+                {customRevisions.length > 0 && (
+                  <div className="pt-2.5 border-t border-border space-y-2">
+                    <div className="text-xs font-bold text-primary">Revisiones Personalizadas Agregadas:</div>
+                    {customRevisions.map((rev) => (
+                      <div key={rev.id} className="flex items-center justify-between p-2 rounded-xl bg-secondary/50 border text-xs">
+                        <div>
+                          <span className="font-semibold">{rev.title}</span>
+                          <span className="text-muted-foreground ml-2">(+{rev.daysPostService} días post-servicio)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomRevision(rev.id)}
+                          className="text-rose-500 hover:text-rose-700 p-1"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Custom Revision Input */}
+                {!showAddRevInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRevInput(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline pt-2"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> + Agregar otra revisión o control personalizado
+                  </button>
+                ) : (
+                  <div className="p-3 rounded-xl border bg-secondary/30 space-y-3 pt-3">
+                    <div className="text-xs font-bold">Nueva Revisión Personalizada</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="label-field text-[11px]">Título de la revisión</label>
+                        <input
+                          className="input-field text-xs mt-1"
+                          placeholder="Ej. Control folicular, Vacuna..."
+                          value={newRevTitle}
+                          onChange={(e) => setNewRevTitle(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="label-field text-[11px]">Días post-servicio</label>
+                        <input
+                          type="number"
+                          className="input-field text-xs mt-1"
+                          placeholder="45"
+                          value={newRevDays}
+                          onChange={(e) => setNewRevDays(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddRevInput(false)}
+                        className="px-3 py-1 rounded-full border text-xs hover:bg-secondary"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddCustomRevision}
+                        className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold"
+                      >
+                        Agregar Revisión
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -984,7 +1107,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                 </div>
                 <div className="flex justify-between border-b border-border pb-1.5">
                   <span className="text-muted-foreground">Veterinario:</span>
-                  <span className="font-bold">{form.vet_name}</span>
+                  <span className="font-bold">{form.vet_name || "No especificado"}</span>
                 </div>
                 <div className="flex justify-between pt-1 text-primary">
                   <span>Próximo Diagnóstico:</span>
@@ -1034,7 +1157,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                       external_dam: "",
                       insemination_date: new Date().toISOString().split("T")[0],
                       insemination_time: "10:00",
-                      vet_name: "Dr. Juan Manuel Sierra",
+                      vet_name: "",
                       follicle_size_mm: "38",
                       uterine_tone: "Tono II (Folicular Activo)",
                       semen_motility_pct: "85",

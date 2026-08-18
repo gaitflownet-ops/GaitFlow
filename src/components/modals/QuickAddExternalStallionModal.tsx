@@ -75,7 +75,7 @@ export function QuickAddExternalStallionModal({ open, onClose, onSuccess }: Prop
             className="input-field mt-1"
             value={form.name}
             onChange={set("name")}
-            placeholder="Ej. Promesa del Sol FC"
+            placeholder="Ej. Nombre del Semental Externo"
           />
         </div>
 
@@ -87,7 +87,7 @@ export function QuickAddExternalStallionModal({ open, onClose, onSuccess }: Prop
               className="input-field mt-1"
               value={form.registry}
               onChange={set("registry")}
-              placeholder="Ej. FEDEQUINAS 7842"
+              placeholder="Ej. REG-123456"
             />
           </div>
           <div>
@@ -97,7 +97,7 @@ export function QuickAddExternalStallionModal({ open, onClose, onSuccess }: Prop
               className="input-field mt-1"
               value={form.owner_criadero}
               onChange={set("owner_criadero")}
-              placeholder="Ej. Criadero La Marqueza"
+              placeholder="Ej. Criadero Externo / Propietario"
             />
           </div>
         </div>

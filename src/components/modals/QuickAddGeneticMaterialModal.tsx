@@ -98,7 +98,7 @@ export function QuickAddGeneticMaterialModal({ open, onClose, onSuccess }: Props
             className="input-field mt-1"
             value={form.donor_name}
             onChange={set("donor_name")}
-            placeholder="Ej. Carbonero V de la Roca"
+            placeholder="Ej. Semental Donador"
           />
         </div>
 
