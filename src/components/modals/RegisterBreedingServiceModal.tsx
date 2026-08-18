@@ -18,6 +18,7 @@ import {
   useMares,
   useStallions,
   useGeneticsInventory,
+  useEmbryos,
   useBreedingCycles,
   useCreateBreedingCycle,
   useCreateReproductiveEvent,
