@@ -394,6 +394,92 @@ export function useCreateGeneticItem() {
   });
 }
 
+export function useDeductGeneticMaterialDose() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemId, quantityUsed = 1 }: { itemId: string; quantityUsed?: number }) => {
+      const { data: rpcData, error: rpcError } = await (supabase as any).rpc("deduct_genetic_material_dose", {
+        p_item_id: itemId,
+        p_quantity_used: quantityUsed,
+      });
+
+      if (!rpcError && rpcData) return rpcData;
+
+      const { data: current, error: getErr } = await (supabase.from("genetic_bank") as any)
+        .select("quantity")
+        .eq("id", itemId)
+        .single();
+      if (getErr || !current) throw new Error("No se encontró el material genético.");
+
+      const newQty = Math.max(0, (current.quantity || 0) - quantityUsed);
+      const newStatus = newQty <= 0 ? "Agotado" : "Disponible";
+
+      const { data, error } = await (supabase.from("genetic_bank") as any)
+        .update({ quantity: newQty, status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", itemId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["genetic-bank"] });
+    },
+  });
+}
+
+export function useQuickCreateStallion() {
+  const { state } = useApp();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      code?: string;
+      breed?: string;
+      stud_fee_usd?: number;
+      bloodline?: string;
+      image_url?: string;
+    }) => {
+      const orgId = await resolveOrgId(state.user?.organization_id);
+      const slug = `${payload.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
+
+      const { data: horse, error: hErr } = await (supabase.from("horses") as any)
+        .insert({
+          organization_id: orgId,
+          name: payload.name,
+          barn_name: payload.name,
+          slug,
+          sex: "Semental",
+          breed: payload.breed || "Paso Fino",
+          code: payload.code || undefined,
+          status: "Activo",
+          bloodline: payload.bloodline || undefined,
+          image_url: payload.image_url || undefined,
+        })
+        .select()
+        .single();
+
+      if (hErr) throw hErr;
+
+      await (supabase.from("stallion_profiles") as any).insert({
+        organization_id: orgId,
+        horse_id: horse.id,
+        status: "Activo",
+        stud_fee_usd: payload.stud_fee_usd || undefined,
+      });
+
+      return horse;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["horses"] });
+      qc.invalidateQueries({ queryKey: ["stallions"] });
+    },
+  });
+}
+
 // ── 5. Reproductive Events / Operational Timeline ─────────────────────────────
 
 export interface ReproductiveEvent {

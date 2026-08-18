@@ -146,7 +146,7 @@ function EnterpriseBreedingPage() {
   const { data: geneticBank = [] } = useGeneticBank();
 
   function handleQuickAction(actionType: "monta" | "inseminacion" | "palpacion" | "diagnostico" | "parto" | "embrion") {
-    if (actionType === "inseminacion") {
+    if (actionType === "inseminacion" || actionType === "monta") {
       setInseminationModalOpen(true);
     } else if (actionType === "parto") {
       setFoalingModalOpen(true);
@@ -333,6 +333,7 @@ function EnterpriseBreedingPage() {
       <AddInseminationModal
         open={inseminationModalOpen}
         onClose={() => setInseminationModalOpen(false)}
+        onNavigateView={(v) => setActiveView(v as any)}
       />
       <AddGeneticMaterialModal
         open={geneticModalOpen}
