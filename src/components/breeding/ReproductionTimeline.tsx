@@ -39,72 +39,10 @@ const EVENT_CONFIG: Record<
   Destete:        { label: "Destete",        icon: Sparkles,    color: "text-orange-500", bg: "bg-orange-500/10 border-orange-500/20" },
 };
 
-export function ReproductionTimeline({ events }: Props) {
+export function ReproductionTimeline({ events, onCompleteEvent }: Props) {
   const [selectedType, setSelectedType] = useState<string>("all");
 
-  // Sample data fallback if events empty
-  const displayEvents: ReproductiveEvent[] = events.length > 0 ? events : [
-    {
-      id: "ev1",
-      organization_id: "org1",
-      mare_id: "m1",
-      event_type: "Palpación",
-      scheduled_date: "2026-08-07",
-      status: "Programado",
-      vet_name: "Dr. Roberto Silva",
-      mare: { name: "Luna Llena", breed: "Paso Fino" },
-      notes: "Palpación folicular día 12 post-celo",
-      created_at: "2026-08-01",
-    },
-    {
-      id: "ev2",
-      organization_id: "org1",
-      mare_id: "m2",
-      event_type: "Ecografía",
-      scheduled_date: "2026-08-08",
-      status: "Programado",
-      vet_name: "Dra. María Gómez",
-      mare: { name: "Esperanza de la Cima", breed: "CCC" },
-      notes: "Diagnóstico precoz de gestación (14 días)",
-      created_at: "2026-08-01",
-    },
-    {
-      id: "ev3",
-      organization_id: "org1",
-      mare_id: "m3",
-      event_type: "Transferencia",
-      scheduled_date: "2026-08-10",
-      status: "Programado",
-      vet_name: "Dr. Carlos Rossi",
-      mare: { name: "Sultana del Valle", breed: "CCC" },
-      notes: "Transferencia de embrión fresco Grado I",
-      created_at: "2026-08-02",
-    },
-    {
-      id: "ev4",
-      organization_id: "org1",
-      mare_id: "m4",
-      event_type: "Parto",
-      scheduled_date: "2026-08-12",
-      status: "Programado",
-      vet_name: "Dr. Roberto Silva",
-      mare: { name: "Dulcinea IV", breed: "Trotador" },
-      notes: "Día 338 de gestación — monitoreo de ubre",
-      created_at: "2026-08-02",
-    },
-    {
-      id: "ev5",
-      organization_id: "org1",
-      mare_id: "m5",
-      event_type: "Lavado",
-      scheduled_date: "2026-08-15",
-      status: "Programado",
-      vet_name: "Dra. María Gómez",
-      mare: { name: "Princesa Real", breed: "Paso Fino" },
-      notes: "Lavado uterino post-inseminación Carbonero",
-      created_at: "2026-08-03",
-    },
-  ];
+  const displayEvents: ReproductiveEvent[] = events;
 
   const filteredEvents = selectedType === "all"
     ? displayEvents
@@ -148,8 +86,17 @@ export function ReproductionTimeline({ events }: Props) {
       </div>
 
       {/* Vertical Timeline List */}
-      <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-        {filteredEvents.map((ev) => {
+      {filteredEvents.length === 0 ? (
+        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-secondary/10 space-y-3">
+          <Calendar className="h-8 w-8 text-muted-foreground mx-auto" />
+          <div className="text-sm font-semibold">No hay eventos reproductivos programados</div>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Registra servicios, palpaciones o diagnósticos de gestación para ver la cronología de procedimientos de tu criadero.
+          </p>
+        </div>
+      ) : (
+        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+          {filteredEvents.map((ev) => {
           const cfg = EVENT_CONFIG[ev.event_type] || EVENT_CONFIG.Palpación;
           const Icon = cfg.icon;
           const isToday = ev.scheduled_date === new Date().toISOString().split("T")[0];
@@ -204,7 +151,8 @@ export function ReproductionTimeline({ events }: Props) {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

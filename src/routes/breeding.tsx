@@ -96,7 +96,7 @@ function useLocalReproductionKPIs(
 ) {
   const { data: cycles = [] } = useBreedingCycles();
 
-  const pregnant = (cycles || []).filter((c) => c && c.pregnancy_status === "Confirmed");
+  const pregnant = (cycles || []).filter((c) => c && (c.pregnancy_status === "Confirmed" || c.pregnancy_status === "Preñada"));
   const upcomingFoalings = pregnant.filter((c) => {
     if (!c || !c.expected_foaling_date) return false;
     const diffDays = (new Date(c.expected_foaling_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
@@ -105,20 +105,20 @@ function useLocalReproductionKPIs(
 
   const confirmedCount = pregnant.length;
   const totalCompletedCycles = (cycles || []).filter((c) => c && c.pregnancy_status !== "Pending").length;
-  const pregnancyRatePct = totalCompletedCycles > 0 ? Math.round((confirmedCount / totalCompletedCycles) * 100) : 78;
+  const pregnancyRatePct = totalCompletedCycles > 0 ? Math.round((confirmedCount / totalCompletedCycles) * 100) : 0;
 
   return {
-    breeding_mares_count: mares.length || 14,
-    active_stallions_count: stallions.length || 4,
-    pregnant_mares_count: pregnant.length || 6,
-    upcoming_foalings_count: upcomingFoalings.length || 2,
-    services_this_month_count: cycles.length || 9,
+    breeding_mares_count: mares.length,
+    active_stallions_count: stallions.length,
+    pregnant_mares_count: pregnant.length,
+    upcoming_foalings_count: upcomingFoalings.length,
+    services_this_month_count: cycles.length,
     pregnancy_rate_pct: pregnancyRatePct,
-    active_embryos_count: embryos.length || 5,
-    transfers_count: (embryos || []).filter((e) => e && (e.status === "Transferido" || e.status === "Implantado")).length || 3,
-    born_foals_count: (cycles || []).filter((c) => c && c.actual_foaling_date).length || 4,
-    abortions_count: (cycles || []).filter((c) => c && (c.pregnancy_status === "Aborted" || c.pregnancy_status === "Lost")).length || 1,
-    pending_services_count: (events || []).filter((e) => e && e.status === "Programado").length || 4,
+    active_embryos_count: embryos.length,
+    transfers_count: (embryos || []).filter((e) => e && (e.status === "Transferido" || e.status === "Implantado")).length,
+    born_foals_count: (cycles || []).filter((c) => c && c.actual_foaling_date).length,
+    abortions_count: (cycles || []).filter((c) => c && (c.pregnancy_status === "Aborted" || c.pregnancy_status === "Lost" || c.pregnancy_status === "Aborto")).length,
+    pending_services_count: (events || []).filter((e) => e && e.status === "Programado").length,
   };
 }
 
