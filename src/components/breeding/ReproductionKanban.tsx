@@ -43,15 +43,8 @@ const STAGES: {
 ];
 
 export function ReproductionKanban({ mares, onUpdateStatus, onOpenMareProfile }: Props) {
-  // Sample mares if prop is empty
-  const displayMares: Mare[] = mares.length > 0 ? mares : [
-    { id: "m1", organization_id: "org1", horse_id: "h1", reproductive_status: "Preñadas", created_at: "", updated_at: "", horse: { id: "h1", name: "Esperanza del Sol", breed: "Paso Fino", age: 6, image_url: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=400&q=80" }, gestation_days: 210, expected_foaling_date: "2026-11-15" },
-    { id: "m2", organization_id: "org1", horse_id: "h2", reproductive_status: "Servidas", created_at: "", updated_at: "", horse: { id: "h2", name: "Princesa Real", breed: "CCC", age: 5, image_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80" }, last_service_date: "2026-08-01" },
-    { id: "m3", organization_id: "org1", horse_id: "h3", reproductive_status: "Diagnóstico", created_at: "", updated_at: "", horse: { id: "h3", name: "Sultana del Valle", breed: "Paso Fino", age: 7, image_url: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&w=400&q=80" } },
-    { id: "m4", organization_id: "org1", horse_id: "h4", reproductive_status: "En celo", created_at: "", updated_at: "", horse: { id: "h4", name: "Luna Llena", breed: "Trotador", age: 4 } },
-    { id: "m5", organization_id: "org1", horse_id: "h5", reproductive_status: "Próximas al parto", created_at: "", updated_at: "", horse: { id: "h5", name: "Dulcinea IV", breed: "CCC", age: 9 }, gestation_days: 332, expected_foaling_date: "2026-08-10" },
-    { id: "m6", organization_id: "org1", horse_id: "h6", reproductive_status: "Vacías", created_at: "", updated_at: "", horse: { id: "h6", name: "Magdalena", breed: "Paso Fino", age: 8 } },
-  ];
+  // Real mares from database
+  const displayMares: Mare[] = mares;
 
   return (
     <div className="lux-card p-6 overflow-hidden">

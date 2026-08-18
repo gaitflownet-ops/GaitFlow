@@ -22,59 +22,7 @@ const EMBRYO_STATUS_COLORS: Record<EmbryoStatus, { color: string; badge: string 
 export function EmbryoCenter({ embryos, onCreateEmbryo }: Props) {
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  const displayEmbryos: Embryo[] = embryos.length > 0 ? embryos : [
-    {
-      id: "emb1",
-      organization_id: "org1",
-      donor_mare_id: "m1",
-      stallion_id: "s1",
-      recipient_mare_id: "rec1",
-      flush_date: "2026-07-20",
-      transfer_date: "2026-07-22",
-      grade: "Calidad I",
-      stage: "Blastocisto Expandido",
-      status: "Implantado",
-      vet_name: "Dr. Roberto Silva",
-      donor_mare: { name: "Esperanza de la Cima", breed: "CCC" },
-      stallion: { name: "Carbonero V", breed: "CCC" },
-      recipient_mare: { name: "Receptora R-102", breed: "Mestizo" },
-      created_at: "",
-      updated_at: "",
-    },
-    {
-      id: "emb2",
-      organization_id: "org1",
-      donor_mare_id: "m2",
-      stallion_id: "s2",
-      flush_date: "2026-07-28",
-      grade: "Calidad I",
-      stage: "Blastocisto",
-      status: "Congelado",
-      vet_name: "Dra. María Gómez",
-      donor_mare: { name: "Luna Llena", breed: "Paso Fino" },
-      stallion: { name: "Dulce Sueño", breed: "Paso Fino" },
-      created_at: "",
-      updated_at: "",
-    },
-    {
-      id: "emb3",
-      organization_id: "org1",
-      donor_mare_id: "m3",
-      stallion_id: "s1",
-      recipient_mare_id: "rec2",
-      flush_date: "2026-06-15",
-      transfer_date: "2026-06-17",
-      grade: "Calidad II",
-      stage: "Mórula",
-      status: "Nacido",
-      vet_name: "Dr. Carlos Rossi",
-      donor_mare: { name: "Princesa Real", breed: "CCC" },
-      stallion: { name: "Carbonero V", breed: "CCC" },
-      recipient_mare: { name: "Receptora R-88", breed: "Mestizo" },
-      created_at: "",
-      updated_at: "",
-    },
-  ];
+  const displayEmbryos: Embryo[] = embryos;
 
   const filtered = filterStatus === "all"
     ? displayEmbryos

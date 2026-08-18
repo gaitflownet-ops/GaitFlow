@@ -320,7 +320,8 @@ export function useEmbryos() {
     queryKey: ["embryos", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("embryos") as any)
+      // 1. Try with relations
+      let { data, error } = await (supabase.from("embryos") as any)
         .select(`
           *,
           donor_mare:donor_mare_id ( name, breed, image_url ),
@@ -330,7 +331,16 @@ export function useEmbryos() {
         .eq("organization_id", orgId)
         .order("flush_date", { ascending: false });
 
-      if (error) return [];
+      // 2. If relationship join fails in schema cache, fallback to simple select
+      if (error) {
+        console.warn("[useEmbryos] Relation join failed, using simple select:", error.message);
+        const res = await (supabase.from("embryos") as any)
+          .select("*")
+          .eq("organization_id", orgId)
+          .order("flush_date", { ascending: false });
+        data = res.data;
+      }
+
       return (data ?? []) as Embryo[];
     },
   });
@@ -393,7 +403,8 @@ export function useGeneticBank() {
     queryKey: ["genetic-bank", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("genetic_bank") as any)
+      // 1. Try with relations
+      let { data, error } = await (supabase.from("genetic_bank") as any)
         .select(`
           *,
           donor:donor_id ( name, breed ),
@@ -402,7 +413,16 @@ export function useGeneticBank() {
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
-      if (error) return [];
+      // 2. If relationship join fails in schema cache, fallback to simple select
+      if (error) {
+        console.warn("[useGeneticBank] Relation join failed, using simple select:", error.message);
+        const res = await (supabase.from("genetic_bank") as any)
+          .select("*")
+          .eq("organization_id", orgId)
+          .order("created_at", { ascending: false });
+        data = res.data;
+      }
+
       return (data ?? []) as GeneticItem[];
     },
   });

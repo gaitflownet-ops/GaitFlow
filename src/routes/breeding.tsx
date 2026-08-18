@@ -174,21 +174,9 @@ function EnterpriseBreedingPage() {
     updateMareStatus.mutate({ id: mareId, reproductive_status: newStatus });
   }
 
-  // Sample fallback data if database empty
-  const displayMares: Mare[] = mares.length > 0 ? mares : [
-    { id: "m1", organization_id: "org1", horse_id: "h1", reproductive_status: "Preñadas", created_at: "", updated_at: "", horse: { id: "h1", name: "Esperanza del Sol", code: "YEG-014", breed: "Paso Fino", age: 6, image_url: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=600&q=80", bloodline: "Dulce Sueño × La Maravilla" }, gestation_days: 210, expected_foaling_date: "2026-11-15" },
-    { id: "m2", organization_id: "org1", horse_id: "h2", reproductive_status: "Servidas", created_at: "", updated_at: "", horse: { id: "h2", name: "Princesa Real", code: "YEG-022", breed: "CCC", age: 5, image_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80", bloodline: "Carbonero × Sultana" }, last_service_date: "2026-08-01" },
-    { id: "m3", organization_id: "org1", horse_id: "h3", reproductive_status: "Diagnóstico", created_at: "", updated_at: "", horse: { id: "h3", name: "Sultana del Valle", code: "YEG-009", breed: "Paso Fino", age: 7, image_url: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&w=600&q=80", bloodline: "Capuchino × La Castañuela" } },
-    { id: "m4", organization_id: "org1", horse_id: "h4", reproductive_status: "En celo", created_at: "", updated_at: "", horse: { id: "h4", name: "Luna Llena", code: "YEG-033", breed: "Trotador", age: 4, bloodline: "Monarca IV × Diana" } },
-    { id: "m5", organization_id: "org1", horse_id: "h5", reproductive_status: "Próximas al parto", created_at: "", updated_at: "", horse: { id: "h5", name: "Dulcinea IV", code: "YEG-005", breed: "CCC", age: 9, bloodline: "Resplandor × Amistad" }, gestation_days: 332, expected_foaling_date: "2026-08-10" },
-    { id: "m6", organization_id: "org1", horse_id: "h6", reproductive_status: "Vacías", created_at: "", updated_at: "", horse: { id: "h6", name: "Magdalena", code: "YEG-041", breed: "Paso Fino", age: 8, bloodline: "Patrimonio × Fantasía" } },
-  ];
-
-  const displayStallions: StallionProfile[] = stallions.length > 0 ? stallions : [
-    { id: "st1", organization_id: "org1", horse_id: "sh1", status: "Activo", total_services_count: 14, conception_rate_pct: 91.5, total_offspring_count: 9, doses_available_count: 18, stud_fee_usd: 4000, created_at: "", updated_at: "", horse: { id: "sh1", name: "Carbonero V de la Roca", breed: "CCC", age: 8, image_url: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&w=600&q=80", bloodline: "Carbonero × Sultana IV" } },
-    { id: "st2", organization_id: "org1", horse_id: "sh2", status: "Activo", total_services_count: 18, conception_rate_pct: 88.0, total_offspring_count: 12, doses_available_count: 24, stud_fee_usd: 3500, created_at: "", updated_at: "", horse: { id: "sh2", name: "Dulce Sueño de Lusitania", breed: "Paso Fino", age: 10, image_url: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=600&q=80", bloodline: "Capuchino × La Dulcinea" } },
-    { id: "st3", organization_id: "org1", horse_id: "sh3", status: "Activo", total_services_count: 9, conception_rate_pct: 82.3, total_offspring_count: 5, doses_available_count: 10, stud_fee_usd: 2800, created_at: "", updated_at: "", horse: { id: "sh3", name: "Aristócrata del Sol", breed: "CCC", age: 6, image_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80", bloodline: "Monarca IV × La Reina" } },
-  ];
+  // Real data only from Supabase database
+  const displayMares: Mare[] = mares;
+  const displayStallions: StallionProfile[] = stallions;
 
   // Render Full Page Horse Reproduction Profile (Req 10 & 11)
   if (selectedHorseProfile) {

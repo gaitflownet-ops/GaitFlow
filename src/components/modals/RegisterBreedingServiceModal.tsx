@@ -70,6 +70,7 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
   const { data: maresList = [] } = useMares();
   const { data: stallionsList = [] } = useStallions();
   const { data: geneticsInventory = [] } = useGeneticsInventory();
+  const { data: embryosList = [] } = useEmbryos();
   const { data: activeCycles = [] } = useBreedingCycles();
 
   const createCycle = useCreateBreedingCycle();
@@ -744,61 +745,129 @@ export function RegisterBreedingServiceModal({ open, onClose, preselectedMareId,
                 </div>
               )}
 
-              {/* OPCIÓN B: BANCO GENÉTICO / MATERIAL ADQUIRIDO */}
+              {/* OPCIÓN B: BANCO GENÉTICO / MATERIAL ADQUIRIDO / EMBRIONES */}
               {form.service_source === "inventory" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="label-field font-semibold text-sm">
-                      4. Seleccionar Lote del Banco Genético *
-                    </label>
+                    <div>
+                      <label className="label-field font-semibold text-sm block">
+                        4. {form.service_type === "Transferencia embrionaria" ? "Seleccionar Embrión del Banco Genético *" : "Seleccionar Lote del Banco Genético *"}
+                      </label>
+                      <p className="text-[11px] text-muted-foreground">
+                        {form.service_type === "Transferencia embrionaria" ? "Selecciona el embrión a implantar en la receptora." : "Selecciona las pajillas o dosis de semen adquiridas."}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowQuickGenetics(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 text-xs font-bold hover:bg-blue-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 text-xs font-bold hover:bg-blue-500/20 transition-colors shrink-0"
                     >
                       <Plus className="h-3.5 w-3.5" /> Registrar Material Genético
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-56 overflow-y-auto">
-                    {geneticsInventory.map((item) => {
-                      const isSel = form.genetic_material_id === item.id;
-                      const isAgotado = item.quantity <= 0 || item.status === "Agotado";
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          disabled={isAgotado}
-                          onClick={() => handleSelectGeneticItem(item)}
-                          className={`p-3.5 rounded-2xl border text-left transition-all ${
-                            isAgotado
-                              ? "opacity-40 border-border bg-secondary/20 cursor-not-allowed"
-                              : isSel
-                              ? "border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/20"
-                              : "border-border hover:border-blue-500/40 hover:bg-secondary/40"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-bold truncate">
-                              {item.donor?.name || "Semental Banco"}
-                            </span>
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                isAgotado
-                                  ? "bg-rose-500/10 text-rose-600"
-                                  : "bg-emerald-500/10 text-emerald-600"
+                  {geneticsInventory.length === 0 && embryosList.length === 0 ? (
+                    <div className="p-6 rounded-2xl border border-dashed border-border text-center space-y-3 bg-secondary/10">
+                      <ShoppingBag className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <div>
+                        <div className="text-xs font-bold">No hay material genético en el inventario</div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Registra saltos, pajillas congeladas o embriones adquiridos para utilizarlos en los servicios.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickGenetics(true)}
+                        className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Agregar al Banco Genético
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1">
+                      {geneticsInventory.map((item) => {
+                        const isSel = form.genetic_material_id === item.id;
+                        const isAgotado = item.quantity <= 0 || item.status === "Agotado";
+                        const isEmbryo = item.material_type === "Embrión";
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            disabled={isAgotado}
+                            onClick={() => handleSelectGeneticItem(item)}
+                            className={`p-3.5 rounded-2xl border text-left transition-all ${
+                              isAgotado
+                                ? "opacity-40 border-border bg-secondary/20 cursor-not-allowed"
+                                : isSel
+                                ? "border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/20"
+                                : "border-border hover:border-blue-500/40 hover:bg-secondary/40"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold truncate">
+                                {item.donor?.name || (isEmbryo ? "Embrión Preservado" : "Semental Banco")}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  isAgotado
+                                    ? "bg-rose-500/10 text-rose-600"
+                                    : "bg-emerald-500/10 text-emerald-600"
+                                }`}
+                              >
+                                {item.quantity} {isEmbryo ? "Embrión" : "Dosis"} {isAgotado ? "(Agotado)" : "Disp."}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+                              <span>Lote: {item.lot_number || "LOTE-001"}</span>
+                              <span className="font-semibold text-primary">{item.material_type}</span>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                              Tanque: {item.storage_tank || "LN2 Main"} {item.storage_canister ? `· Can: ${item.storage_canister}` : ""}
+                            </div>
+                          </button>
+                        );
+                      })}
+
+                      {/* Also show Embryos from Embryo Center */}
+                      {embryosList
+                        .filter((emb) => !geneticsInventory.some((g) => g.id === emb.id))
+                        .map((emb) => {
+                          const isSel = form.genetic_material_id === emb.id;
+                          return (
+                            <button
+                              key={emb.id}
+                              type="button"
+                              onClick={() => {
+                                setForm((f) => ({
+                                  ...f,
+                                  genetic_material_id: emb.id,
+                                  stallion_id: emb.stallion_id || "",
+                                  stallion_name: emb.stallion?.name || "Semental",
+                                  stallion_registry: `Embrión: ${emb.grade} · ${emb.stage}`,
+                                }));
+                              }}
+                              className={`p-3.5 rounded-2xl border text-left transition-all ${
+                                isSel
+                                  ? "border-cyan-500 bg-cyan-500/10 ring-2 ring-cyan-500/20"
+                                  : "border-border hover:border-cyan-500/40 hover:bg-secondary/40"
                               }`}
                             >
-                              {item.quantity} Dosis {isAgotado ? "(Agotado)" : "Disponibles"}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            Lote: {item.lot_number || "LOTE-001"} · Tank: {item.storage_tank || "LN2 Main"}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-bold truncate">
+                                  {emb.donor_mare?.name || "Donadora"} × {emb.stallion?.name || "Semental"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700">
+                                  {emb.grade}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                Estadio: {emb.stage} · Lavado: {emb.flush_date}
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
                 </div>
               )}
 

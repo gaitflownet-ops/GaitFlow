@@ -28,14 +28,21 @@ export function ReproductionCalendarView({ events }: Props) {
     Parto: "bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-400/40",
   };
 
-  const sampleCalendarEvents: Record<number, { title: string; type: string; mare: string; vet: string }[]> = {
-    7: [{ title: "Palpación Folicular", type: "Palpación", mare: "Luna Llena", vet: "Dr. Roberto Silva" }],
-    8: [{ title: "Ecografía Precoz D14", type: "Ecografía", mare: "Esperanza del Sol", vet: "Dra. María Gómez" }],
-    10: [{ title: "Transferencia Embrión", type: "Transferencia", mare: "Sultana del Valle", vet: "Dr. Carlos Rossi" }],
-    12: [{ title: "Parto Inminente ETA", type: "Parto", mare: "Dulcinea IV", vet: "Dr. Roberto Silva" }],
-    15: [{ title: "Lavado Embrión", type: "Inseminación", mare: "Princesa Real", vet: "Dra. María Gómez" }],
-    22: [{ title: "Chequeo D30 Gestación", type: "Ecografía", mare: "Esperanza del Sol", vet: "Dr. Roberto Silva" }],
-  };
+  // Map real database events to calendar days
+  const eventsByDay: Record<number, { title: string; type: string; mare: string; vet: string }[]> = {};
+  for (const ev of events) {
+    const dStr = ev.scheduled_date || ev.completed_date;
+    if (!dStr) continue;
+    const dObj = new Date(dStr);
+    const dayNum = dObj.getDate();
+    if (!eventsByDay[dayNum]) eventsByDay[dayNum] = [];
+    eventsByDay[dayNum].push({
+      title: `${ev.event_type} ${ev.result ? '— ' + ev.result : ''}`,
+      type: ev.event_type,
+      mare: ev.mare?.name || "Yegua",
+      vet: ev.vet_name || "Veterinario",
+    });
+  }
 
   return (
     <div className="lux-card p-6">
@@ -89,8 +96,8 @@ export function ReproductionCalendarView({ events }: Props) {
 
         {/* Month Days */}
         {daysInMonth.map((dayNum) => {
-          const dayEvents = sampleCalendarEvents[dayNum] || [];
-          const isToday = dayNum === 5;
+          const dayEvents = eventsByDay[dayNum] || [];
+          const isToday = dayNum === new Date().getDate();
 
           return (
             <div

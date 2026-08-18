@@ -14,59 +14,7 @@ interface Props {
 export function GeneticBankView({ inventory, onCreateItem }: Props) {
   const [selectedType, setSelectedType] = useState<string>("all");
 
-  const displayItems: GeneticItem[] = inventory.length > 0 ? inventory : [
-    {
-      id: "gen1",
-      organization_id: "org1",
-      material_type: "Semen",
-      lot_number: "LOT-2026-088",
-      donor_id: "s1",
-      quantity: 15,
-      storage_tank: "Tanque A (Nitrógeno Líquido -196°C)",
-      storage_canister: "Canastilla 3",
-      storage_rack: "Pajilla #12-#26",
-      status: "Disponible",
-      cost_usd: 3500,
-      notes: "Semen congelado de altísima calidad espermática",
-      donor: { name: "Carbonero V", breed: "CCC" },
-      created_at: "",
-      updated_at: "",
-    },
-    {
-      id: "gen2",
-      organization_id: "org1",
-      material_type: "Embrión",
-      lot_number: "EMB-LOT-014",
-      donor_id: "s2",
-      dam_id: "m1",
-      quantity: 2,
-      storage_tank: "Tanque B",
-      storage_canister: "Canastilla 1",
-      status: "Disponible",
-      cost_usd: 6000,
-      notes: "Cruce de élite Dulce Sueño × Esperanza del Sol",
-      donor: { name: "Dulce Sueño", breed: "Paso Fino" },
-      dam: { name: "Esperanza del Sol", breed: "Paso Fino" },
-      created_at: "",
-      updated_at: "",
-    },
-    {
-      id: "gen3",
-      organization_id: "org1",
-      material_type: "Ovocito",
-      lot_number: "OVO-LOT-003",
-      donor_id: "m2",
-      quantity: 8,
-      storage_tank: "Tanque C",
-      storage_canister: "Canastilla 2",
-      status: "Disponible",
-      cost_usd: 2500,
-      notes: "Ovocitos aspirados por OPU en laboratorio",
-      donor: { name: "Luna Llena", breed: "Paso Fino" },
-      created_at: "",
-      updated_at: "",
-    },
-  ];
+  const displayItems: GeneticItem[] = inventory;
 
   const filtered = selectedType === "all"
     ? displayItems
