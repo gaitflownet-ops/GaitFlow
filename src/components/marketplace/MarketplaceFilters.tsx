@@ -166,32 +166,41 @@ export function MarketplaceFilters({ filters, onChange, totalResults }: Props) {
             </div>
           </div>
 
+          {/* Gait Type (Andar) */}
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              Andar (CCC)
+            </label>
+            <select
+              value={filters.gaitType || ""}
+              onChange={(e) => update({ gaitType: e.target.value || undefined })}
+              className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
+            >
+              <option value="">Todos los andares</option>
+              <option value="p1">P1 — Paso Fino</option>
+              <option value="p2">P2 — Trote y Galope</option>
+              <option value="p3">P3 — Trocha</option>
+              <option value="p4">P4 — Trocha y Galope</option>
+            </select>
+          </div>
+
           {/* Age Range */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Edad Mín. (años)
-              </label>
-              <input
-                type="number"
-                min={0} max={30}
-                value={filters.minAge || ""}
-                onChange={(e) => update({ minAge: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Edad Máx. (años)
-              </label>
-              <input
-                type="number"
-                min={0} max={30}
-                value={filters.maxAge || ""}
-                onChange={(e) => update({ maxAge: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
-              />
-            </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              Edad
+            </label>
+            <select
+              value={filters.ageMonthsRange || ""}
+              onChange={(e) => update({ ageMonthsRange: e.target.value || undefined, minAge: undefined, maxAge: undefined })}
+              className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
+            >
+              <option value="">Todas las edades</option>
+              <option value="0-6">0 - 6 meses (Destetos)</option>
+              <option value="6-12">6 - 12 meses</option>
+              <option value="12-24">1 - 2 años</option>
+              <option value="24-60">2 - 5 años</option>
+              <option value="60+">Mayores a 5 años</option>
+            </select>
           </div>
 
           {/* Discipline */}

@@ -179,12 +179,59 @@ export function SellerDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard icon={ShoppingBag} label="Publicaciones Activas" value={active} color="bg-emerald-500/10 text-emerald-600" />
-        <KPICard icon={CheckCircle2} label="Ventas Cerradas" value={sold} color="bg-blue-500/10 text-blue-500" />
-        <KPICard icon={Eye} label="Vistas Totales" value={totalViews.toLocaleString()} color="bg-primary/10 text-primary" />
-        <KPICard icon={MessageCircle} label="Consultas Pendientes" value={pendingInquiries} color={pendingInquiries > 0 ? "bg-amber-500/10 text-amber-600" : "bg-secondary text-muted-foreground"} />
+      {/* Commercial Funnel */}
+      <div className="lux-card p-6 overflow-hidden relative">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" /> Embudo Comercial
+        </h2>
+        
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Visitas</span>
+            <div className="text-3xl font-display font-bold text-foreground">{totalViews.toLocaleString()}</div>
+            <div className="h-1 w-full bg-primary/20 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-primary w-full" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Favoritos (Aprox)</span>
+            {/* Simulation of favorites based on views for now, or actual if available */}
+            <div className="text-3xl font-display font-bold text-foreground">{Math.floor(totalViews * 0.15)}</div>
+            <div className="h-1 w-full bg-primary/20 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-primary w-[85%]" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Consultas</span>
+            <div className="text-3xl font-display font-bold text-amber-500">{inquiries.length}</div>
+            <div className="h-1 w-full bg-primary/20 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-amber-500 w-[60%]" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Negociaciones</span>
+            <div className="text-3xl font-display font-bold text-blue-500">
+              {inquiries.filter((i) => (i as any).inquiry_type === "Negociar precio").length}
+            </div>
+            <div className="h-1 w-full bg-primary/20 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-blue-500 w-[30%]" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Ventas</span>
+            <div className="text-3xl font-display font-bold text-emerald-500">{sold}</div>
+            <div className="h-1 w-full bg-primary/20 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-emerald-500 w-[10%]" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Background visual curve */}
+        <div className="absolute -bottom-12 -left-12 -right-12 h-32 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none rounded-t-[100%]" />
       </div>
 
       {/* Tab Nav */}

@@ -44,7 +44,9 @@ export function BuyerInquiryForm({ listingId, listingTitle, onClose }: Props) {
         buyer_phone: form.buyer_phone || undefined,
         buyer_country: form.buyer_country,
         inquiry_type: form.inquiry_type,
-      });
+        target_price: (form as any).target_price ? Number((form as any).target_price) : undefined,
+        target_currency: (form as any).target_currency || "COP",
+      } as any);
       setSubmitted(true);
       toast.success("¡Consulta enviada! El vendedor te contactará pronto.");
     } catch (err) {
@@ -163,13 +165,45 @@ export function BuyerInquiryForm({ listingId, listingTitle, onClose }: Props) {
               onChange={set("inquiry_type")}
               className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
             >
-              <option value="Information">Información General</option>
-              <option value="Visit">Agendar Visita</option>
-              <option value="DirectPurchase">Compra Directa</option>
-              <option value="TrackTrial">Prueba en Pista</option>
+              <option value="Solicitar información">Solicitar información</option>
+              <option value="Quiero comprar">Quiero comprar</option>
+              <option value="Negociar precio">Negociar precio</option>
+              <option value="Solicitar visita">Solicitar visita</option>
+              <option value="Solicitar video">Solicitar video</option>
             </select>
           </div>
         </div>
+
+        {form.inquiry_type === "Negociar precio" && (
+          <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Oferta (COP)
+              </label>
+              <input
+                type="number"
+                value={(form as any).target_price || ""}
+                onChange={set("target_price" as any)}
+                placeholder="Valor de tu oferta"
+                className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Moneda
+              </label>
+              <select
+                value={(form as any).target_currency || "COP"}
+                onChange={set("target_currency" as any)}
+                className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
+              >
+                <option value="COP">COP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         {/* Message */}
         <div>

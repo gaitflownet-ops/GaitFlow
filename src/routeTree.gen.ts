@@ -35,12 +35,15 @@ import { Route as HorsesIndexRouteImport } from './routes/horses.index'
 import { Route as StallionsStallionIdRouteImport } from './routes/stallions.$stallionId'
 import { Route as ShowcaseHorseIdRouteImport } from './routes/showcase.$horseId'
 import { Route as MarketplaceStallionsRouteImport } from './routes/marketplace.stallions'
+import { Route as MarketplaceSellerRouteImport } from './routes/marketplace.seller'
 import { Route as MarketplaceSalesRouteImport } from './routes/marketplace.sales'
 import { Route as MarketplaceGeneticsRouteImport } from './routes/marketplace.genetics'
+import { Route as MarketplaceFavoritesRouteImport } from './routes/marketplace.favorites'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as HorsesHorseIdRouteImport } from './routes/horses_.$horseId'
 import { Route as FarmsFarmIdRouteImport } from './routes/farms.$farmId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as MarketplaceListingListingIdRouteImport } from './routes/marketplace.listing.$listingId'
 
 const VaultRoute = VaultRouteImport.update({
   id: '/vault',
@@ -172,6 +175,11 @@ const MarketplaceStallionsRoute = MarketplaceStallionsRouteImport.update({
   path: '/marketplace/stallions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceSellerRoute = MarketplaceSellerRouteImport.update({
+  id: '/marketplace/seller',
+  path: '/marketplace/seller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceSalesRoute = MarketplaceSalesRouteImport.update({
   id: '/marketplace/sales',
   path: '/marketplace/sales',
@@ -180,6 +188,11 @@ const MarketplaceSalesRoute = MarketplaceSalesRouteImport.update({
 const MarketplaceGeneticsRoute = MarketplaceGeneticsRouteImport.update({
   id: '/marketplace/genetics',
   path: '/marketplace/genetics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceFavoritesRoute = MarketplaceFavoritesRouteImport.update({
+  id: '/marketplace/favorites',
+  path: '/marketplace/favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -202,6 +215,12 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceListingListingIdRoute =
+  MarketplaceListingListingIdRouteImport.update({
+    id: '/marketplace/listing/$listingId',
+    path: '/marketplace/listing/$listingId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -229,13 +248,16 @@ export interface FileRoutesByFullPath {
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/marketplace/favorites': typeof MarketplaceFavoritesRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/seller': typeof MarketplaceSellerRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
   '/showcase/$horseId': typeof ShowcaseHorseIdRoute
   '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses/': typeof HorsesIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/marketplace/listing/$listingId': typeof MarketplaceListingListingIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -263,13 +285,16 @@ export interface FileRoutesByTo {
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses/$horseId': typeof HorsesHorseIdRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/marketplace/favorites': typeof MarketplaceFavoritesRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/seller': typeof MarketplaceSellerRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
   '/showcase/$horseId': typeof ShowcaseHorseIdRoute
   '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses': typeof HorsesIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
+  '/marketplace/listing/$listingId': typeof MarketplaceListingListingIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -298,13 +323,16 @@ export interface FileRoutesById {
   '/farms/$farmId': typeof FarmsFarmIdRoute
   '/horses_/$horseId': typeof HorsesHorseIdRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/marketplace/favorites': typeof MarketplaceFavoritesRoute
   '/marketplace/genetics': typeof MarketplaceGeneticsRoute
   '/marketplace/sales': typeof MarketplaceSalesRoute
+  '/marketplace/seller': typeof MarketplaceSellerRoute
   '/marketplace/stallions': typeof MarketplaceStallionsRoute
   '/showcase/$horseId': typeof ShowcaseHorseIdRoute
   '/stallions/$stallionId': typeof StallionsStallionIdRoute
   '/horses/': typeof HorsesIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/marketplace/listing/$listingId': typeof MarketplaceListingListingIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -334,13 +362,16 @@ export interface FileRouteTypes {
     | '/farms/$farmId'
     | '/horses/$horseId'
     | '/invite/$token'
+    | '/marketplace/favorites'
     | '/marketplace/genetics'
     | '/marketplace/sales'
+    | '/marketplace/seller'
     | '/marketplace/stallions'
     | '/showcase/$horseId'
     | '/stallions/$stallionId'
     | '/horses/'
     | '/marketplace/'
+    | '/marketplace/listing/$listingId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -368,13 +399,16 @@ export interface FileRouteTypes {
     | '/farms/$farmId'
     | '/horses/$horseId'
     | '/invite/$token'
+    | '/marketplace/favorites'
     | '/marketplace/genetics'
     | '/marketplace/sales'
+    | '/marketplace/seller'
     | '/marketplace/stallions'
     | '/showcase/$horseId'
     | '/stallions/$stallionId'
     | '/horses'
     | '/marketplace'
+    | '/marketplace/listing/$listingId'
   id:
     | '__root__'
     | '/'
@@ -402,13 +436,16 @@ export interface FileRouteTypes {
     | '/farms/$farmId'
     | '/horses_/$horseId'
     | '/invite/$token'
+    | '/marketplace/favorites'
     | '/marketplace/genetics'
     | '/marketplace/sales'
+    | '/marketplace/seller'
     | '/marketplace/stallions'
     | '/showcase/$horseId'
     | '/stallions/$stallionId'
     | '/horses/'
     | '/marketplace/'
+    | '/marketplace/listing/$listingId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -437,13 +474,16 @@ export interface RootRouteChildren {
   FarmsFarmIdRoute: typeof FarmsFarmIdRoute
   HorsesHorseIdRoute: typeof HorsesHorseIdRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  MarketplaceFavoritesRoute: typeof MarketplaceFavoritesRoute
   MarketplaceGeneticsRoute: typeof MarketplaceGeneticsRoute
   MarketplaceSalesRoute: typeof MarketplaceSalesRoute
+  MarketplaceSellerRoute: typeof MarketplaceSellerRoute
   MarketplaceStallionsRoute: typeof MarketplaceStallionsRoute
   ShowcaseHorseIdRoute: typeof ShowcaseHorseIdRoute
   StallionsStallionIdRoute: typeof StallionsStallionIdRoute
   HorsesIndexRoute: typeof HorsesIndexRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplaceListingListingIdRoute: typeof MarketplaceListingListingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -630,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceStallionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/seller': {
+      id: '/marketplace/seller'
+      path: '/marketplace/seller'
+      fullPath: '/marketplace/seller'
+      preLoaderRoute: typeof MarketplaceSellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/sales': {
       id: '/marketplace/sales'
       path: '/marketplace/sales'
@@ -642,6 +689,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace/genetics'
       fullPath: '/marketplace/genetics'
       preLoaderRoute: typeof MarketplaceGeneticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/favorites': {
+      id: '/marketplace/favorites'
+      path: '/marketplace/favorites'
+      fullPath: '/marketplace/favorites'
+      preLoaderRoute: typeof MarketplaceFavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -670,6 +724,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/listing/$listingId': {
+      id: '/marketplace/listing/$listingId'
+      path: '/marketplace/listing/$listingId'
+      fullPath: '/marketplace/listing/$listingId'
+      preLoaderRoute: typeof MarketplaceListingListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -701,13 +762,16 @@ const rootRouteChildren: RootRouteChildren = {
   FarmsFarmIdRoute: FarmsFarmIdRoute,
   HorsesHorseIdRoute: HorsesHorseIdRoute,
   InviteTokenRoute: InviteTokenRoute,
+  MarketplaceFavoritesRoute: MarketplaceFavoritesRoute,
   MarketplaceGeneticsRoute: MarketplaceGeneticsRoute,
   MarketplaceSalesRoute: MarketplaceSalesRoute,
+  MarketplaceSellerRoute: MarketplaceSellerRoute,
   MarketplaceStallionsRoute: MarketplaceStallionsRoute,
   ShowcaseHorseIdRoute: ShowcaseHorseIdRoute,
   StallionsStallionIdRoute: StallionsStallionIdRoute,
   HorsesIndexRoute: HorsesIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplaceListingListingIdRoute: MarketplaceListingListingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

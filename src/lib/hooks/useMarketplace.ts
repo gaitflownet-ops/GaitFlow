@@ -25,11 +25,15 @@ export interface EnterpriseListing extends Listing {
   discipline?: string;
   location_country?: string;
   location_city?: string;
+  original_price?: number;
+  discount_percentage?: number;
+  is_promoted?: boolean;
   horses?: {
     id?: string;
     name?: string;
     breed?: string;
     age?: number;
+    birth_date?: string;
     sex?: string;
     color?: string;
     discipline?: string;
@@ -48,17 +52,21 @@ export interface EnterpriseListing extends Listing {
   };
   profiles?: {
     name?: string;
-    stable_name?: string;
   };
 }
 
-export interface EnterpriseInquiry extends Inquiry {
+export interface EnterpriseInquiry {
+  id: string;
+  message: string;
+  created_at: string;
   buyer_name?: string;
   buyer_email?: string;
   buyer_phone?: string;
   buyer_country?: string;
-  inquiry_type?: "Information" | "Visit" | "DirectPurchase" | "TrackTrial";
-  status?: "Pending" | "Replied" | "Closed";
+  inquiry_type?: string;
+  status?: string | null;
+  target_price?: number;
+  target_currency?: string;
   seller_reply?: string;
   replied_at?: string;
 }
@@ -72,6 +80,8 @@ export interface MarketplaceFilters {
   sex?: string;
   minAge?: number;
   maxAge?: number;
+  ageMonthsRange?: string; // e.g. "0-6", "6-12", "12-24", "24-60", "60+"
+  gaitType?: string; // P1, P2, P3, P4
   discipline?: string;
   country?: string;
   sortBy?: "newest" | "price_asc" | "price_desc" | "most_viewed";
@@ -80,9 +90,9 @@ export interface MarketplaceFilters {
 const LISTING_JOIN = `
   *,
   horses:horse_id (
-    id, name, breed, age, sex, color, discipline, image_url,
+    id, name, breed, age, birth_date, sex, color, discipline, image_url,
     location, trainer, wins, bloodline, story, temperament,
-    latest_achievement, badges, organization_id, code
+    latest_achievement, badges, organization_id, code, gait_type
   ),
   profiles:seller_id (
     name,
