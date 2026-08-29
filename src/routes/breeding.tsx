@@ -143,6 +143,7 @@ function EnterpriseBreedingPage() {
   const { data: stallions = [] } = useStallions();
   const { data: embryos = [] } = useEmbryos();
   const { data: events = [] } = useReproductiveEvents();
+  const { data: cycles = [] } = useBreedingCycles();
   const kpis = useLocalReproductionKPIs(mares, stallions, embryos, events);
   const updateMareStatus = useUpdateMareStatus();
   const { data: geneticBank = [] } = useGeneticBank();
@@ -215,7 +216,14 @@ function EnterpriseBreedingPage() {
       />
 
       {/* 3. Operational Intelligence Alerts & Recommendations (Req 13) */}
-      <OperationalIntelligenceAlerts />
+      <OperationalIntelligenceAlerts
+        mares={displayMares}
+        stallions={displayStallions}
+        cycles={cycles}
+        events={events}
+        onOpenAction={handleQuickAction}
+        onNavigateView={(view) => setActiveView(view as MainViewMode)}
+      />
 
       {/* 4. Main Navigation View Selector Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-border mb-8">
