@@ -1,16 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicShell } from "@/components/PublicShell";
 import { useListings } from "@/lib/hooks/useMarketplace";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2, MessageCircle, Sparkles } from "lucide-react";
 import { ReputationBadges } from "@/components/ReputationBadges";
 import { PriceForecastCard } from "@/components/hw/HWWidgets";
+import { useMemo, useState } from "react";
+import { Modal } from "@/components/modals/Modal";
+import { BuyerInquiryForm } from "@/components/marketplace/BuyerInquiryForm";
 
 export const Route = createFileRoute("/marketplace/sales")({
   component: SalesMarketplace,
 });
 
 function SalesMarketplace() {
-  const { data: listings = [], isLoading } = useListings("horse");
+  const { data: rawListings = [], isLoading } = useListings("horse");
+  const [inquiryTarget, setInquiryTarget] = useState<{ id: string; title: string } | null>(null);
+
+  // Only show active listings on public page
+  const listings = useMemo(
+    () => rawListings.filter((l) => {
+      const s = (l as any).listing_status || l.status;
+      return s === "Active" || s === "active";
+    }),
+    [rawListings]
+  );
+
+  // Build price forecast segments from real listing prices
+  const priceForecasts = useMemo(() => {
+    const prices = listings
+      .map((l) => Number(l.price) || 0)
+      .filter((p) => p > 0)
+      .sort((a, b) => b - a);
+    if (prices.length === 0) return [];
+    const count = Math.min(prices.length, 3);
+    return Array.from({ length: count }, (_, i) => {
+      const idx = Math.floor((i / count) * prices.length);
+      const p = prices[idx];
+      return { current: p, low: Math.round(p * 0.88), high: Math.round(p * 1.15), trend: i < count - 1 ? "up" as const : "down" as const };
+    });
+  }, [listings]);
+
 
   return (
     <PublicShell>
@@ -33,26 +62,21 @@ function SalesMarketplace() {
               · Holt-Winters · 90-day forecast
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <PriceForecastCard
-              current={185000}
-              forecastLow={170000}
-              forecastHigh={210000}
-              trend="up"
-            />
-            <PriceForecastCard
-              current={92000}
-              forecastLow={95000}
-              forecastHigh={120000}
-              trend="up"
-            />
-            <PriceForecastCard
-              current={245000}
-              forecastLow={200000}
-              forecastHigh={235000}
-              trend="down"
-            />
-          </div>
+          {priceForecasts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {priceForecasts.map((p, i) => (
+                <PriceForecastCard
+                  key={i}
+                  current={p.current}
+                  forecastLow={p.low}
+                  forecastHigh={p.high}
+                  trend={p.trend}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sin datos de precios activos todavía.</p>
+          )}
         </section>
 
         {isLoading ? (
@@ -119,10 +143,21 @@ function SalesMarketplace() {
                           Finca
                         </div>
                         <div className="text-sm">
-                          {(horse.location || "USA").split("·")[1]?.trim() || horse.location || "USA"}
+                          {(horse.location || "").split("·")[1]?.trim() || horse.location || ""}
                         </div>
                       </div>
                     </div>
+                    {/* Contactar button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setInquiryTarget({ id: l.id, title: title || "Ejemplar" });
+                      }}
+                      className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                      <MessageCircle className="h-4 w-4" /> Contactar al Vendedor
+                    </button>
                   </div>
                 </Link>
               );
@@ -130,6 +165,17 @@ function SalesMarketplace() {
           </div>
         )}
       </div>
+
+      {/* Buyer Inquiry Modal */}
+      {inquiryTarget && (
+        <Modal open={!!inquiryTarget} onClose={() => setInquiryTarget(null)} title="">
+          <BuyerInquiryForm
+            listingId={inquiryTarget.id}
+            listingTitle={inquiryTarget.title}
+            onClose={() => setInquiryTarget(null)}
+          />
+        </Modal>
+      )}
     </PublicShell>
   );
 }
