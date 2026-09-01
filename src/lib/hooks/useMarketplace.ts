@@ -96,7 +96,7 @@ const LISTING_JOIN = `
   horses:horse_id (
     id, name, breed, age, birth_date, sex, color, discipline, image_url,
     location, trainer, wins, bloodline, story, temperament,
-    latest_achievement, badges, organization_id, code, gait_type
+    latest_achievement, badges, organization_id, gait_type
   ),
   profiles:seller_id (
     name,
@@ -557,3 +557,4 @@ export function useReplyToInquiry() {
 }
 
 export { useApp } from "../store";
+
