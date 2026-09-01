@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { usePublicListings, useListings, useFavorites, useToggleFavorite, useApp, type EnterpriseListing } from "@/lib/hooks/useMarketplace";
 import { useState, useMemo } from "react";
@@ -191,6 +191,7 @@ function FilterSection({ title, children }: { title: string; children: React.Rea
 // ── Main Component ────────────────────────────────────────────────────────────
 function MarketplaceHome() {
   const { state } = useApp();
+  if (!state.user) return <Navigate to="/" />;
   const isLoggedIn = !!state.user;
   const navigate = useNavigate();
 
@@ -621,3 +622,4 @@ function MarketplaceHome() {
     </AppShell>
   );
 }
+

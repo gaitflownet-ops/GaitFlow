@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { useListings, useFavorites, useToggleFavorite } from "@/lib/hooks/useMarketplace";
+import { usePublicListings, useListings, useFavorites, useToggleFavorite } from "@/lib/hooks/useMarketplace";
+import { useApp } from "@/lib/store";
 import { ArrowLeft, MapPin, Tag, ShieldCheck, Stethoscope, Medal, Heart, Share2, Info, MessageCircle, FileText, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Modal } from "@/components/modals/Modal";
@@ -15,14 +16,23 @@ function ListingDetailPage() {
   const { listingId } = Route.useParams();
   const navigate = useNavigate();
   
-  const { data: listings = [], isLoading } = useListings();
+  const { state } = useApp();
+  if (!state.user) return <Navigate to="/" />;
+  const isLoggedIn = !!state.user;
+
+  const { data: publicData = [], isLoading: publicLoading } = usePublicListings();
+  const { data: privateData = [], isLoading: privateLoading } = useListings();
+  
+  const allListings = isLoggedIn ? privateData : publicData;
+  const isLoading = isLoggedIn ? privateLoading : publicLoading;
+
   const { data: favorites = [] } = useFavorites();
   const toggleFavorite = useToggleFavorite();
 
   const [inquiryType, setInquiryType] = useState<string | null>(null);
   const [currentImg, setCurrentImg] = useState(0);
 
-  const listing = listings.find((l) => l.id === listingId);
+  const listing = allListings.find((l: any) => l.id === listingId);
   const h = listing?.horses as any;
 
   if (isLoading) {
@@ -62,7 +72,12 @@ function ListingDetailPage() {
 
   const title = listing.title || h.name || "Ejemplar Premium";
   const isSold = listing.listing_status === "Sold" || listing.status === "Sold";
-  const priceText = listing.price ? `${listing.currency || "USD"} $${Number(listing.price).toLocaleString()}` : "Precio a consultar";
+  
+  const formatCOP = (p: number | null | undefined) =>
+    p ? `COP $${Number(p).toLocaleString("es-CO")}` : "Precio a consultar";
+
+  const priceText = formatCOP(listing.price);
+  const originalPriceText = listing.original_price ? formatCOP(listing.original_price) : null;
   
   const allImages = [];
   if (listing.images && listing.images.length > 0) allImages.push(...listing.images);
@@ -71,13 +86,38 @@ function ListingDetailPage() {
 
   const isFav = favorites.some((f: any) => f.listing_id === listing.id);
 
+  let ageDisplay = h.age ? `${h.age} años` : "No especificada";
+  if (h.birth_date) {
+    const bDate = new Date(h.birth_date);
+    const months = Math.floor((Date.now() - bDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+    ageDisplay = months < 24 ? `${months} meses` : `${Math.floor(months / 12)} años`;
+  }
+
   // Auto-generate some tags from horse data
   const tags = [
     h.breed,
     h.sex,
-    h.age ? `${h.age} años` : null,
+    ageDisplay !== "No especificada" ? ageDisplay : null,
     listing.discipline || h.discipline,
+    h.gait_type,
   ].filter(Boolean);
+
+  const handleFav = () => {
+    if (!isLoggedIn) {
+      alert("Inicia sesión para guardar en favoritos");
+      return;
+    }
+    toggleFavorite.mutate({ userId: state.user!.id, listingId: listing.id, isFav } as any);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title, url: window.location.href });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("URL copiada al portapapeles");
+    }
+  };
 
   return (
     <AppShell>
@@ -137,6 +177,15 @@ function ListingDetailPage() {
             </div>
           )}
 
+          {/* Tags */}
+          <div className="flex flex-wrap gap-2">
+            {tags.map((t, i) => (
+              <span key={i} className="px-3 py-1 bg-secondary text-secondary-foreground text-sm font-semibold rounded-lg border border-border">
+                {t}
+              </span>
+            ))}
+          </div>
+
           {/* Listing Description */}
           <section className="space-y-6">
             <h2 className="text-2xl font-display font-bold border-b border-border pb-4">Acerca de este ejemplar</h2>
@@ -178,7 +227,7 @@ function ListingDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Edad</p>
-                <p className="font-semibold">{h.age ? `${h.age} años` : "No especificada"}</p>
+                <p className="font-semibold">{ageDisplay}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Disciplina</p>
@@ -221,12 +270,15 @@ function ListingDetailPage() {
                 </span>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => toggleFavorite.mutate({ userId: "temp", listingId: listing.id, isFav })}
+                    onClick={handleFav}
                     className="p-2 rounded-full hover:bg-secondary transition-colors"
                   >
                     <Heart className={`h-5 w-5 transition-colors ${isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
                   </button>
-                  <button className="p-2 rounded-full hover:bg-secondary transition-colors">
+                  <button 
+                    onClick={handleShare}
+                    className="p-2 rounded-full hover:bg-secondary transition-colors"
+                  >
                     <Share2 className="h-5 w-5 text-muted-foreground" />
                   </button>
                 </div>
@@ -236,14 +288,14 @@ function ListingDetailPage() {
               
               <div className="mb-6">
                 <p className="text-sm text-muted-foreground uppercase tracking-widest mb-1">Precio de Inversión</p>
+                {originalPriceText && (
+                  <p className="text-sm font-semibold text-muted-foreground line-through mb-1">
+                    {originalPriceText}
+                  </p>
+                )}
                 <p className="text-4xl font-display font-bold text-foreground">
                   {priceText}
                 </p>
-                {listing.original_price && (
-                  <p className="text-sm font-semibold text-muted-foreground line-through mt-1">
-                    {listing.currency || "USD"} ${Number(listing.original_price).toLocaleString()}
-                  </p>
-                )}
                 {listing.discount_percentage && (
                   <span className="inline-block mt-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-red-500 text-white">
                     -{listing.discount_percentage}% Dcto
@@ -256,41 +308,15 @@ function ListingDetailPage() {
                 )}
               </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-8">
-                {tags.map((t, i) => (
-                  <span key={i} className="px-3 py-1 bg-secondary text-secondary-foreground text-xs font-semibold rounded-lg border border-border">
-                    {t}
-                  </span>
-                ))}
-              </div>
-
               {/* Action Buttons */}
-              {/* Actions */}
               <div className="space-y-3">
                 <button 
                   disabled={isSold}
                   onClick={() => setInquiryType("Quiero comprar")}
                   className="w-full py-3.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity text-center flex items-center justify-center gap-2"
                 >
-                  <Tag className="h-5 w-5" /> Quiero Comprar
+                  <MessageCircle className="h-5 w-5" /> Contactar al Vendedor
                 </button>
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    disabled={isSold}
-                    onClick={() => setInquiryType("Negociar precio")}
-                    className="py-3 bg-secondary text-foreground font-semibold rounded-xl hover:bg-secondary/80 disabled:opacity-50 transition-colors text-sm"
-                  >
-                    Hacer Oferta
-                  </button>
-                  <button 
-                    disabled={isSold}
-                    onClick={() => setInquiryType("Solicitar información")}
-                    className="py-3 border-2 border-border text-foreground font-semibold rounded-xl hover:bg-secondary disabled:opacity-50 transition-colors text-sm"
-                  >
-                    Consultar
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -302,15 +328,12 @@ function ListingDetailPage() {
                   {listing.organization_id ? "G" : "V"}
                 </div>
                 <div>
-                  <p className="font-semibold">Organización Verificada</p>
+                  <p className="font-semibold">{listing.profiles?.name || "Organización Verificada"}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                     <MapPin className="h-3 w-3" /> {(listing.location_country || "Colombia")}
                   </p>
                 </div>
               </div>
-              <button className="w-full mt-6 py-2 text-sm font-semibold text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
-                Ver más ejemplares
-              </button>
             </div>
             
           </div>
@@ -330,3 +353,4 @@ function ListingDetailPage() {
     </AppShell>
   );
 }
+
