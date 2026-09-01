@@ -28,6 +28,9 @@ export interface EnterpriseListing extends Listing {
   original_price?: number;
   discount_percentage?: number;
   is_promoted?: boolean;
+  sub_type?: string;
+  location_farm?: string;
+  is_negotiable?: boolean;
   horses?: {
     id?: string;
     name?: string;
@@ -74,17 +77,18 @@ export interface EnterpriseInquiry {
 export interface MarketplaceFilters {
   search?: string;
   type?: string;
+  subType?: string;
   minPrice?: number;
   maxPrice?: number;
   breed?: string;
   sex?: string;
-  minAge?: number;
-  maxAge?: number;
-  ageMonthsRange?: string; // e.g. "0-6", "6-12", "12-24", "24-60", "60+"
-  gaitType?: string; // P1, P2, P3, P4
+  ageRange?: string; // "0-3", "3-6", "6-12", "12-24", "24-60", "60-120", "120+"
+  gaitType?: string;
+  gaits?: string[];
   discipline?: string;
   country?: string;
-  sortBy?: "newest" | "price_asc" | "price_desc" | "most_viewed";
+  isNegotiable?: boolean;
+  sortBy?: "newest" | "price_asc" | "price_desc" | "most_viewed" | "promoted";
 }
 
 const LISTING_JOIN = `
@@ -551,3 +555,5 @@ export function useReplyToInquiry() {
     },
   });
 }
+
+export { useApp } from "../store";

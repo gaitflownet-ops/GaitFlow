@@ -25,13 +25,20 @@ interface Props {
   onSuccess?: () => void;
 }
 
-type ListingType = "horse" | "embryo" | "semen" | "breeding service";
+type ListingType = "horse" | "mare" | "stallion" | "foal_male" | "foal_female" | "donkey" | "mule" | "embryo" | "semen" | "oocyte" | "breeding_service";
 
 const TYPE_OPTIONS = [
-  { value: "horse", label: "Ejemplar", icon: ShoppingBag, desc: "Caballos, yeguas, potros, mulares..." },
+  { value: "horse", label: "Caballo", icon: ShoppingBag, desc: "Ejemplar equino general" },
+  { value: "mare", label: "Yegua", icon: ShoppingBag, desc: "Hembra adulta" },
+  { value: "stallion", label: "Semental", icon: ShoppingBag, desc: "Reproductor macho registrado" },
+  { value: "foal_male", label: "Potro", icon: ShoppingBag, desc: "Macho joven" },
+  { value: "foal_female", label: "Potranca", icon: ShoppingBag, desc: "Hembra joven" },
+  { value: "donkey", label: "Asnal", icon: ShoppingBag, desc: "Asno o burro" },
+  { value: "mule", label: "Mular", icon: ShoppingBag, desc: "Mulo o mula" },
   { value: "embryo", label: "Embrión", icon: Dna, desc: "Embriones del banco criogénico" },
   { value: "semen", label: "Semen", icon: Droplets, desc: "Material genético reproductivo" },
-  { value: "breeding service", label: "Salto", icon: Handshake, desc: "Servicio de monta de sementales" },
+  { value: "oocyte", label: "Ovocito", icon: Dna, desc: "Material reproductivo femenino" },
+  { value: "breeding_service", label: "Salto / Servicio", icon: Handshake, desc: "Servicio de monta o IA" },
 ] as const;
 
 export function PublishListingWizard({ onClose, onSuccess }: Props) {
@@ -55,6 +62,13 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
     original_price: "",
     negotiation_terms: "",
     description: "",
+    
+    // New Commercial Fields
+    location_country: "",
+    location_city: "",
+    location_farm: "",
+    sub_type: "",
+    is_negotiable: false,
     
     // Gallery
     images: [] as { file?: File; url: string; isMain: boolean }[],
@@ -161,6 +175,11 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
         listing_status: "Active",
         currency: form.currency,
         negotiation_terms: form.negotiation_terms || undefined,
+        location_country: form.location_country || undefined,
+        location_city: form.location_city || undefined,
+        location_farm: form.location_farm || undefined,
+        is_negotiable: form.is_negotiable,
+        sub_type: form.sub_type || undefined,
         images: allImageUrls,
         // Fallback for UI that still looks for single image inside horses join, though proper way is using listing.images
       } as any);
@@ -393,6 +412,37 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
           <div>
             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Descripción Detallada *</label>
             <textarea required rows={4} value={form.description} onChange={set("description")} placeholder="Vende las virtudes del ejemplar..." className="w-full px-4 py-2.5 text-sm bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">País *</label>
+              <select required value={form.location_country} onChange={set("location_country")} className="w-full px-4 py-2.5 text-sm bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40">
+                <option value="">Selecciona</option>
+                <option value="Colombia">Colombia</option>
+                <option value="México">México</option>
+                <option value="Estados Unidos">Estados Unidos</option>
+                <option value="Venezuela">Venezuela</option>
+                <option value="Ecuador">Ecuador</option>
+                <option value="Perú">Perú</option>
+                <option value="España">España</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Ciudad *</label>
+              <input required value={form.location_city} onChange={set("location_city")} placeholder="Ej. Medellín" className="w-full px-4 py-2.5 text-sm bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Finca/Criadero</label>
+              <input value={form.location_farm} onChange={set("location_farm")} placeholder="Ej. Criadero La Ilusión" className="w-full px-4 py-2.5 text-sm bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer mt-2 text-sm text-foreground">
+              <input type="checkbox" checked={form.is_negotiable} onChange={(e) => setForm(prev => ({ ...prev, is_negotiable: e.target.checked }))} className="w-4 h-4 rounded border-border text-primary focus:ring-primary/40" />
+              Es negociable
+            </label>
           </div>
         </div>
       )}
