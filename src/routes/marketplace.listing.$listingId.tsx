@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { usePublicListings, useListings, useFavorites, useToggleFavorite } from "@/lib/hooks/useMarketplace";
 import { useApp } from "@/lib/store";
@@ -353,4 +353,6 @@ function ListingDetailPage() {
     </AppShell>
   );
 }
+
+
 
