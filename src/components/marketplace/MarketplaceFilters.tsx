@@ -177,10 +177,10 @@ export function MarketplaceFilters({ filters, onChange, totalResults }: Props) {
               className="w-full px-3 py-2 text-sm bg-secondary border border-border rounded-lg focus:outline-none"
             >
               <option value="">Todos los andares</option>
-              <option value="p1">P1 — Paso Fino</option>
-              <option value="p2">P2 — Trote y Galope</option>
-              <option value="p3">P3 — Trocha</option>
-              <option value="p4">P4 — Trocha y Galope</option>
+              <option value="p1">P1 - Trote y Galope</option>
+              <option value="p2">P2 - Trocha y Galope</option>
+              <option value="p3">P3 - Trocha Pura</option>
+              <option value="p4">P4 - Paso Fino Colombiano</option>
             </select>
           </div>
 

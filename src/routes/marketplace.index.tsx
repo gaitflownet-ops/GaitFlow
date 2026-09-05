@@ -165,10 +165,10 @@ const BREEDS = [
 ];
 
 const GAITS = [
-  { id: "P1", label: "P1 — Paso Fino" },
-  { id: "P2", label: "P2 — Trote y Galope" },
-  { id: "P3", label: "P3 — Trocha" },
-  { id: "P4", label: "P4 — Trocha y Galope" },
+  { id: "P1", label: "P1 - Trote y Galope" },
+  { id: "P2", label: "P2 - Trocha y Galope" },
+  { id: "P3", label: "P3 - Trocha Pura" },
+  { id: "P4", label: "P4 - Paso Fino Colombiano" },
 ];
 
 // ── FilterSection ─────────────────────────────────────────────────────────────
