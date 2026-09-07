@@ -22,6 +22,7 @@ export interface EnterpriseListing extends Listing {
   sale_price?: number;
   featured?: boolean;
   images?: string[];
+  videos?: string[];
   discipline?: string;
   location_country?: string;
   location_city?: string;
@@ -222,6 +223,7 @@ export function useCreateListing() {
         location_country?: string;
         location_city?: string;
         images?: string[];
+        videos?: string[];
         listing_status?: string;
       }
     ) => {

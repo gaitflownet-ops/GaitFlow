@@ -15,6 +15,7 @@ import {
   Star
 } from "lucide-react";
 import { useCreateListing } from "@/lib/hooks/useMarketplace";
+import { supabase } from "@/lib/supabase";
 import { useHorses } from "@/lib/hooks/useHorses";
 import { useEmbryos } from "@/lib/hooks/useBreeding";
 import { toast } from "sonner";
@@ -25,7 +26,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-type ListingType = "horse" | "mare" | "stallion" | "foal_male" | "foal_female" | "donkey" | "mule" | "embryo" | "semen" | "oocyte" | "breeding_service";
+type ListingType = "horse" | "mare" | "stallion" | "foal_male" | "foal_female" | "donkey" | "mule" | "embryo" | "semen" | "oocyte" | "breeding_service" | "product";
 
 const TYPE_OPTIONS = [
   { value: "horse", label: "Caballo", icon: ShoppingBag, desc: "Ejemplar equino general" },
@@ -39,6 +40,7 @@ const TYPE_OPTIONS = [
   { value: "semen", label: "Semen", icon: Droplets, desc: "Material genético reproductivo" },
   { value: "oocyte", label: "Ovocito", icon: Dna, desc: "Material reproductivo femenino" },
   { value: "breeding_service", label: "Salto / Servicio", icon: Handshake, desc: "Servicio de monta o IA" },
+  { value: "product", label: "Producto ecuestre", icon: ShoppingBag, desc: "Equipos, suplementos y artículos relacionados" },
 ] as const;
 
 export function PublishListingWizard({ onClose, onSuccess }: Props) {
@@ -72,6 +74,7 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
     
     // Gallery
     images: [] as { file?: File; url: string; isMain: boolean }[],
+    videos: [] as { file?: File; url: string }[],
   });
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -115,7 +118,9 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
   };
 
   const addFilesToGallery = (files: File[]) => {
-    const newImages = files.map(file => ({
+    const imageFiles = files.filter((file) => !file.type.startsWith("video/"));
+    const videoFiles = files.filter((file) => file.type.startsWith("video/"));
+    const newImages = imageFiles.map(file => ({
       file,
       url: URL.createObjectURL(file),
       isMain: false
@@ -125,9 +130,18 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
       if (all.length > 0 && !all.some(i => i.isMain)) {
         all[0].isMain = true;
       }
-      return { ...prev, images: all };
+      return { ...prev, images: all, videos: [...prev.videos, ...videoFiles.map((file) => ({ file, url: URL.createObjectURL(file) }))] };
     });
   };
+
+  const uploadMedia = async (media: { file?: File; url: string }[], folder: string) => Promise.all(media.map(async (item) => {
+    if (!item.file) return item.url;
+    const extension = item.file.name.split(".").pop() || "bin";
+    const path = `marketplace/${state.user?.organization_id || "public"}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from("horse-documents").upload(path, item.file, { upsert: false, contentType: item.file.type });
+    if (error) throw new Error(`No pudimos subir ${folder}: ${error.message}`);
+    return supabase.storage.from("horse-documents").getPublicUrl(path).data.publicUrl;
+  }));
 
   const removeImage = (index: number) => {
     setForm(prev => {
@@ -149,12 +163,12 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
 
   const handlePublish = async () => {
     try {
-      const horseId = form.type === "horse" ? form.selectedHorseId || undefined
+      const horseId = ["horse", "mare", "stallion", "foal_male", "foal_female", "donkey", "mule"].includes(form.type) ? form.selectedHorseId || undefined
         : form.type === "embryo" ? (selectedEmbryo as any)?.horse_id || undefined
         : undefined;
 
-      const mainImageUrl = form.images.find(i => i.isMain)?.url || form.images[0]?.url;
-      const allImageUrls = form.images.map(i => i.url);
+      const allImageUrls = await uploadMedia(form.images, "las fotos");
+      const allVideoUrls = await uploadMedia(form.videos, "los videos");
 
       const priceNum = form.price ? Number(form.price) : 0;
       const originalPriceNum = form.original_price ? Number(form.original_price) : undefined;
@@ -181,6 +195,7 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
         is_negotiable: form.is_negotiable,
         sub_type: form.sub_type || undefined,
         images: allImageUrls,
+        videos: allVideoUrls,
         // Fallback for UI that still looks for single image inside horses join, though proper way is using listing.images
       } as any);
 
@@ -219,8 +234,8 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
 
   const canNext = () => {
     if (step === 1) return !!form.type;
-    if (step === 2) return form.type === "horse" ? !!form.selectedHorseId : form.type === "embryo" ? !!form.selectedEmbryoId : true;
-    if (step === 3) return form.images.length > 0;
+    if (step === 2) return ["horse", "mare", "stallion", "foal_male", "foal_female", "donkey", "mule"].includes(form.type) ? !!form.selectedHorseId : true;
+    if (step === 3) return form.images.length + form.videos.length > 0;
     if (step === 4) return !!form.title && !!form.price && !!form.description;
     return true;
   };
@@ -281,7 +296,7 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
         <div className="space-y-4 animate-in fade-in duration-300">
           <h4 className="font-semibold text-lg text-foreground mb-2">Selecciona desde tu inventario</h4>
           
-          {form.type === "horse" && (
+          {["horse", "mare", "stallion", "foal_male", "foal_female", "donkey", "mule"].includes(form.type) && (
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
               {horses.length === 0 ? (
                 <div className="text-center py-10 bg-secondary rounded-2xl">
@@ -314,7 +329,7 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
           )}
           
           {/* Implement embryo logic similar to previous version, truncated for brevity in this step... */}
-          {form.type !== "horse" && (
+          {!["horse", "mare", "stallion", "foal_male", "foal_female", "donkey", "mule"].includes(form.type) && (
              <div className="py-12 text-center bg-secondary rounded-2xl border border-dashed border-border">
                <Dna className="h-10 w-10 text-primary/50 mx-auto mb-3" />
                <p className="font-semibold text-foreground">Continuar al paso comercial</p>
@@ -369,6 +384,7 @@ export function PublishListingWizard({ onClose, onSuccess }: Props) {
                     )}
                   </div>
                 ))}
+                {form.videos.map((video, idx) => <div key={`video-${idx}`} className="relative aspect-square overflow-hidden rounded-xl border-2 border-border bg-black"><video src={video.url} className="h-full w-full object-cover" muted /><span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">VIDEO</span></div>)}
               </div>
             )}
           </div>
