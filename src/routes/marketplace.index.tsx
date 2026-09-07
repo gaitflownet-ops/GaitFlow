@@ -1,625 +1,103 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { ArrowRight, BadgeCheck, ChevronDown, Filter, Heart, MapPin, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { usePublicListings, useListings, useFavorites, useToggleFavorite, useApp, type EnterpriseListing } from "@/lib/hooks/useMarketplace";
-import { useState, useMemo } from "react";
-import { Search, Heart, MapPin, Filter, X, Star, Zap, Dna, ChevronDown, ChevronUp, Plus, SlidersHorizontal } from "lucide-react";
 import { Modal } from "@/components/modals/Modal";
 import { PublishListingWizard } from "@/components/marketplace/PublishListingWizard";
+import { type EnterpriseListing, useFavorites, usePublicListings, useToggleFavorite } from "@/lib/hooks/useMarketplace";
+import { useApp } from "@/lib/store";
 
-export const Route = createFileRoute("/marketplace/")({  
-  head: () => ({
-    meta: [{ title: "Marketplace — GaitFlow" }],
-  }),
+export const Route = createFileRoute("/marketplace/")({
+  head: () => ({ meta: [{ title: "Remates | GaitFlow" }] }),
   component: MarketplaceHome,
 });
 
-// ── Listing Card ────────────────────────────────────────────────────────────
-function ListingGridCard({
-  listing,
-  isFavorite,
-  onToggleFavorite,
-  isLoggedIn,
-}: {
-  listing: EnterpriseListing;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
-  isLoggedIn?: boolean;
-}) {
-  const navigate = useNavigate();
-  const [imgError, setImgError] = useState(false);
-  const h = listing.horses as any;
-  const title = listing.title || h?.name || "Ejemplar Premium";
-  
-  const formatCOP = (p: number | null | undefined) =>
-    p ? `COP ${Number(p).toLocaleString("es-CO")}` : "Consultar precio";
-
-  const price = formatCOP(listing.price);
-  const originalPrice = listing.original_price ? formatCOP(listing.original_price) : null;
-
-  const fallbackImg = "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&q=80&w=800";
-  let imageUrl = fallbackImg;
-  if (!imgError) {
-    if (listing.images && listing.images.length > 0) imageUrl = listing.images[0];
-    else if (h?.image_url) imageUrl = h.image_url;
-  }
-
-  let ageDisplay = "";
-  if (h?.birth_date) {
-    const bDate = new Date(h.birth_date);
-    const months = Math.floor((Date.now() - bDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
-    ageDisplay = months < 24 ? `${months}m` : `${Math.floor(months / 12)}a`;
-  } else if (h?.age) {
-    ageDisplay = `${h.age}a`;
-  }
-
-  const isSold = listing.listing_status === "Sold" || listing.status === "Sold";
-
-  const handleFav = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isLoggedIn) {
-      alert("Inicia sesión para guardar en favoritos");
-      return;
-    }
-    onToggleFavorite?.();
-  };
-
-  return (
-    <div className="flex flex-col bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow group cursor-pointer" onClick={() => navigate({ to: `/marketplace/listing/$listingId`, params: { listingId: listing.id } })}>
-      {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-        <img
-          src={imageUrl}
-          alt={title}
-          onError={() => setImgError(true)}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {/* Badges */}
-        {listing.discount_percentage && !isSold && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-            -{listing.discount_percentage}%
-          </div>
-        )}
-        {isSold ? (
-          <div className="absolute top-2 right-2 bg-zinc-800/90 text-white text-[10px] font-bold px-2 py-0.5 rounded">VENDIDO</div>
-        ) : listing.is_promoted ? (
-          <div className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-            <Star className="w-3 h-3 fill-white" /> Destacado
-          </div>
-        ) : null}
-        {/* Fav button */}
-        <button
-          onClick={handleFav}
-          className="absolute bottom-2 right-2 p-1.5 bg-background/80 backdrop-blur-sm rounded-full hover:bg-background transition-colors"
-        >
-          <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-        </button>
-      </div>
-      {/* Info */}
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-base line-clamp-1 text-foreground">{title}</h3>
-        {/* Chips */}
-        <div className="flex flex-wrap gap-1 mt-2">
-          {h?.breed && <span className="bg-secondary text-[10px] font-medium px-2 py-0.5 rounded text-muted-foreground">{h.breed}</span>}
-          {ageDisplay && <span className="bg-secondary text-[10px] font-medium px-2 py-0.5 rounded text-muted-foreground">{ageDisplay}</span>}
-          {h?.sex && <span className="bg-secondary text-[10px] font-medium px-2 py-0.5 rounded text-muted-foreground">{h.sex}</span>}
-          {(h as any)?.gait_type && <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded">{(h as any).gait_type}</span>}
-        </div>
-        {/* Price */}
-        <div className="mt-3">
-          {originalPrice && !isSold && <div className="text-xs text-muted-foreground line-through">{originalPrice}</div>}
-          <div className="text-xl font-bold text-foreground">{isSold ? "VENDIDO" : price}</div>
-          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-            <MapPin className="w-3 h-3 shrink-0" />
-            {listing.location_city ? `${listing.location_city}, ` : ""}{listing.location_country || "Colombia"}
-          </div>
-        </div>
-        {/* CTA */}
-        <div className="mt-3">
-          <div className="w-full bg-primary/10 text-primary text-sm font-semibold text-center py-2 rounded-lg hover:bg-primary/20 transition-colors">
-            Ver ficha completa
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Categories ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: "all", label: "Todos", emoji: "🏇" },
-  { id: "horse", label: "Caballos", emoji: "🐎" },
-  { id: "mare", label: "Yeguas", emoji: "🐴" },
-  { id: "stallion", label: "Sementales", emoji: "👑" },
-  { id: "foal_male", label: "Potros", emoji: "⚡" },
-  { id: "foal_female", label: "Potrancas", emoji: "✨" },
-  { id: "donkey", label: "Asnales", emoji: "🫏" },
-  { id: "mule", label: "Mulares", emoji: "🦌" },
-  { id: "embryo", label: "Embriones", emoji: "🧬" },
-  { id: "semen", label: "Semen", emoji: "💉" },
-  { id: "oocyte", label: "Ovocitos", emoji: "🔬" },
-  { id: "breeding_service", label: "Saltos", emoji: "🤝" },
+  { id: "all", label: "Todo el catálogo" }, { id: "horse", label: "Ejemplares" },
+  { id: "stallion", label: "Reproductores" }, { id: "mare", label: "Yeguas" },
+  { id: "breeding_service", label: "Saltos" }, { id: "embryo", label: "Genética" },
 ];
 
-const AGE_RANGES = [
-  { id: "", label: "Cualquier edad" },
-  { id: "0-3", label: "0 a 3 meses" },
-  { id: "3-6", label: "3 a 6 meses" },
-  { id: "6-12", label: "6 a 12 meses" },
-  { id: "12-24", label: "1 a 2 años" },
-  { id: "24-60", label: "2 a 5 años" },
-  { id: "60-120", label: "5 a 10 años" },
-  { id: "120+", label: "Más de 10 años" },
-];
+const formatPrice = (price: number | null | undefined, currency = "COP") =>
+  !price ? "Precio a consultar" : new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(price));
 
-const BREEDS = [
-  "",
-  "Criollo Colombiano",
-  "Cuarto de Milla",
-  "Paso Fino",
-  "Trotón Galopero",
-  "Pura Sangre Inglés",
-  "Warmblood",
-  "Árabe",
-  "Appaloosa",
-  "Otra",
-];
+const matchesCategory = (listing: EnterpriseListing, category: string) => {
+  if (category === "all") return true;
+  const type = listing.type?.toLowerCase();
+  const subtype = listing.sub_type?.toLowerCase();
+  const sex = listing.horses?.sex?.toLowerCase();
+  if (category === "stallion") return subtype === "stallion" || subtype === "semental" || sex === "macho";
+  if (category === "mare") return subtype === "mare" || sex === "hembra";
+  if (category === "breeding_service") return type === "breeding service" || type === "breeding_service";
+  if (category === "embryo") return ["embryo", "semen", "oocyte"].includes(type || "");
+  return type === category;
+};
 
-const GAITS = [
-  { id: "P1", label: "P1 - Trote y Galope" },
-  { id: "P2", label: "P2 - Trocha y Galope" },
-  { id: "P3", label: "P3 - Trocha Pura" },
-  { id: "P4", label: "P4 - Paso Fino Colombiano" },
-];
+function ListingCard({ listing, favorite, onFavorite }: { listing: EnterpriseListing; favorite: boolean; onFavorite: () => void }) {
+  const navigate = useNavigate();
+  const horse = listing.horses;
+  const title = listing.title || horse?.name || "Ejemplar GaitFlow";
+  const image = listing.images?.[0] || horse?.image_url || "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&q=85&w=1200";
+  const location = [listing.location_city, listing.location_country].filter(Boolean).join(", ") || horse?.location || "Ubicación por confirmar";
+  const tags = [horse?.breed, horse?.age ? `${horse.age} años` : null, horse?.sex].filter(Boolean);
 
-// ── FilterSection ─────────────────────────────────────────────────────────────
-function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="border-b border-border pb-4 last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full py-2 text-sm font-semibold"
-      >
-        {title}
-        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-      </button>
-      {open && <div className="mt-3">{children}</div>}
+  return <article className="group cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl" onClick={() => navigate({ to: "/marketplace/listing/$listingId", params: { listingId: listing.id } })}>
+    <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+      <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent" />
+      <div className="absolute left-3 top-3 flex items-center gap-2">
+        {listing.is_promoted && <span className="rounded-full bg-[var(--gold)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-black">Destacado</span>}
+        {listing.discount_percentage ? <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold text-white">-{listing.discount_percentage}%</span> : null}
+      </div>
+      <button type="button" aria-label={favorite ? "Quitar de favoritos" : "Guardar en favoritos"} onClick={(event) => { event.stopPropagation(); onFavorite(); }} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-slate-800 shadow-sm backdrop-blur transition hover:scale-105"><Heart className={`h-4 w-4 ${favorite ? "fill-red-500 text-red-500" : ""}`} /></button>
+      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur"><BadgeCheck className="h-3.5 w-3.5 text-[var(--gold)]" /> Ficha publicada</div>
     </div>
-  );
+    <div className="p-5">
+      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">{listing.type || "Ejemplar"}</p>
+      <h2 className="truncate font-display text-2xl text-foreground">{title}</h2>
+      <div className="mt-3 flex min-h-6 flex-wrap gap-1.5">{tags.map((tag) => <span key={tag} className="rounded-md bg-secondary px-2 py-1 text-[11px] text-muted-foreground">{tag}</span>)}</div>
+      <div className="mt-4 flex items-end justify-between gap-3 border-t border-border pt-4"><div><p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Valor publicado</p>{listing.original_price && <p className="text-xs text-muted-foreground line-through">{formatPrice(listing.original_price, listing.currency)}</p>}<p className="font-display text-xl text-foreground">{formatPrice(listing.price, listing.currency)}</p></div><ArrowRight className="mb-1 h-5 w-5 text-primary transition-transform group-hover:translate-x-1" /></div>
+      <p className="mt-3 flex items-center gap-1.5 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" />{location}</p>
+    </div>
+  </article>;
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 function MarketplaceHome() {
-  const { state } = useApp();
-  if (!state.user) return <Navigate to="/" />;
-  const isLoggedIn = !!state.user;
   const navigate = useNavigate();
-
-  // Use public listings (no auth required) — falls back to useListings if public query fails
-  const { data: publicData = [], isLoading: publicLoading } = usePublicListings();
-  const { data: privateData = [], isLoading: privateLoading } = useListings();
-  
-  // For logged-in users, merge private (all statuses) with public. For visitors, only public.
-  const allListings = isLoggedIn ? privateData : publicData;
-  const isLoading = isLoggedIn ? privateLoading : publicLoading;
-
+  const { state } = useApp();
+  const { data: listings = [], isLoading } = usePublicListings();
   const { data: favorites = [] } = useFavorites();
-  const toggleFav = useToggleFavorite();
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-
-  // ── State: unified filters ──
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [filters, setFilters] = useState({
-    breed: "",
-    gaits: [] as string[],
-    ageRange: "",
-    minPrice: "",
-    maxPrice: "",
-    country: "",
-    isNegotiable: false,
-  });
-  const [sortBy, setSortBy] = useState("recent");
-
-  const activeListings = useMemo(() => {
-    return allListings.filter(l => {
-      const st = (l as any).listing_status || l.status;
-      return !st || st === "Active" || st === "active";
-    });
-  }, [allListings]);
-
+  const toggleFavorite = useToggleFavorite();
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("recent");
+  const [showFilters, setShowFilters] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
+  const [breed, setBreed] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const activeListings = useMemo(() => listings.filter((item) => (item.listing_status || item.status || "Active").toLowerCase() === "active"), [listings]);
   const filteredListings = useMemo(() => {
-    let res = [...activeListings];
-
-    // Search
-    if (searchTerm) {
-      const s = searchTerm.toLowerCase();
-      res = res.filter(l =>
-        l.title?.toLowerCase().includes(s) ||
-        l.horses?.name?.toLowerCase().includes(s) ||
-        l.horses?.breed?.toLowerCase().includes(s) ||
-        l.description?.toLowerCase().includes(s)
-      );
-    }
-
-    // Category chip — maps to listing.type or listing.sub_type
-    if (activeCategory !== "all") {
-      res = res.filter(l => {
-        const t = l.type?.toLowerCase();
-        const st = (l as any).sub_type?.toLowerCase();
-        if (activeCategory === "horse") return t === "horse" && !st;
-        if (activeCategory === "mare") return t === "horse" && (st === "mare" || l.horses?.sex === "Hembra");
-        if (activeCategory === "stallion") return t === "horse" && (st === "stallion" || st === "semental");
-        if (activeCategory === "foal_male") return t === "horse" && (st === "foal_male" || st === "potro");
-        if (activeCategory === "foal_female") return t === "horse" && (st === "foal_female" || st === "potranca");
-        if (activeCategory === "donkey") return t === "donkey" || st === "donkey" || st === "asnal";
-        if (activeCategory === "mule") return t === "mule" || st === "mule" || st === "mular";
-        if (activeCategory === "embryo") return t === "embryo";
-        if (activeCategory === "semen") return t === "semen";
-        if (activeCategory === "oocyte") return t === "oocyte" || st === "oocyte";
-        if (activeCategory === "breeding_service") return t === "breeding service" || t === "breeding_service";
-        return t === activeCategory || st === activeCategory;
-      });
-    }
-
-    // Breed
-    if (filters.breed) {
-      res = res.filter(l => l.horses?.breed?.toLowerCase() === filters.breed.toLowerCase());
-    }
-
-    // Gaits
-    if (filters.gaits.length > 0) {
-      res = res.filter(l => {
-        const gt = (l.horses as any)?.gait_type;
-        return gt && filters.gaits.some(g => gt.includes(g));
-      });
-    }
-
-    // Age range (months)
-    if (filters.ageRange) {
-      res = res.filter(l => {
-        const h = l.horses as any;
-        let months = 0;
-        if (h?.birth_date) {
-          months = Math.floor((Date.now() - new Date(h.birth_date).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
-        } else if (h?.age) {
-          months = h.age * 12;
-        }
-        const [minStr, maxStr] = filters.ageRange.split("-");
-        const min = Number(minStr);
-        if (filters.ageRange.endsWith("+")) return months >= min;
-        const max = Number(maxStr);
-        return months >= min && months <= max;
-      });
-    }
-
-    // Price
-    if (filters.minPrice) res = res.filter(l => Number(l.price) >= Number(filters.minPrice));
-    if (filters.maxPrice) res = res.filter(l => Number(l.price) <= Number(filters.maxPrice));
-
-    // Country
-    if (filters.country) res = res.filter(l => l.location_country === filters.country);
-
-    // Negotiable
-    if (filters.isNegotiable) res = res.filter(l => (l as any).is_negotiable || l.negotiation_terms);
-
-    // Sort
-    if (sortBy === "price_asc") res.sort((a, b) => Number(a.price) - Number(b.price));
-    else if (sortBy === "price_desc") res.sort((a, b) => Number(b.price) - Number(a.price));
-    else if (sortBy === "promoted") res.sort((a, b) => (b.is_promoted ? 1 : 0) - (a.is_promoted ? 1 : 0));
-
-    return res;
-  }, [activeListings, searchTerm, activeCategory, filters, sortBy]);
-
-  const promotedListings = useMemo(() => filteredListings.filter(l => l.is_promoted), [filteredListings]);
-  const geneticsListings = useMemo(() => activeListings.filter(l => l.type === "embryo" || l.type === "semen" || (l.type as any) === "oocyte"), [activeListings]);
-  const discountListings = useMemo(() => activeListings.filter(l => (l.discount_percentage || 0) > 0), [activeListings]);
-
-  const clearFilters = () => {
-    setFilters({ breed: "", gaits: [], ageRange: "", minPrice: "", maxPrice: "", country: "", isNegotiable: false });
-    setSearchTerm("");
-    setActiveCategory("all");
-    setSortBy("recent");
+    const term = search.trim().toLowerCase();
+    const result = activeListings.filter((listing) => {
+      const text = [listing.title, listing.description, listing.horses?.name, listing.horses?.breed, listing.location_city, listing.location_country].filter(Boolean).join(" ").toLowerCase();
+      return (!term || text.includes(term)) && matchesCategory(listing, category) && (!breed || listing.horses?.breed?.toLowerCase().includes(breed.toLowerCase())) && (!maxPrice || !listing.price || Number(listing.price) <= Number(maxPrice));
+    });
+    return result.sort((a, b) => sort === "price-low" ? Number(a.price || 0) - Number(b.price || 0) : sort === "price-high" ? Number(b.price || 0) - Number(a.price || 0) : sort === "featured" ? Number(Boolean(b.is_promoted)) - Number(Boolean(a.is_promoted)) : new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [activeListings, breed, category, maxPrice, search, sort]);
+  const favoriteIds = new Set(favorites.map((favorite) => favorite.listing_id));
+  const hasFilters = Boolean(search || category !== "all" || breed || maxPrice);
+  const featured = filteredListings.filter((listing) => listing.is_promoted).slice(0, 3);
+  const clearFilters = () => { setSearch(""); setCategory("all"); setBreed(""); setMaxPrice(""); };
+  const handleFavorite = (listingId: string) => {
+    if (!state.user) { navigate({ to: "/login" }); return; }
+    toggleFavorite.mutate({ userId: state.user.id, listingId, isFav: favoriteIds.has(listingId) });
   };
 
-  const toggleGait = (g: string) => setFilters(prev => ({
-    ...prev,
-    gaits: prev.gaits.includes(g) ? prev.gaits.filter(x => x !== g) : [...prev.gaits, g]
-  }));
-
-  const hasActiveFilters = searchTerm || activeCategory !== "all" || filters.breed || filters.gaits.length > 0 || filters.ageRange || filters.minPrice || filters.maxPrice || filters.country || filters.isNegotiable;
-
-  const favIds = useMemo(() => new Set(favorites.map((f: any) => f.listing_id)), [favorites]);
-
-  const SidebarFilters = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-base flex items-center gap-2"><SlidersHorizontal className="w-4 h-4" /> Filtros</h3>
-        {hasActiveFilters && (
-          <button onClick={clearFilters} className="text-xs text-primary hover:underline flex items-center gap-1">
-            <X className="w-3 h-3" /> Limpiar
-          </button>
-        )}
-      </div>
-
-      <FilterSection title="Raza">
-        <select
-          value={filters.breed}
-          onChange={e => setFilters({ ...filters, breed: e.target.value })}
-          className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          {BREEDS.map(b => <option key={b} value={b}>{b || "Todas las razas"}</option>)}
-        </select>
-      </FilterSection>
-
-      <FilterSection title="Andar CCC">
-        <div className="space-y-2">
-          {GAITS.map(g => (
-            <label key={g.id} className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.gaits.includes(g.id)}
-                onChange={() => toggleGait(g.id)}
-                className="rounded border-border text-primary accent-primary"
-              />
-              {g.label}
-            </label>
-          ))}
-        </div>
-      </FilterSection>
-
-      <FilterSection title="Edad">
-        <select
-          value={filters.ageRange}
-          onChange={e => setFilters({ ...filters, ageRange: e.target.value })}
-          className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          {AGE_RANGES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-        </select>
-      </FilterSection>
-
-      <FilterSection title="Precio (COP)">
-        <div className="space-y-2">
-          <input
-            type="number"
-            placeholder="Precio mínimo"
-            value={filters.minPrice}
-            onChange={e => setFilters({ ...filters, minPrice: e.target.value })}
-            className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            placeholder="Precio máximo"
-            value={filters.maxPrice}
-            onChange={e => setFilters({ ...filters, maxPrice: e.target.value })}
-            className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
-          />
-        </div>
-      </FilterSection>
-
-      <FilterSection title="Ubicación">
-        <select
-          value={filters.country}
-          onChange={e => setFilters({ ...filters, country: e.target.value })}
-          className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="">Todos los países</option>
-          <option value="Colombia">Colombia</option>
-          <option value="México">México</option>
-          <option value="Estados Unidos">Estados Unidos</option>
-          <option value="Venezuela">Venezuela</option>
-          <option value="Ecuador">Ecuador</option>
-          <option value="Perú">Perú</option>
-          <option value="España">España</option>
-        </select>
-      </FilterSection>
-
-      <FilterSection title="Condiciones">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filters.isNegotiable}
-            onChange={e => setFilters({ ...filters, isNegotiable: e.target.checked })}
-            className="rounded border-border accent-primary"
-          />
-          Solo negociables
-        </label>
-      </FilterSection>
-    </div>
-  );
-
-  return (
-    <AppShell>
-      <div className="max-w-7xl mx-auto px-4 py-6 w-full space-y-6">
-
-        {/* ── Top Bar: Search + Publish Button ── */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* Search */}
-          <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-2.5 shadow-sm">
-            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar ejemplares, razas, ubicaciones..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-sm"
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="p-0.5 hover:bg-secondary rounded">
-                <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-          {/* Publish CTA — solo visible para usuarios logueados */}
-          {isLoggedIn && (
-            <button
-              onClick={() => setShowPublishModal(true)}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" /> Publicar ejemplar
-            </button>
-          )}
-          {/* Mobile filter toggle */}
-          <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="lg:hidden flex items-center gap-2 border border-border rounded-xl px-4 py-2.5 text-sm font-medium"
-          >
-            <Filter className="w-4 h-4" /> Filtros
-            {hasActiveFilters && <span className="w-2 h-2 bg-primary rounded-full" />}
-          </button>
-        </div>
-
-        {/* ── Category Chips ── */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                activeCategory === cat.id
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-foreground border-border hover:border-primary/50"
-              }`}
-            >
-              <span>{cat.emoji}</span> {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Main Layout: Sidebar + Grid ── */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-          {/* Sidebar */}
-          <aside className={`${
-            showMobileFilters ? "block" : "hidden"
-          } lg:block w-full lg:w-[260px] shrink-0 bg-card border border-border rounded-xl p-5 sticky top-24`}>
-            <SidebarFilters />
-          </aside>
-
-          {/* Grid Area */}
-          <div className="flex-1 min-w-0 space-y-10">
-
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card border border-border rounded-xl px-4 py-3">
-              <p className="text-sm">
-                <span className="font-bold text-foreground">{filteredListings.length}</span>
-                <span className="text-muted-foreground"> resultado{filteredListings.length !== 1 ? "s" : ""}</span>
-                {hasActiveFilters && (
-                  <button onClick={clearFilters} className="ml-3 text-xs text-primary hover:underline">
-                    Limpiar filtros
-                  </button>
-                )}
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Ordenar:</span>
-                <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value)}
-                  className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm outline-none"
-                >
-                  <option value="recent">Más recientes</option>
-                  <option value="price_asc">Menor precio</option>
-                  <option value="price_desc">Mayor precio</option>
-                  <option value="promoted">Destacados primero</option>
-                </select>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 animate-pulse">
-                {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-[3/4] bg-secondary rounded-xl" />)}
-              </div>
-            ) : filteredListings.length === 0 ? (
-              <div className="py-24 text-center flex flex-col items-center gap-4">
-                <Search className="w-14 h-14 text-muted-foreground/30" />
-                <h3 className="text-xl font-bold">Sin resultados</h3>
-                <p className="text-muted-foreground text-sm max-w-sm">
-                  No encontramos publicaciones con esos criterios. Intenta ajustar los filtros.
-                </p>
-                <button onClick={clearFilters} className="px-6 py-2 bg-secondary rounded-full text-sm font-medium hover:bg-secondary/80 transition-colors">
-                  Ver todo el catálogo
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-14">
-
-                {/* Destacados */}
-                {promotedListings.length > 0 && (
-                  <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                      <Star className="w-5 h-5 fill-amber-500 text-amber-500" />
-                      <h2 className="text-lg font-bold">Destacados</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                      {promotedListings.slice(0, 3).map(l => (
-                        <ListingGridCard
-                          key={l.id} listing={l}
-                          isFavorite={favIds.has(l.id)}
-                          onToggleFavorite={() => toggleFav.mutate({ userId: state.user!.id, listingId: l.id, isFav: favIds.has(l.id) } as any)}
-                          isLoggedIn={isLoggedIn}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Main Grid */}
-                <section className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {filteredListings.map(l => (
-                      <ListingGridCard
-                        key={l.id} listing={l}
-                        isFavorite={favIds.has(l.id)}
-                        onToggleFavorite={() => toggleFav.mutate({ userId: state.user!.id, listingId: l.id, isFav: favIds.has(l.id) } as any)}
-                        isLoggedIn={isLoggedIn}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                {/* Genética */}
-                {geneticsListings.length > 0 && activeCategory === "all" && (
-                  <section className="space-y-4 pt-6 border-t border-border">
-                    <div className="flex items-center gap-2 text-primary">
-                      <Dna className="w-5 h-5" />
-                      <h2 className="text-lg font-bold">Genética Premium</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                      {geneticsListings.slice(0, 3).map(l => (
-                        <ListingGridCard key={l.id} listing={l} isLoggedIn={isLoggedIn} />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Oportunidades */}
-                {discountListings.length > 0 && activeCategory === "all" && (
-                  <section className="space-y-4 pt-6 border-t border-border">
-                    <div className="flex items-center gap-2 text-red-500">
-                      <Zap className="w-5 h-5" />
-                      <h2 className="text-lg font-bold">Oportunidades y Descuentos</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                      {discountListings.slice(0, 3).map(l => (
-                        <ListingGridCard key={l.id} listing={l} isLoggedIn={isLoggedIn} />
-                      ))}
-                    </div>
-                  </section>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Publish Wizard Modal */}
-      {isLoggedIn && (
-        <Modal open={showPublishModal} onOpenChange={setShowPublishModal} title="Publicar en Marketplace">
-          <PublishListingWizard onClose={() => setShowPublishModal(false)} onSuccess={() => setShowPublishModal(false)} />
-        </Modal>
-      )}
-    </AppShell>
-  );
+  return <AppShell><div className="mx-auto max-w-7xl space-y-8">
+    <section className="relative overflow-hidden rounded-3xl bg-[linear-gradient(125deg,oklch(0.19_0.025_55),oklch(0.27_0.04_60))] px-6 py-10 text-white shadow-xl sm:px-10 sm:py-14"><div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[var(--gold)]/15 blur-3xl" /><div className="relative max-w-2xl"><p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold tracking-[0.16em] text-[var(--gold)]"><Sparkles className="h-3.5 w-3.5" /> REMATES GAITFLOW</p><h1 className="font-display text-4xl leading-tight sm:text-5xl">Encuentra el siguiente gran capítulo de tu criadero.</h1><p className="mt-4 max-w-xl text-sm leading-6 text-white/75 sm:text-base">Explora ejemplares, reproductores y genética con información clara para tomar decisiones de compra con criterio.</p><div className="mt-7 flex flex-wrap gap-3 text-xs text-white/80"><span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-[var(--gold)]" /> Publicaciones activas</span><span className="inline-flex items-center gap-1.5"><BadgeCheck className="h-4 w-4 text-[var(--gold)]" /> Fichas para comparar</span></div></div></section>
+    <section className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex flex-col gap-3 lg:flex-row"><label className="flex flex-1 items-center gap-3 rounded-xl bg-secondary px-4 py-3" aria-label="Buscar en remates"><Search className="h-5 w-5 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Busca por ejemplar, raza, disciplina o ubicación" />{search && <button type="button" onClick={() => setSearch("")} aria-label="Limpiar búsqueda"><X className="h-4 w-4 text-muted-foreground" /></button>}</label><button type="button" onClick={() => setShowFilters((open) => !open)} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${showFilters || hasFilters ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"}`}><SlidersHorizontal className="h-4 w-4" /> Filtros</button><button type="button" onClick={() => setShowPublish(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"><Plus className="h-4 w-4" /> Publicar</button></div>{showFilters && <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-3"><input value={breed} onChange={(event) => setBreed(event.target.value)} className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" placeholder="Filtrar por raza" /><input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} type="number" min="0" className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" placeholder="Precio máximo (COP)" /><button type="button" onClick={clearFilters} className="rounded-xl border border-border px-3 py-2.5 text-sm font-medium hover:bg-secondary">Limpiar filtros</button></div>}</section>
+    <div className="flex gap-2 overflow-x-auto pb-1">{CATEGORIES.map((item) => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${category === item.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary/40"}`}>{item.label}</button>)}</div>
+    {featured.length > 0 && !hasFilters && <section><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--gold)]">Selección curada</p><h2 className="font-display text-3xl">Destacados de la semana</h2></div><span className="hidden text-sm text-muted-foreground sm:block">Publicaciones con mayor visibilidad</span></div><div className="grid gap-5 md:grid-cols-3">{featured.map((listing) => <ListingCard key={listing.id} listing={listing} favorite={favoriteIds.has(listing.id)} onFavorite={() => handleFavorite(listing.id)} />)}</div></section>}
+    <section><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-display text-3xl">Catálogo de remates</h2><p className="mt-1 text-sm text-muted-foreground">{filteredListings.length} {filteredListings.length === 1 ? "publicación disponible" : "publicaciones disponibles"}</p></div><label className="inline-flex items-center gap-2 text-sm text-muted-foreground">Ordenar <ChevronDown className="-mr-8 h-4 w-4 pointer-events-none" /><select value={sort} onChange={(event) => setSort(event.target.value)} className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-9 text-sm text-foreground outline-none"><option value="recent">Más recientes</option><option value="featured">Destacados</option><option value="price-low">Menor precio</option><option value="price-high">Mayor precio</option></select></label></div>{isLoading ? <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-[380px] animate-pulse rounded-2xl bg-secondary" />)}</div> : filteredListings.length ? <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{filteredListings.map((listing) => <ListingCard key={listing.id} listing={listing} favorite={favoriteIds.has(listing.id)} onFavorite={() => handleFavorite(listing.id)} />)}</div> : <div className="rounded-2xl border border-dashed border-border py-20 text-center"><Filter className="mx-auto h-9 w-9 text-muted-foreground" /><h3 className="mt-4 font-display text-2xl">No encontramos coincidencias</h3><p className="mt-2 text-sm text-muted-foreground">Prueba con otra búsqueda o ajusta los filtros.</p><button type="button" onClick={clearFilters} className="mt-5 text-sm font-semibold text-primary hover:underline">Ver todo el catálogo</button></div>}</section>
+  </div><Modal open={showPublish} onOpenChange={setShowPublish} title="Publicar en Remates"><PublishListingWizard onClose={() => setShowPublish(false)} onSuccess={() => setShowPublish(false)} /></Modal></AppShell>;
 }
-
