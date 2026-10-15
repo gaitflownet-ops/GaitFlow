@@ -7,6 +7,7 @@ interface Props {
   listing: EnterpriseListing;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onViewDetail?: () => void;
 }
 
 export function ListingCard({ listing, isFavorite, onToggleFavorite }: Props) {

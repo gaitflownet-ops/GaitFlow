@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { usePublicListings, useListings, useFavorites, useToggleFavorite } from "@/lib/hooks/useMarketplace";
+import { useListing, useFavorites, useToggleFavorite } from "@/lib/hooks/useMarketplace";
 import { useApp } from "@/lib/store";
 import { ArrowLeft, MapPin, Tag, ShieldCheck, Stethoscope, Medal, Heart, Share2, Info, MessageCircle, FileText, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -20,20 +20,14 @@ function ListingDetailPage() {
   if (!state.user) return <Navigate to="/" />;
   const isLoggedIn = !!state.user;
 
-  const { data: publicData = [], isLoading: publicLoading } = usePublicListings();
-  const { data: privateData = [], isLoading: privateLoading } = useListings();
-  
-  const allListings = isLoggedIn ? privateData : publicData;
-  const isLoading = isLoggedIn ? privateLoading : publicLoading;
+  const { data: listing, isLoading } = useListing(listingId);
+  const h = (listing?.horses as any) || {};
 
   const { data: favorites = [] } = useFavorites();
   const toggleFavorite = useToggleFavorite();
 
   const [inquiryType, setInquiryType] = useState<string | null>(null);
   const [currentImg, setCurrentImg] = useState(0);
-
-  const listing = allListings.find((l: any) => l.id === listingId);
-  const h = listing?.horses as any;
 
   if (isLoading) {
     return (
@@ -53,7 +47,7 @@ function ListingDetailPage() {
     );
   }
 
-  if (!listing || !h) {
+  if (!listing) {
     return (
       <AppShell>
         <div className="lux-card p-16 text-center">
@@ -249,12 +243,14 @@ function ListingDetailPage() {
           </section>
 
           {/* Pedigree Section */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-display font-bold border-b border-border pb-4">Genealogía</h2>
-            <div className="bg-secondary/50 rounded-3xl p-6 border border-border/50 overflow-x-auto">
-              <PedigreeTree horse={h} />
-            </div>
-          </section>
+          {h?.id && (
+            <section className="space-y-6">
+              <h2 className="text-2xl font-display font-bold border-b border-border pb-4">Genealogía</h2>
+              <div className="bg-secondary/50 rounded-3xl p-6 border border-border/50 overflow-x-auto">
+                <PedigreeTree horse={h} />
+              </div>
+            </section>
+          )}
 
         </div>
 

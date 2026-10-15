@@ -84,6 +84,8 @@ export interface MarketplaceFilters {
   breed?: string;
   sex?: string;
   ageRange?: string; // "0-3", "3-6", "6-12", "12-24", "24-60", "60-120", "120+"
+  minAge?: number;
+  maxAge?: number;
   gaitType?: string;
   gaits?: string[];
   discipline?: string;
@@ -185,6 +187,33 @@ export function useListings(typeFilter?: string) {
         }
         return listing;
       }) as EnterpriseListing[];
+    },
+  });
+}
+
+// ── 2b. Single Listing (by ID) ────────────────────────────────────────────────
+export function useListing(id?: string) {
+  return useQuery<EnterpriseListing | null>({
+    queryKey: ["listing", id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await (supabase.from("listings") as any)
+        .select(LISTING_JOIN)
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching single listing:", error);
+        throw error;
+      }
+      if (!data) return null;
+
+      const listing = { ...data };
+      if (listing.horses?.image_url?.startsWith("/src/assets/")) {
+        listing.horses.image_url = listing.horses.image_url.replace("/src/assets/", "/media/");
+      }
+      return listing as EnterpriseListing;
     },
   });
 }
